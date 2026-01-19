@@ -1,0 +1,51 @@
+<!-- Terms and Conditions Modal -->
+<div id="termsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Terms and Conditions</h2>
+      <button class="close-btn" onclick="closeTermsModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <h3>1. Acceptance of Terms</h3>
+      <p>By creating an account and using our services, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not register or use our services.</p>
+      
+      <h3>2. User Accounts</h3>
+      <p>You are responsible for:</p>
+      <ul>
+        <li>Maintaining the confidentiality of your account credentials</li>
+        <li>All activities that occur under your account</li>
+        <li>Notifying us immediately of any unauthorized use</li>
+        <li>Providing accurate and complete registration information</li>
+      </ul>
+      
+      <h3>3. Acceptable Use</h3>
+      <p>You agree not to:</p>
+      <ul>
+        <li>Use the service for any illegal or unauthorized purpose</li>
+        <li>Violate any laws in your jurisdiction</li>
+        <li>Infringe upon the rights of others</li>
+        <li>Transmit any malicious code or viruses</li>
+        <li>Attempt to gain unauthorized access to our systems</li>
+      </ul>
+      
+      <h3>4. Privacy</h3>
+      <p>Your use of our service is also governed by our Privacy Policy. We collect and process your personal information in accordance with applicable data protection laws.</p>
+      
+      <h3>5. Termination</h3>
+      <p>We reserve the right to suspend or terminate your account at any time for violations of these terms or for any other reason we deem necessary.</p>
+      
+      <h3>6. Changes to Terms</h3>
+      <p>We may modify these terms at any time. Continued use of the service after changes constitutes acceptance of the modified terms.</p>
+    </div>
+    <div class="modal-footer">
+      <div class="checkbox-wrapper">
+        <input type="checkbox" id="agreeCheckbox" onchange="toggleAcceptButton()">
+        <label for="agreeCheckbox">I have read and agree to the Terms and Conditions</label>
+      </div>
+      <div class="modal-buttons">
+        <button type="button" class="btn-cancel" onclick="closeTermsModal()">Cancel</button>
+        <button type="button" class="btn-accept" id="acceptBtn" disabled onclick="acceptTerms()">Accept & Register</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,22 @@
+{% if perms.informationmanagement.access_information_management_system %}
+    <a href="{% url 'informationmanagement:information-dashboard' %}">Information Management Dashboard</a>
+{% endif %}
+
+{% comment %} logout button {% endcomment %}
+<form method="post" action="{% url 'core:core_logout' %}">
+    {% csrf_token %}
+    <button type="submit">Logout</button>
+</form>
+
+{% comment %} 
+if multiple systems are accessible, provide a link to system selection 
+{% endcomment %}
+{% if systems|length > 1 %}
+    <label for="system-select">Switch System:</label>
+    <select id="system-select" onchange="if (this.value) window.location.href=this.value;">
+        <option value="">-- Select a system --</option>
+        {% for sys in systems %}
+            <option value="/{{ sys.url }}/">{{ sys.name }}</option>
+        {% endfor %}
+    </select>
+{% endif %}

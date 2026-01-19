@@ -1,0 +1,488 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<link rel="icon" href="{% static 'favicon.png' %}" type="image/x-icon">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  top: -250px;
+  right: -250px;
+  animation: float 8s ease-in-out infinite;
+}
+
+body::after {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  bottom: -200px;
+  left: -200px;
+  animation: float 10s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+.container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 48px 40px;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  z-index: 1;
+  animation: slideIn 0.6s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.logo {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+}
+
+h1 {
+  text-align: center;
+  color: #1a202c;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 32px;
+}
+
+.error {
+  background: #fee;
+  border-left: 4px solid #f56565;
+  color: #c53030;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+label {
+  display: block;
+  color: #2d3748;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.input-wrapper {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  background: #fff;
+  outline: none;
+}
+
+input[type="password"] {
+  padding-right: 48px;
+}
+
+input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+input:hover {
+  border-color: #cbd5e0;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: #718096;
+  transition: color 0.3s ease;
+  width: auto;
+  box-shadow: none;
+  margin: 0;
+}
+
+.toggle-password:hover {
+  color: #667eea;
+  transform: translateY(-50%);
+  box-shadow: none;
+}
+
+.toggle-password:active {
+  transform: translateY(-50%);
+}
+
+.toggle-password svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+button[type="submit"] {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  margin-top: 8px;
+}
+
+button[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+button[type="submit"]:active {
+  transform: translateY(0);
+}
+
+.forgot-password {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.forgot-password a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.forgot-password a:hover {
+  color: #764ba2;
+}
+
+.signup-link {
+  text-align: center;
+  margin-top: 24px;
+  color: #718096;
+  font-size: 14px;
+}
+
+.signup-link a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.signup-link a:hover {
+  color: #764ba2;
+}
+
+.captcha-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  /* Center horizontally */
+  margin: 24px 0;       /* Space above/below */
+  gap: 12px;            /* Space between label and captcha */
+}
+
+.captcha-container label {
+  text-align: left;   /* Center the label text */
+  align-self: stretch; /* Make label take full width */
+  margin-bottom: 0;     /* Remove default margin since we use gap */
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .container {
+    max-width: 400px;
+    padding: 40px 32px;
+  }
+
+  h1 {
+    font-size: 26px;
+    margin-bottom: 28px;
+  }
+
+  .logo {
+    width: 56px;
+    height: 56px;
+    font-size: 26px;
+    margin-bottom: 20px;
+  }
+
+  input {
+    padding: 13px 15px;
+    font-size: 14px;
+  }
+
+  button[type="submit"] {
+    padding: 13px;
+    font-size: 15px;
+  }
+}
+
+/* Mobile Large */
+@media (max-width: 480px) {
+  body::before,
+  body::after {
+    display: none;
+  }
+
+  .container {
+    margin: 20px;
+    padding: 36px 28px;
+    max-width: 100%;
+    border-radius: 20px;
+  }
+
+  h1 {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+
+  .logo {
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
+    margin-bottom: 18px;
+  }
+
+  input {
+    padding: 12px 14px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+
+  input[type="password"] {
+    padding-right: 44px;
+  }
+
+  .toggle-password {
+    right: 10px;
+  }
+
+  button[type="submit"] {
+    padding: 12px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+
+  .forgot-password {
+    margin-top: 16px;
+  }
+
+  .signup-link {
+    margin-top: 20px;
+    font-size: 13px;
+  }
+
+  label {
+    font-size: 13px;
+  }
+
+  .error {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+}
+
+/* Mobile Small */
+@media (max-width: 360px) {
+  .container {
+    margin: 16px;
+    padding: 32px 24px;
+  }
+
+  h1 {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+
+  .logo {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+
+  input {
+    padding: 11px 13px;
+    font-size: 13px;
+  }
+
+  button[type="submit"] {
+    padding: 11px;
+    font-size: 14px;
+  }
+
+  .forgot-password a,
+  .signup-link {
+    font-size: 12px;
+  }
+}
+
+/* Landscape Mobile */
+@media (max-width: 812px) and (orientation: landscape) {
+  body {
+    padding: 20px 0;
+  }
+
+  .container {
+    margin: 20px auto;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .logo {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">L</div>
+  <h1>Login</h1>
+  
+  {% if error %}
+  <p class="error">{{ error }}</p>
+  {% endif %}
+  
+<form method="post">
+  {% csrf_token %}
+  
+  {{ form.username.label_tag }} {{ form.username }}
+  {% if form.username.errors %}
+    <div class="error">{{ form.username.errors }}</div>
+  {% endif %}
+  
+  {{ form.password.label_tag }}
+  <div class="input-wrapper">
+    {{ form.password }}
+    <button type="button" class="toggle-password" onclick="togglePassword()">
+      <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+    </button>
+  </div>
+  {% if form.password.errors %}
+    <div class="error">{{ form.password.errors }}</div>
+  {% endif %}
+  
+  <!-- Centered captcha wrapper -->
+  <div class="captcha-container">
+    {{ form.captcha.label_tag }} {{ form.captcha }}
+  </div>
+  {% if form.captcha.errors %}
+    <div class="error">{{ form.captcha.errors }}</div>
+  {% endif %}
+  
+  {% if form.non_field_errors %}
+    <div class="error">{{ form.non_field_errors }}</div>
+  {% endif %}
+  
+  <button type="submit">Login</button>
+</form>
+  
+  <div class="forgot-password">
+    <a href="#"{%comment %}url 'core:password_reset' {%endcomment%}>Forgot your password?</a>
+  </div>
+  
+  <p class="signup-link">
+    Don't have an account? <a href="{% url 'core:register' %}">Sign up</a>
+  </p>
+</div>
+
+<script>
+function togglePassword() {
+  const passwordInput = document.getElementById('id_password');
+  const eyeIcon = document.getElementById('eyeIcon');
+  
+  if (passwordInput.type === 'password') {
+    passwordInput.type = 'text';
+    eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />';
+  } else {
+    passwordInput.type = 'password';
+    eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />';
+  }
+}
+</script>
+</body>
+</html>

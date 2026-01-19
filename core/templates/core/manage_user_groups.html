@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage User Access</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            padding: 2rem;
+        }
+        h1 {
+            margin-bottom: 0.25rem;
+        }
+        .muted {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+        form {
+            max-width: 600px;
+        }
+        .group-list {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+        }
+        .group-item {
+            margin-bottom: 0.5rem;
+        }
+        .actions {
+            display: flex;
+            gap: 1rem;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        .save {
+            background: #2563eb;
+            color: white;
+        }
+        .cancel {
+            background: #e5e7eb;
+            color: #111;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+        .warning {
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Manage Access</h1>
+<p class="muted">
+    User: <strong>{{ target_user.username }}</strong>
+    ({{ target_user.email }})
+</p>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="group-list">
+        {% for group in groups %}
+            <div class="group-item">
+                <label>
+                    <input
+                        type="checkbox"
+                        name="groups"
+                        value="{{ group.name }}"
+                        {% if group in target_user.groups.all %}checked{% endif %}
+                    >
+                    {{ group.name }}
+                </label>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="save">Save Changes</button>
+
+        <button
+            type="submit"
+            name="action"
+            value="clear"
+            style="background:#dc2626; color:white"
+            onclick="return confirm('Clear all group access for this user?');"
+        >
+            Clear All
+        </button>
+
+        <a href="{% url 'core:user_list' %}" class="cancel">Cancel</a>
+    </div>
+
+</form>
+
+<p class="warning">
+    Changes here affect system access immediately and are logged.
+</p>
+
+</body>
+</html>

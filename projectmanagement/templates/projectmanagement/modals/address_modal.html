@@ -1,0 +1,171 @@
+          <style>
+/* Modal overlay */
+.modal {
+  position: fixed;
+  inset: 0; /* top:0; right:0; bottom:0; left:0 */
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+/* Show modal */
+.modal:not(.hidden) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Modal content box */
+.modal-content {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  transform: translateY(-20px);
+  transition: transform 0.3s ease;
+}
+
+/* Animate modal content when shown */
+.modal:not(.hidden) .modal-content {
+  transform: translateY(0);
+}
+
+/* Input and label styling (optional to match form) */
+.modal-content label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.modal-content input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Buttons inside modal */
+.modal-content .btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modal-content .btn + .btn {
+  margin-left: 0.5rem;
+}
+
+/* Optional: hide address2 fields initially (if not populated) */
+#address2Fields.hidden {
+  display: none;
+}
+</style>
+
+   
+<div id="addressModal" class="modal hidden">
+  <div class="modal-content">
+    <h2 class="text-xl font-semibold mb-4">Update Addresses</h2>
+    <form id="addressForm" method="post" action="{% url 'core:save_addresses' %}">
+      {% csrf_token %}
+      
+      <!-- Address 1 (Home) -->
+      <h3 class="font-medium text-lg mb-2">Home Address</h3>
+      <div class="mb-4">
+        <label for="country1" class="block font-medium mb-1">Country</label>
+        <input type="text" id="country1" name="country1" placeholder="PH"
+               class="w-full border rounded p-2 mb-2"
+               value="{{ home_address.country|default:'' }}" required  max="2"/>
+
+        <label for="address1" class="block font-medium mb-1">Full Address</label>
+        <input type="text" id="address1" name="address1" placeholder="123 Main St"
+               class="w-full border rounded p-2"
+               value="{{ home_address.full_address|default:'' }}" required />
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        <input type="text" name="city1" placeholder="City"
+               class="w-full border rounded p-2"
+               value="{{ home_address.city|default:'' }}" required />
+        <input type="text" name="province1" placeholder="Province"
+               class="w-full border rounded p-2"
+               value="{{ home_address.province|default:'' }}" required />
+        <input type="text" name="zip1" placeholder="ZIP Code"
+               class="w-full border rounded p-2"
+               value="{{ home_address.postal_code|default:'' }}" required />
+      </div>
+
+      <!-- Address 2 (Billing - optional) -->
+        <h3 class="font-medium text-lg mb-2 mt-6">Billing Address (optional)</h3>
+
+        <div class="mb-4">
+        <label for="country2" class="block font-medium mb-1">Country</label>
+        <input
+            type="text"
+            id="country2"
+            name="country2"
+            placeholder="Country"
+            class="w-full border rounded p-2"
+            value="{{ secondary_address.country|default:'' }}"
+        />
+        </div>
+
+        <div
+        id="address2Fields"
+        class="grid grid-cols-3 gap-2 mb-4 {% if not secondary_address %}hidden{% endif %}"
+        >
+        <label for="address2" class="block font-medium mb-1">Full Address</label>
+        <input
+            type="text"
+            id="address2"
+            name="address2"
+            placeholder="Full Address"
+            class="w-full border rounded p-2"
+            value="{{ secondary_address.full_address|default:'' }}"
+        />
+        <input
+            type="text"
+            name="city2"
+            placeholder="City"
+            class="w-full border rounded p-2"
+            value="{{ secondary_address.city|default:'' }}"
+        />
+        <input
+            type="text"
+            name="province2"
+            placeholder="Province"
+            class="w-full border rounded p-2"
+            value="{{ secondary_address.province|default:'' }}"
+        />
+        <input
+            type="text"
+            name="zip2"
+            placeholder="ZIP Code"
+            class="w-full border rounded p-2"
+            value="{{ secondary_address.postal_code|default:'' }}"
+        />
+        </div>
+
+
+      <div class="flex justify-end gap-2 mt-4">
+        <button type="button" id="closeModal" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Both Addresses</button>
+      </div>
+    </form>
+  </div>
+</div>

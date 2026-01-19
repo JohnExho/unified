@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Management</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            padding: 2rem;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background: #f5f5f5;
+        }
+        a.button {
+            padding: 0.4rem 0.7rem;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .muted {
+            color: #666;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+<h1>User Access Management</h1>
+<p class="muted">Manage system access via group assignments</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Groups</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.username }}</td>
+            <td>{{ user.first_name }} {{ user.last_name }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+                {% for group in user.groups.all %}
+                    {{ group.name }}{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                    <span class="muted">No access</span>
+                {% endfor %}
+            </td>
+            <td>
+                <a class="button"
+                href="{% url 'core:manage_user_groups' user.id %}">
+                    Manage Access
+                </a>
+
+                {% if user.is_active %}
+                    <form method="post"
+                        action="{% url 'core:deactivate_user' user.id %}"
+                        style="display:inline">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="button"
+                                style="background:#dc2626"
+                                onclick="return confirm('Deactivate this user?');">
+                            Deactivate
+                        </button>
+                    </form>
+                {% else %}
+                    <form method="post"
+                        action="{% url 'core:activate_user' user.id %}"
+                        style="display:inline">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="button"
+                                style="background:#16a34a">
+                            Activate
+                        </button>
+                    </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% comment %} logout button {% endcomment %}
+<form method="post" action="{% url 'core:core_logout' %}">
+    {% csrf_token %}
+    <button type="submit">Logout</button>
+</form>
+
+{% comment %} 
+if multiple systems are accessible, provide a link to system selection 
+{% endcomment %}
+{% if systems|length > 1 %}
+    <label for="system-select">Switch System:</label>
+    <select id="system-select" onchange="if (this.value) window.location.href=this.value;">
+        <option value="">-- Select a system --</option>
+        {% for sys in systems %}
+            <option value="/{{ sys.url }}/">{{ sys.name }}</option>
+        {% endfor %}
+    </select>
+{% endif %}
+
+</body>
+</html>
