@@ -1,14 +1,6 @@
 from django.contrib import admin
-from .models import AdminLog, CustomUser, Address
+from .models import CustomUser,  SystemMembership, AdminLog, Address
 from django.contrib.auth.admin import UserAdmin
-
-@admin.register(AdminLog)
-class AdminLogAdmin(admin.ModelAdmin):
-    # Use actual fields from your model
-    list_display = ('user', 'system_name', 'target_model', 'action', 'created_at')
-    list_filter = ('system_name', 'target_model', 'action', 'user')
-    search_fields = ('user__username', 'description')
-
 
 
 @admin.register(CustomUser)
@@ -20,6 +12,19 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = UserAdmin.add_fieldsets + (
         (None, {'fields': ('middle_name', 'avatar', 'bio', '_phone_number', 'is_email_verified')}),
     )
+
+@admin.register(SystemMembership)
+class SystemMembershipAdmin(admin.ModelAdmin):
+    list_display = ('user', 'system_name', 'joined_at')
+    list_filter = ('system_name', 'user')
+    search_fields = ('user__username', 'system_name')
+
+@admin.register(AdminLog)
+class AdminLogAdmin(admin.ModelAdmin):
+    # Use actual fields from your model
+    list_display = ('user', 'system_name', 'target_model', 'action', 'created_at')
+    list_filter = ('system_name', 'target_model', 'action', 'user')
+    search_fields = ('user__username', 'description')
 
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect,  get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth import get_user_model, update_session_auth_hash
-from .models import AdminLog, Address
+from .models import AdminLog, Address, SystemMembership
 from .utils import get_client_ip, get_user_agent, encrypt, decrypt
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.models import Group
@@ -16,20 +16,10 @@ from django.views.decorators.http import require_POST
 
 User = get_user_model()
 
-# Map systems to their login URLs
-SYSTEM_PERMISSION_MAP = {
-    'users': ('core.access_users_system', 'Users Access Management'),
-    'projectmanagement/dashboard': ('projectmanagement.access_project_management_system', 'Project Management'),
-    'library/dashboard': ('librarymanagement.access_library_management_system', 'Library Management'),
-    'inventory/dashboard': ('inventorymanagement.access_inventory_management_system', 'Inventory Management'),
-    'communityextensionservices/dashboard': ('communityextensionservices.access_community_extension_services_system', 'Community Extension Services'),
-    'informationmanagement/dashboard': ('informationmanagement.access_information_dashboard_system', 'Information Management'),
-    'performanceevaluation/dashboard': ('performanceevaluation.access_performance_evaluation_system', 'Performance Evaluation'),
-}
 
+def core_register(request, system_name):
+    User = get_user_model()
 
-
-def core_register(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -40,24 +30,17 @@ def core_register(request):
         terms_accepted = request.POST.get('terms_accepted')
         avatar = request.FILES.get('avatar')
         avatar_url = request.POST.get('avatar_url')
-        
-        # Validate terms acceptance
+
+        # Validate terms
         if terms_accepted != 'true':
-            return render(request, 'core/register.html', {
-                'error': 'You must accept the Terms and Conditions to register.'
-            })
-        
+            return render(request, 'core/register.html', {'error': 'Accept the Terms and Conditions', 'system_name': system_name})
+
         if not username or not password:
-            return render(request, 'core/register.html', {
-                'error': 'Please fill out all required fields.'
-            })
-        
-        User = get_user_model()
+            return render(request, 'core/register.html', {'error': 'Fill all required fields', 'system_name': system_name})
+
         if User.objects.filter(username=username).exists():
-            return render(request, 'core/register.html', {
-                'error': 'Username already exists.'
-            })
-        
+            return render(request, 'core/register.html', {'error': 'Username already exists', 'system_name': system_name})
+
         user = User.objects.create_user(
             username=username,
             password=password,
@@ -67,73 +50,123 @@ def core_register(request):
             last_name=last_name,
             avatar_url=avatar_url
         )
-        
-        # Set avatar if provided
+
         if avatar:
             user.avatar = avatar
             user.save()
-        
+
         # Log registration
         AdminLog.objects.create(
             user=user,
-            system_name='core',
+            system_name=system_name,
             action='REGISTER',
             target_model='User',
             target_id=user.id,
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
-            description=f"User '{username}' registered and accepted terms"
+            description=f"User '{username}' registered for {system_name}"
         )
-        
+
+        # Assign system membership
+        SystemMembership.objects.create(user=user, system_name=system_name)
+
         messages.success(request, "Registration successful. Please log in.")
         return redirect('core:core_login')
 
-    messages.error(request, "Registration failed. Please try again.")
-    return render(request, 'core/register.html')
+    # GET request: just render form
+    return render(request, 'core/register.html', {'system_name': system_name})
 
-def core_login(request):
-    if request.method == "POST":
-        form = LoginForm(request.POST)
+
+def core_login(request, system_name=None):
+    User = get_user_model()
+    form = LoginForm(request.POST or None)
+
+    print(f"=== LOGIN DEBUG START ===")
+    print(f"system_name: {system_name}")
+    print(f"request.method: {request.method}")
+    
+    if request.method == "POST" and form.is_valid():
+        username = form.cleaned_data["username"]
+        password = form.cleaned_data["password"]
         
-        if form.is_valid():
-            username = form.cleaned_data["username"]
-            password = form.cleaned_data["password"]
-
-            user = authenticate(request, username=username, password=password)
-            if user:
-                login(request, user)
-                
+        print(f"Form is valid. Username: {username}")
+        
+        user = authenticate(request, username=username, password=password)
+        print(f"Authenticated user: {user}")
+        
+        if user:
+            login(request, user)
+            print(f"User logged in successfully")
+            
+            # Fetch systems the user belongs to
+            memberships = SystemMembership.objects.filter(user=user)
+            print(f"Memberships query: {memberships}")
+            print(f"Memberships count: {memberships.count()}")
+            
+            accessible_systems = [
+                {"url": m.system_name, "name": m.system_name.title()} for m in memberships
+            ]
+            
+            print(f"accessible_systems: {accessible_systems}")
+            print(f"len(accessible_systems): {len(accessible_systems)}")
+            
+            # Determine the system the user should access
+            if system_name and any(s['url'] == system_name for s in accessible_systems):
+                print(f"BRANCH 1: Specific system login")
+                # User logged in via a specific system URL
                 AdminLog.objects.create(
                     user=user,
                     target_model="User",
+                    system_name=system_name,
                     target_id=user.id,
                     action="LOGIN",
                     ip_address=get_client_ip(request),
                     user_agent=get_user_agent(request),
-                    description="Admin logged in",
+                    description=f"User logged in for {system_name}"
                 )
+                messages.success(request, f"Welcome to {system_name.title()}!")
+                print(f"Redirecting to: /{system_name}/")
+                return redirect(f"/{system_name}/")
                 
-                # System routing
-                accessible_systems = [
-                    {"url": system, "name": name}
-                    for system, (perm, name) in SYSTEM_PERMISSION_MAP.items()
-                    if user.has_perm(perm)
-                ]
-
-                if len(accessible_systems) == 1:
-                    messages.success(request, f"Welcome to {accessible_systems[0]['name']}!")
-                    return redirect(f"/{accessible_systems[0]['url']}/")
-                if len(accessible_systems) > 1:
-                    request.session["accessible_systems"] = accessible_systems
-                    return redirect("core:system_selection")
-
-                return redirect("/404/")
+            elif len(accessible_systems) == 1:
+                print(f"BRANCH 2: Single system")
+                # User has only one system
+                target_system = accessible_systems[0]['url']
+                AdminLog.objects.create(
+                    user=user,
+                    target_model="User",
+                    system_name=target_system,
+                    target_id=user.id,
+                    action="LOGIN",
+                    ip_address=get_client_ip(request),
+                    user_agent=get_user_agent(request),
+                    description=f"User logged in for {target_system}"
+                )
+                print(f"Redirecting to: /{target_system}/")
+                return redirect(f"/{target_system}/")
+                
+            elif len(accessible_systems) > 1:
+                print(f"BRANCH 3: Multiple systems")
+                # User has multiple systems - let them choose
+                request.session["accessible_systems"] = accessible_systems
+                print(f"Session data set: {request.session['accessible_systems']}")
+                print(f"Redirecting to: core:system_selection")
+                return redirect("core:system_selection")
+                
             else:
-                form.add_error(None, "Invalid username or password.")
+                print(f"BRANCH 4: No systems assigned")
+                messages.error(request, "You are not assigned to any system.")
+                return redirect('core:core_login')
+        else:
+            print(f"Authentication failed")
+            form.add_error(None, "Invalid username or password.")
     else:
-        form = LoginForm()
-
-    return render(request, "core/login.html", {"form": form})
+        print(f"Form not valid or not POST")
+        if request.method == "POST":
+            print(f"Form errors: {form.errors}")
+    
+    print(f"=== Rendering login page ===")
+    return render(request, "core/login.html", {"form": form, "system_name": system_name})
 
 
 def system_selection(request):
@@ -142,16 +175,33 @@ def system_selection(request):
     if not systems:
         return redirect('core:core_login')
     
-    # redundant logging removed
-    # AdminLog.objects.create(
-    #     user=request.user,
-    #     system_name='core',
-    #     action='OTHER',
-    #     description='Viewed system selection page'
-    # )
+    # Handle system selection
+    if request.method == 'POST':
+        selected_system = request.POST.get('system')
+        
+        # Verify the user has access to this system
+        if any(s['url'] == selected_system for s in systems):
+            # Log the login for the selected system
+            AdminLog.objects.create(
+                user=request.user,
+                target_model="User",
+                system_name=selected_system,
+                target_id=request.user.id,
+                action="LOGIN",
+                ip_address=get_client_ip(request),
+                user_agent=get_user_agent(request),
+                description=f"User logged in for {selected_system}"
+            )
+            
+            # Clear the session data
+            del request.session['accessible_systems']
+            
+            return redirect(f"/{selected_system}/")
+        else:
+            messages.error(request, "Invalid system selection.")
+            return redirect('core:core_login')
 
     return render(request, 'core/system_selection.html', {'systems': systems})
-
 
 
 def core_logout(request):
@@ -258,7 +308,7 @@ def deactivate_user(request, user_id):
             system_name='core',
             action='UPDATE',
             target_model='User',
-            target_id=target_user.id,
+            target_id=user.id,
             description=f"Deactivated user '{user.username}'"
         )
         user.save()
@@ -411,7 +461,7 @@ def delete_address(request, address_id):
         address.delete()
 
         AdminLog.objects.create(
-            user=user,
+            user=request.user,
             system_name='core',
             action='DELETE',
             target_model='Address',

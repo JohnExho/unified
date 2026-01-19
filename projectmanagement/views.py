@@ -3,9 +3,13 @@ from django.views.defaults import page_not_found
 from django.shortcuts import render
 from .models import Project
 from core.utils import get_client_ip, get_user_agent, decrypt, encrypt
+from core.models import SystemMembership
+from core.forms import LoginForm
 
 def dashboard(request):
-    if not request.user.has_perm('projectmanagement.access_project_management_system'):
+    system_name = 'projectmanagement'  # current system
+    # Superuser bypass
+    if not request.user.is_superuser and not SystemMembership.objects.filter(user=request.user, system_name=system_name).exists():
         return render(request, '404.html', status=404)
     
     systems = request.session.get('accessible_systems', [])
@@ -13,9 +17,11 @@ def dashboard(request):
     return render(request, 'projectmanagement/pages/dashboard.html', {'projects': projects, 'systems': systems})
 
 def settings(request):
-    if not request.user.has_perm('projectmanagement.access_project_management_system'):
+    system_name = 'projectmanagement'  # current system
+    # Superuser bypass
+    if not request.user.is_superuser and not SystemMembership.objects.filter(user=request.user, system_name=system_name).exists():
         return render(request, '404.html', status=404)
-
+    
     systems = request.session.get('accessible_systems', [])
 
     home_address = request.user.addresses.filter(type='home').first()

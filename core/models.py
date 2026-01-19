@@ -37,6 +37,16 @@ class CustomUser(AbstractUser):
     #     self.save(update_fields=['email_verification_token', 'email_verification_sent_at'])
     #     return self.email_verification_token
 
+class SystemMembership(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    system_name = models.CharField(max_length=50)  # e.g., 'core', 'projectmanagement'
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'system_name')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.system_name}"   
 
 class AdminLog(models.Model):
 
@@ -55,13 +65,6 @@ class AdminLog(models.Model):
 
     def __str__(self):
         return f"{self.user} performed {self.action} on {self.target_model} using {self.system_name} at {self.created_at}"
-
-class CoreAccess(models.Model):
-    class Meta:
-        permissions = [
-            ("access_users_system", "Can access Users system"),
-        ]
-
 
 class Address(models.Model):
     ADDRESS_TYPES = [
