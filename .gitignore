@@ -3,3 +3,5 @@ media/avatar/*
 .venv
 **/pr/
 *.sqlite3
+*.pyc
+__pycache__/
