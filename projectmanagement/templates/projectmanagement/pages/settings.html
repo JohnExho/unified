@@ -230,7 +230,12 @@
       <input type="password" id="confirmPassword" name="new_password2" required />
     </div>
     <div class="change-password-form">
-      <a href="{% url 'core:core_logout' %}" class="btn btn-danger">Logout</a>
+      {% if system_name and system_name != 'core' %}
+          <a href="{% url 'core:core_system_logout' system_name %}" class="btn btn-danger">Logout</a>
+      {% else %}
+          <a href="{% url 'core:core_logout' %}" class="btn btn-danger">Logout</a>
+      {% endif %}
+
       <button type="submit" class="btn btn-primary">Change Password</button>
     </div>
   </form>
@@ -321,7 +326,7 @@
 
     })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
   document.addEventListener("DOMContentLoaded", () => {
     {% if messages %}

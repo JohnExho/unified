@@ -53,5 +53,6 @@ def settings(request):
             'systems': systems,
             'home_address': home_address,
             'secondary_address': secondary_address,
+            'system_name': system_name,
         }
     )

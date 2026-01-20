@@ -1,0 +1,175 @@
+/* =========================
+   Global Reset & Base
+========================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #eef2f7, #d9e2ec);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2c3e50;
+}
+
+/* =========================
+   Dashboard Container
+========================= */
+.dashboard-container {
+    width: 95%;
+    max-width: 1100px;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 40px 45px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* =========================
+   Header
+========================= */
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 45px;
+}
+
+.dashboard-header h1 {
+    font-size: 2.3rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.dashboard-header p {
+    font-size: 1rem;
+    color: #6c757d;
+}
+
+/* =========================
+   Navigation Cards
+========================= */
+.dashboard-nav ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 28px;
+    margin-bottom: 50px;
+}
+
+.dashboard-nav .card {
+    display: block;
+    padding: 28px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    border: 1px solid #e1e6eb;
+    text-decoration: none;
+    transition: all 0.25s ease;
+}
+
+.dashboard-nav .card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+    color: #343a40;
+}
+
+.dashboard-nav .card p {
+    font-size: 0.95rem;
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+/* Hover Effect */
+.dashboard-nav .card:hover {
+    transform: translateY(-6px);
+    background: #ffffff;
+    border-color: #0d6efd;
+    box-shadow: 0 14px 30px rgba(13, 110, 253, 0.15);
+}
+
+.dashboard-nav .card:hover h3 {
+    color: #0d6efd;
+}
+
+/* =========================
+   User List Section
+========================= */
+.user-list-section {
+    margin-top: 10px;
+}
+
+.user-list-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+/* =========================
+   User Table
+========================= */
+.user-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.user-list-table thead {
+    background: #0d6efd;
+    color: #ffffff;
+}
+
+.user-list-table th,
+.user-list-table td {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.user-list-table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.user-list-table tbody tr {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.user-list-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* Zebra striping */
+.user-list-table tbody tr:nth-child(even) {
+    background: #f8f9fa;
+}
+
+/* Hover row */
+.user-list-table tbody tr:hover {
+    background: #eef4ff;
+}
+
+/* =========================
+   Responsive tweaks
+========================= */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 30px 25px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.9rem;
+    }
+
+    .user-list-table th,
+    .user-list-table td {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+}

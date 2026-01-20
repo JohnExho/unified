@@ -1,0 +1,67 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
+</head>
+<body>  
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Welcome to the Dashboard</h1>
+            <p>Your central hub to manage system modules</p>
+        </header>
+
+        <nav class="dashboard-nav">
+            <ul>
+                <li>
+                    <a href="{% url 'core:user_list' %}" class="card">
+                        <h3>User Management</h3>
+                        <p>Manage users, roles, and access</p>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'projectmanagement:pm-dashboard' %}" class="card">
+                        <h3>Project Management</h3>
+                        <p>Track and organize projects</p>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{% url 'librarymanagement:library-dashboard' %}" class="card">
+                        <h3>Library Management</h3>
+                        <p>Handle books and resources</p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        {% comment %} user_list here {% endcomment %}
+        {% if user_list %}
+        <section class="user-list-section">
+            <h2>Recent Users</h2>
+            <table class="user-list-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in user_list %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.first_name }} {{ user.last_name }}</td>
+                        <td>{{ user.email }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        {% endif %}
+    </div>
+</body>
+</html>

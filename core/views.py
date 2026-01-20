@@ -15,8 +15,6 @@ from django.views.decorators.http import require_POST
 
 
 User = get_user_model()
-
-
 def core_register(request, system_name):
     User = get_user_model()
 
@@ -33,14 +31,18 @@ def core_register(request, system_name):
 
         # Validate terms
         if terms_accepted != 'true':
-            return render(request, 'core/register.html', {'error': 'Accept the Terms and Conditions', 'system_name': system_name})
+            messages.error(request, "You must accept the Terms and Conditions to register.")
+            return render(request, 'core/pages/register.html', {'error': 'Accept the Terms and Conditions', 'system_name': system_name})
 
         if not username or not password:
-            return render(request, 'core/register.html', {'error': 'Fill all required fields', 'system_name': system_name})
-
+            messages.error(request, "Please fill in all required fields.")
+            return render(request, 'core/pages/register.html', {'error': 'Fill all required fields', 'system_name': system_name})
+    
         if User.objects.filter(username=username).exists():
-            return render(request, 'core/register.html', {'error': 'Username already exists', 'system_name': system_name})
+            messages.error(request, "Username already exists.")
+            return render(request, 'core/pages/register.html', {'error': 'Username already exists', 'system_name': system_name})
 
+        # Create the user
         user = User.objects.create_user(
             username=username,
             password=password,
@@ -71,10 +73,16 @@ def core_register(request, system_name):
         SystemMembership.objects.create(user=user, system_name=system_name)
 
         messages.success(request, "Registration successful. Please log in.")
+
+        # --- Redirect to system-specific login like core_logout ---
+        if system_name != 'core':
+            messages.info(request, f"You can now log in.")
+            return redirect(f'/{system_name}/login/')
         return redirect('core:core_login')
 
     # GET request: just render form
-    return render(request, 'core/register.html', {'system_name': system_name})
+    return render(request, 'core/pages/register.html', {'system_name': system_name})
+
 
 
 def core_login(request, system_name=None):
@@ -90,7 +98,6 @@ def core_login(request, system_name=None):
         
         if user:
             login(request, user)
-            print(f"User logged in successfully")
             
             # Fetch systems the user belongs to
             memberships = SystemMembership.objects.filter(user=user)
@@ -101,7 +108,6 @@ def core_login(request, system_name=None):
             
             # Determine the system the user should access
             if system_name and any(s['url'] == system_name for s in accessible_systems):
-                print(f"BRANCH 1: Specific system login")
                 # User logged in via a specific system URL
                 AdminLog.objects.create(
                     user=user,
@@ -113,11 +119,10 @@ def core_login(request, system_name=None):
                     user_agent=get_user_agent(request),
                     description=f"User logged in for {system_name}"
                 )
-                messages.success(request, f"Welcome to {system_name.title()}!")
+                messages.success(request, f"Welcome {user.username}!")
                 return redirect(f"/{system_name}/dashboard/")
                 
             elif len(accessible_systems) == 1:
-                print(f"BRANCH 2: Single system")
                 # User has only one system
                 target_system = accessible_systems[0]['url']
                 AdminLog.objects.create(
@@ -135,6 +140,7 @@ def core_login(request, system_name=None):
             elif len(accessible_systems) > 1:
                 # User has multiple systems - let them choose
                 request.session["accessible_systems"] = accessible_systems
+                messages.info(request, "Please select a system to continue.")
                 return redirect("core:system_selection")
                 
             else:
@@ -143,14 +149,14 @@ def core_login(request, system_name=None):
         else:
             form.add_error(None, "Invalid username or password.")
 
-    return render(request, "core/login.html", {"form": form, "system_name": system_name})
+    return render(request, "core/pages/login.html", {"form": form, "system_name": system_name})
 
 
-@login_required
 def system_selection(request):
     systems = request.session.get('accessible_systems')
 
     if not systems:
+        messages.error(request, "No Access.")
         return redirect('core:core_login')
     
     # Handle system selection
@@ -178,107 +184,138 @@ def system_selection(request):
             request.session['current_system'] = selected_system
 
             # Redirect to the dashboard
-            return redirect(f"/{selected_system}/dashboard/")
+            if selected_system == 'core':
+                return redirect('core:core_dashboard')
+            else:
+                return redirect(f"/{selected_system}")
         else:
             messages.error(request, "Invalid system selection.")
             return redirect('core:core_login')
 
-    return render(request, 'core/system_selection.html', {'systems': systems})
+    return render(request, 'core/pages/system_selection.html', {'systems': systems})
 
+def core_logout(request, system_name=None):
+    """
+    Handle logout for both core and system-specific contexts.
+    
+    Args:
+        system_name: Optional system name from URL pattern
+    """
+    # Priority: URL parameter > session value > default to 'core'
+    if system_name:
+        current_system = system_name
+    else:
+        current_system = request.session.get('current_system', 'core')
 
-def core_logout(request):
+    # Log the logout action BEFORE clearing session
     if request.user.is_authenticated:
         AdminLog.objects.create(
             user=request.user,
             target_model="User",
+            system_name=current_system,
             target_id=request.user.id,
             action='LOGOUT',
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
-            description='User logged out'
+            description=f'User logged out from {current_system}'
         )
 
+    # Clear authentication and session
     auth_logout(request)
-    return redirect('core:core_login')
+    request.session.flush()
 
+    # Redirect to the system's login page
+    if current_system and current_system != 'core':
+        # return redirect(f'{current_system}:login')  # Use named URL
+        # OR if you prefer absolute path:
+        return redirect(f'/{current_system}/login/')
+    
+    return redirect('core:core_login')
 
 def user_list(request):
     systems = request.session.get('accessible_systems', [])
+
+    if systems != 'core' and not request.user.is_superuser:
+        return render(request, '404.html', status=404)
+
     users = User.objects.exclude(id=request.user.id).order_by('username')
-    return render(request, 'core/user_list.html', {'users': users, 'systems': systems})
+    return render(request, 'core/pages/user_list.html', {'users': users, 'systems': systems})
 
 
 @user_passes_test(lambda u: u.is_superuser)
-def manage_user_groups(request, user_id):
+def manage_user_systems(request, user_id):
     target_user = get_object_or_404(User, id=user_id)
-    all_groups = Group.objects.all()
-
+    
     if request.user == target_user:
         return render(request, '404.html', status=404)
 
+    # Fetch all distinct system names used in the app
+    all_systems = SystemMembership.objects.values_list('system_name', flat=True).distinct()
+
     if request.method == 'POST':
         action = request.POST.get('action')
-
-        old_groups = set(target_user.groups.values_list('name', flat=True))
+        old_systems = set(target_user.systemmembership_set.values_list('system_name', flat=True))
 
         # CLEAR ALL FEATURE
         if action == 'clear':
-            target_user.groups.clear()
+            target_user.systemmembership_set.all().delete()
 
-            for g in old_groups:
+            for s in old_systems:
                 AdminLog.objects.create(
                     user=request.user,
                     system_name='core',
                     action='UPDATE',
                     target_model='User',
                     target_id=target_user.id,
-                    description=f"Cleared user from group '{g}'"
+                    description=f"Cleared user from system '{s}'"
                 )
 
-            return redirect('core:manage_user_groups', user_id=user_id)
+            return redirect('core:manage_user_systems', user_id=user_id)
 
         # NORMAL SAVE FLOW
-        selected_groups = request.POST.getlist('groups')
-        new_groups = set(selected_groups)
+        selected_systems = request.POST.getlist('systems')
+        new_systems = set(selected_systems)
 
-        target_user.groups.set(
-            Group.objects.filter(name__in=new_groups)
-        )
+        # Remove memberships not in the new selection
+        target_user.systemmembership_set.exclude(system_name__in=new_systems).delete()
 
-        added = new_groups - old_groups
-        removed = old_groups - new_groups
-
-        for g in added:
+        # Add new memberships
+        for system_name in new_systems - old_systems:
+            SystemMembership.objects.create(user=target_user, system_name=system_name)
             AdminLog.objects.create(
                 user=request.user,
                 system_name='core',
                 action='UPDATE',
                 target_model='User',
                 target_id=target_user.id,
-                description=f"Added user to group '{g}'"
+                description=f"Added user to system '{system_name}'"
             )
 
-        for g in removed:
+        # Log removed systems
+        for system_name in old_systems - new_systems:
             AdminLog.objects.create(
                 user=request.user,
                 system_name='core',
                 action='UPDATE',
                 target_model='User',
                 target_id=target_user.id,
-                description=f"Removed user from group '{g}'"
+                description=f"Removed user from system '{system_name}'"
             )
 
         return redirect('core:user_list')
 
+    # GET request: render current memberships
+    user_systems = target_user.systemmembership_set.values_list('system_name', flat=True)
+
     return render(
         request,
-        'core/manage_user_groups.html',
+        'core/pages/manage_user_systems.html',
         {
             'target_user': target_user,
-            'groups': all_groups,
+            'all_systems': all_systems,
+            'user_systems': user_systems
         }
     )
-
 
 def deactivate_user(request, user_id):
     if request.method == "POST":
@@ -587,4 +624,6 @@ def change_password(request):
     return redirect("projectmanagement:pm-settings")
 
 def dashboard(request):
-    return render(request, 'core/dashboard.html')
+    user_list = User.objects.all()
+
+    return render(request, 'core/pages/dashboard.html' , {'user_list': user_list})

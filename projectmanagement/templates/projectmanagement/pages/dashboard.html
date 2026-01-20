@@ -574,6 +574,21 @@ body {
     </div>
   </div>
 </main>
-
+{% if messages %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  {% for message in messages %}
+    Swal.fire({
+      toast: true,
+      icon: "{{ message.tags|default:'info' }}",
+      title: "{{ message|escapejs }}",
+      timer: 4000,
+      timerProgressBar: true,
+      showConfirmButton: false,
+      position: "top-end"
+    });
+  {% endfor %}
+</script>
+{% endif %}
 </body>
 </html>

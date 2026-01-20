@@ -527,7 +527,11 @@
 
       <div class="systems-grid">
         {% for sys in systems %}
-        <a href="/{{ sys.url }}/" class="system-card">
+        {% if sys.url == 'core' %}
+        <a href="/dashboard/" class="system-card">
+        {% else %}
+        <a href="/{{ sys.url }}/dashboard/" class="system-card">
+        {% endif %}
           <div class="system-icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -567,5 +571,21 @@
         {% endfor %}
       </div>
     </div>
+{% if messages %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  {% for message in messages %}
+    Swal.fire({
+      toast: true,
+      icon: "{{ message.tags|default:'info' }}",
+      title: "{{ message|escapejs }}",
+      timer: 4000,
+      timerProgressBar: true,
+      showConfirmButton: false,
+      position: "top-end"
+    });
+  {% endfor %}
+</script>
+{% endif %}
   </body>
 </html>

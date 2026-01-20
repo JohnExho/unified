@@ -45,7 +45,7 @@
             <th>Username</th>
             <th>Name</th>
             <th>Email</th>
-            <th>Groups</th>
+            <th>Systems</th>
             <th>Action</th>
         </tr>
     </thead>
@@ -56,15 +56,19 @@
             <td>{{ user.first_name }} {{ user.last_name }}</td>
             <td>{{ user.email }}</td>
             <td>
-                {% for group in user.groups.all %}
-                    {{ group.name }}{% if not forloop.last %}, {% endif %}
-                {% empty %}
-                    <span class="muted">No access</span>
-                {% endfor %}
+                {% with memberships=user.systemmembership_set.all %}
+                    {% if memberships %}
+                        {% for membership in memberships %}
+                            {{ membership.system_name }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <span class="muted">No access</span>
+                    {% endif %}
+                {% endwith %}
             </td>
             <td>
                 <a class="button"
-                href="{% url 'core:manage_user_groups' user.id %}">
+                href="{% url 'core:manage_user_systems' user.id %}">
                     Manage Access
                 </a>
 

@@ -71,16 +71,16 @@
     {% csrf_token %}
 
     <div class="group-list">
-        {% for group in groups %}
+        {% for system in all_systems %}
             <div class="group-item">
                 <label>
                     <input
                         type="checkbox"
-                        name="groups"
-                        value="{{ group.name }}"
-                        {% if group in target_user.groups.all %}checked{% endif %}
+                        name="systems"
+                        value="{{ system }}"
+                        {% if system in user_systems %}checked{% endif %}
                     >
-                    {{ group.name }}
+                    {{ system }}
                 </label>
             </div>
         {% endfor %}
@@ -94,15 +94,15 @@
             name="action"
             value="clear"
             style="background:#dc2626; color:white"
-            onclick="return confirm('Clear all group access for this user?');"
+            onclick="return confirm('Clear all system access for this user?');"
         >
             Clear All
         </button>
 
         <a href="{% url 'core:user_list' %}" class="cancel">Cancel</a>
     </div>
-
 </form>
+
 
 <p class="warning">
     Changes here affect system access immediately and are logged.

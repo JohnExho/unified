@@ -2,7 +2,7 @@ from django.urls import path
 from django.shortcuts import redirect
 from .views import (
     core_login, core_logout, system_selection,
-    core_register, manage_user_groups, user_list,
+    core_register, manage_user_systems, user_list,
     deactivate_user, activate_user, save_addresses,
     delete_address, upload_avatar, remove_avatar,
     profile_update, change_password, dashboard,
@@ -23,8 +23,8 @@ urlpatterns = [
     # Auth - System-specific
     path('<str:system_name>/login/', core_login, name='core_system_login'),
     path('<str:system_name>/register/', core_register, name='core_register'),
-    path('logout/', core_logout, name='core_logout'),
-    
+    path('logout/', core_logout, name='core_logout'),  # generic logout
+    path('<str:system_name>/logout/', core_logout, name='core_system_logout'),  # system logout
     # User flow
     path('dashboard/', dashboard, name='core_dashboard'),
     path('select-system/', system_selection, name='system_selection'),
@@ -40,8 +40,8 @@ urlpatterns = [
     
     # User group management
     path('users/<uuid:user_id>/access/',
-        manage_user_groups,
-        name='manage_user_groups'
+        manage_user_systems,
+        name='manage_user_systems'
     ),
 
     # User activation/deactivation
