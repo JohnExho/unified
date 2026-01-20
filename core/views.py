@@ -80,19 +80,13 @@ def core_register(request, system_name):
 def core_login(request, system_name=None):
     User = get_user_model()
     form = LoginForm(request.POST or None)
-
-    print(f"=== LOGIN DEBUG START ===")
-    print(f"system_name: {system_name}")
-    print(f"request.method: {request.method}")
     
     if request.method == "POST" and form.is_valid():
         username = form.cleaned_data["username"]
         password = form.cleaned_data["password"]
         
-        print(f"Form is valid. Username: {username}")
         
         user = authenticate(request, username=username, password=password)
-        print(f"Authenticated user: {user}")
         
         if user:
             login(request, user)
@@ -100,15 +94,10 @@ def core_login(request, system_name=None):
             
             # Fetch systems the user belongs to
             memberships = SystemMembership.objects.filter(user=user)
-            print(f"Memberships query: {memberships}")
-            print(f"Memberships count: {memberships.count()}")
             
             accessible_systems = [
                 {"url": m.system_name, "name": m.system_name.title()} for m in memberships
             ]
-            
-            print(f"accessible_systems: {accessible_systems}")
-            print(f"len(accessible_systems): {len(accessible_systems)}")
             
             # Determine the system the user should access
             if system_name and any(s['url'] == system_name for s in accessible_systems):
@@ -125,8 +114,7 @@ def core_login(request, system_name=None):
                     description=f"User logged in for {system_name}"
                 )
                 messages.success(request, f"Welcome to {system_name.title()}!")
-                print(f"Redirecting to: /{system_name}/")
-                return redirect(f"/{system_name}/")
+                return redirect(f"/{system_name}/dashboard/")
                 
             elif len(accessible_systems) == 1:
                 print(f"BRANCH 2: Single system")
@@ -142,33 +130,23 @@ def core_login(request, system_name=None):
                     user_agent=get_user_agent(request),
                     description=f"User logged in for {target_system}"
                 )
-                print(f"Redirecting to: /{target_system}/")
-                return redirect(f"/{target_system}/")
+                return redirect(f"/{target_system}/dashboard/")
                 
             elif len(accessible_systems) > 1:
-                print(f"BRANCH 3: Multiple systems")
                 # User has multiple systems - let them choose
                 request.session["accessible_systems"] = accessible_systems
-                print(f"Session data set: {request.session['accessible_systems']}")
-                print(f"Redirecting to: core:system_selection")
                 return redirect("core:system_selection")
                 
             else:
-                print(f"BRANCH 4: No systems assigned")
                 messages.error(request, "You are not assigned to any system.")
                 return redirect('core:core_login')
         else:
-            print(f"Authentication failed")
             form.add_error(None, "Invalid username or password.")
-    else:
-        print(f"Form not valid or not POST")
-        if request.method == "POST":
-            print(f"Form errors: {form.errors}")
-    
-    print(f"=== Rendering login page ===")
+
     return render(request, "core/login.html", {"form": form, "system_name": system_name})
 
 
+@login_required
 def system_selection(request):
     systems = request.session.get('accessible_systems')
 
@@ -196,7 +174,11 @@ def system_selection(request):
             # Clear the session data
             del request.session['accessible_systems']
             
-            return redirect(f"/{selected_system}/")
+            # Store the selected system in session
+            request.session['current_system'] = selected_system
+
+            # Redirect to the dashboard
+            return redirect(f"/{selected_system}/dashboard/")
         else:
             messages.error(request, "Invalid system selection.")
             return redirect('core:core_login')
@@ -603,3 +585,6 @@ def change_password(request):
 
     # fallback for GET requests
     return redirect("projectmanagement:pm-settings")
+
+def dashboard(request):
+    return render(request, 'core/dashboard.html')

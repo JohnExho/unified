@@ -1,0 +1,20 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{% static 'core/styles.css' %}">
+</head>
+<body>  
+    <h1>Welcome to the Dashboard</h1>
+    <p>This is your main dashboard where you can navigate to different sections of the application.</p>
+    <nav>
+        <ul>
+            <li><a href="{% url 'core:user_list' %}">User Management</a></li>
+            <li><a href="{% url 'projectmanagement:pm-dashboard' %}">Project Management</a></li>
+            <li><a href="{% url 'librarymanagement:library-dashboard' %}">Library Management</a></li>
+        </ul>
+    </nav>
+</body>
+</html>

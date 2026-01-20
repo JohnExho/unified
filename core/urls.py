@@ -1,18 +1,24 @@
 from django.urls import path
+from django.shortcuts import redirect
 from .views import (
     core_login, core_logout, system_selection,
     core_register, manage_user_groups, user_list,
     deactivate_user, activate_user, save_addresses,
     delete_address, upload_avatar, remove_avatar,
-    profile_update, change_password
+    profile_update, change_password, dashboard,
 )
 
 app_name = "core"
 
+def core_root(request):
+    if request.user.is_authenticated:
+        return redirect('core:core_dashboard')
+    return redirect('core:core_login')
+
 urlpatterns = [
     # Auth - Generic login (no system specified)
     path('login/', core_login, name='core_login'),
-    path('', core_login, name='core_login_root'),  # Root redirect
+    path('', core_root, name='core_login_root'),  # Root redirect
     
     # Auth - System-specific
     path('<str:system_name>/login/', core_login, name='core_system_login'),
@@ -20,6 +26,7 @@ urlpatterns = [
     path('logout/', core_logout, name='core_logout'),
     
     # User flow
+    path('dashboard/', dashboard, name='core_dashboard'),
     path('select-system/', system_selection, name='system_selection'),
     path('save-addresses/', save_addresses, name='save_addresses'),
     path('address/delete/<uuid:address_id>/', delete_address, name='delete_address'),
