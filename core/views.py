@@ -12,6 +12,7 @@ from django.contrib import messages
 import random, uuid
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator
 
 
 User = get_user_model()
@@ -158,14 +159,21 @@ def system_selection(request):
     if not systems:
         messages.error(request, "No Access.")
         return redirect('core:core_login')
-    
-    # Handle system selection
+
+    # --- Ensure 'core' is always first ---
+    systems = sorted(
+        systems,
+        key=lambda s: 0 if s.get('url') == 'core' else 1
+    )
+
+    # Persist the ordered list (important for POST validation consistency)
+    request.session['accessible_systems'] = systems
+
     if request.method == 'POST':
         selected_system = request.POST.get('system')
-        
+
         # Verify the user has access to this system
         if any(s['url'] == selected_system for s in systems):
-            # Log the login for the selected system
             AdminLog.objects.create(
                 user=request.user,
                 target_model="User",
@@ -176,38 +184,33 @@ def system_selection(request):
                 user_agent=get_user_agent(request),
                 description=f"User logged in for {selected_system}"
             )
-            
-            # Clear the session data
+
+            # Clear selection list after use
             del request.session['accessible_systems']
-            
-            # Store the selected system in session
             request.session['current_system'] = selected_system
 
-            # Redirect to the dashboard
             if selected_system == 'core':
                 return redirect('core:core_dashboard')
-            else:
-                return redirect(f"/{selected_system}")
-        else:
-            messages.error(request, "Invalid system selection.")
-            return redirect('core:core_login')
+            return redirect(f"/{selected_system}")
 
-    return render(request, 'core/pages/system_selection.html', {'systems': systems})
+        messages.error(request, "Invalid system selection.")
+        return redirect('core:core_login')
+
+    return render(
+        request,
+        'core/pages/system_selection.html',
+        {'systems': systems}
+    )
+
 
 def core_logout(request, system_name=None):
-    """
-    Handle logout for both core and system-specific contexts.
-    
-    Args:
-        system_name: Optional system name from URL pattern
-    """
-    # Priority: URL parameter > session value > default to 'core'
-    if system_name:
-        current_system = system_name
-    else:
-        current_system = request.session.get('current_system', 'core')
+    # Resolve current system
+    current_system = system_name or request.session.get('current_system', 'core')
 
-    # Log the logout action BEFORE clearing session
+    # Capture user state BEFORE logout
+    is_admin = request.user.is_authenticated and request.user.is_superuser
+
+    # Log logout action
     if request.user.is_authenticated:
         AdminLog.objects.create(
             user=request.user,
@@ -220,17 +223,22 @@ def core_logout(request, system_name=None):
             description=f'User logged out from {current_system}'
         )
 
-    # Clear authentication and session
+    # Logout and clear session
     auth_logout(request)
     request.session.flush()
 
-    # Redirect to the system's login page
-    if current_system and current_system != 'core':
-        # return redirect(f'{current_system}:login')  # Use named URL
-        # OR if you prefer absolute path:
+    messages.info(request, "You have been logged out.")
+
+    # Admins ALWAYS go to core
+    if is_admin:
+        return redirect('core:core_login')
+
+    # Non-core systems redirect to their own login
+    if current_system != 'core':
         return redirect(f'/{current_system}/login/')
-    
+
     return redirect('core:core_login')
+
 
 def user_list(request):
     systems = request.session.get('accessible_systems', [])
@@ -624,6 +632,17 @@ def change_password(request):
     return redirect("projectmanagement:pm-settings")
 
 def dashboard(request):
-    user_list = User.objects.all()
+    users_qs = User.objects.order_by('-date_joined')
+    paginator = Paginator(users_qs, 10)
 
-    return render(request, 'core/pages/dashboard.html' , {'user_list': user_list})
+    page_number = request.GET.get('page')
+    users = paginator.get_page(page_number)
+
+    return render(
+        request,
+        'core/pages/dashboard.html',
+        {
+            'users': users,                 # iterable (Page object)
+            'total_users': paginator.count, # int
+        }
+    )

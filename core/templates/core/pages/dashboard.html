@@ -35,11 +35,39 @@
                         <p>Handle books and resources</p>
                     </a>
                 </li>
+
+                <li>
+                    <a href="{% url 'inventorymanagement:inventory-dashboard' %}" class="card">
+                        <h3>Inventory Management</h3>
+                        <p>Monitor stock and supplies</p>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#" class="card disabled">
+                        <h3>Coming Soon</h3>
+                        <p>New modules will be added here</p>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#" class="card disabled">
+                        <h3>Coming Soon</h3>
+                        <p>New modules will be added here</p>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#" class="card disabled">
+                        <h3>Coming Soon</h3>
+                        <p>New modules will be added here</p>
+                    </a>
+                </li>
             </ul>
         </nav>
 
         {% comment %} user_list here {% endcomment %}
-        {% if user_list %}
+        {% if user in users %}
         <section class="user-list-section">
             <h2>Recent Users</h2>
             <table class="user-list-table">
@@ -51,7 +79,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for user in user_list %}
+                    {% for user in users %}
                     <tr>
                         <td>{{ user.username }}</td>
                         <td>{{ user.first_name }} {{ user.last_name }}</td>
