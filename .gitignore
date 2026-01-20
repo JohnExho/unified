@@ -1,2 +1,4 @@
 media/avatar/*
 !media/avatar/.gitkeep
+.venv
+**/pr/
