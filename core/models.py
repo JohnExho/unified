@@ -40,6 +40,7 @@ class CustomUser(AbstractUser):
 class SystemMembership(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     system_name = models.CharField(max_length=50)  # e.g., 'core', 'projectmanagement'
+    system_role = models.CharField(max_length=50, blank=True, null=True)  # e.g., 'admin', 'member' 
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -48,7 +49,7 @@ class SystemMembership(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.system_name}"   
 
-class AdminLog(models.Model):
+class Logs(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     action = models.CharField(max_length=20, blank=False)  # e.g., 'CREATE', 'UPDATE', 'DELETE'

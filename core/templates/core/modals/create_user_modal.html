@@ -1,0 +1,353 @@
+<!-- Add this to your create_user_modal.html file -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <button id="closeModal" class="close-btn">&times;</button>
+        <h2>Create New Admin</h2>
+        <form method="POST" action="{% url 'core:create_system_admin' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label>System Access</label>
+                <div class="checkbox-group">
+                    {% for system in systems %}
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="system_access" value="{{ system.name }}" class="checkbox-input">
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-text">{{ system.name }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password1" required>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" name="password2" required>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" id="cancelModal" class="btn-cancel">Cancel</button>
+                <button type="submit" class="btn-submit">Create Admin</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Modal Overlay */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+/* Modal Content Box */
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 32px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    position: relative;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: scale(1);
+}
+
+/* Close Button */
+.close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #6b7280;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+/* Modal Title */
+.modal-content h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 24px 0;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="email"]:focus,
+.form-group input[type="password"]:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Custom Checkbox Styles */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.checkbox-label:hover {
+    background: #ffffff;
+}
+
+/* Hide default checkbox */
+.checkbox-input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Custom checkbox */
+.checkbox-custom {
+    position: relative;
+    height: 20px;
+    width: 20px;
+    background-color: #ffffff;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.checkbox-label:hover .checkbox-custom {
+    border-color: #3b82f6;
+}
+
+/* Checkmark */
+.checkbox-custom::after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Show checkmark when checked */
+.checkbox-input:checked ~ .checkbox-custom {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.checkbox-input:checked ~ .checkbox-custom::after {
+    display: block;
+}
+
+.checkbox-text {
+    margin-left: 12px;
+    font-size: 0.9rem;
+    color: #374151;
+    font-weight: 500;
+}
+
+.checkbox-input:checked ~ .checkbox-text {
+    color: #111827;
+}
+
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+/* Buttons */
+.btn-cancel {
+    padding: 10px 20px;
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+}
+
+.btn-submit {
+    padding: 10px 20px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-submit:hover {
+    background: #2563eb;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .modal-content {
+        padding: 24px;
+        width: 95%;
+    }
+
+    .modal-content h2 {
+        font-size: 1.25rem;
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .btn-cancel,
+    .btn-submit {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modal');
+    const openModalBtn = document.getElementById('openModal');
+    const closeModalBtn = document.getElementById('closeModal');
+    const cancelModalBtn = document.getElementById('cancelModal');
+
+    // Function to open modal
+    function openModal() {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    // Function to close modal
+    function closeModal() {
+        modal.classList.remove('show');
+        document.body.style.overflow = ''; // Restore scrolling
+    }
+
+    // Event listeners
+    if (openModalBtn) {
+        openModalBtn.addEventListener('click', openModal);
+    }
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', closeModal);
+    }
+
+    if (cancelModalBtn) {
+        cancelModalBtn.addEventListener('click', closeModal);
+    }
+
+    // Close modal when clicking outside the modal content
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('show')) {
+            closeModal();
+        }
+    });
+});
+</script>
