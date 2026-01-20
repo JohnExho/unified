@@ -17,7 +17,11 @@ if multiple systems are accessible, provide a link to system selection
     <select id="system-select" onchange="if (this.value) window.location.href=this.value;">
         <option value="">-- Select a system --</option>
         {% for sys in systems %}
+        {% if sys.url == 'core' %}
+            <option value="/dashboard/">{{ sys.name }}</option>
+        {% else %}
             <option value="/{{ sys.url }}/">{{ sys.name }}</option>
+        {% endif %}
         {% endfor %}
     </select>
 {% endif %}

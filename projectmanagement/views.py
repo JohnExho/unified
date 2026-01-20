@@ -56,3 +56,14 @@ def settings(request):
             'system_name': system_name,
         }
     )
+
+
+def admin_dashboard(request):
+    system_name = 'projectmanagement'  # current system
+    # Superuser bypass
+    if not request.user.is_superuser and not SystemMembership.objects.filter(user=request.user, system_name=system_name, system_role='admin').exists():
+        return render(request, '404.html', status=404)
+    
+    systems = request.session.get('accessible_systems', [])
+    projects = Project.objects.all()
+    return render(request, 'projectmanagement/pages/admin/dashboard.html', {'projects': projects, 'systems': systems})

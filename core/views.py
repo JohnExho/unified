@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect,  get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth import get_user_model, update_session_auth_hash
-from .models import AdminLog, Address, SystemMembership
+from .models import CustomUser, Logs, Address, SystemMembership
 from .utils import get_client_ip, get_user_agent, encrypt, decrypt
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.models import Group
@@ -11,11 +11,12 @@ from .forms import LoginForm
 from django.contrib import messages
 import random, uuid
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from django.core.paginator import Paginator
 
 
 User = get_user_model()
+
 def core_register(request, system_name):
     User = get_user_model()
 
@@ -59,7 +60,7 @@ def core_register(request, system_name):
             user.save()
 
         # Log registration
-        AdminLog.objects.create(
+        Logs.objects.create(
             user=user,
             system_name=system_name,
             action='REGISTER',
@@ -71,7 +72,7 @@ def core_register(request, system_name):
         )
 
         # Assign system membership
-        SystemMembership.objects.create(user=user, system_name=system_name)
+        SystemMembership.objects.create(user=user, system_name=system_name, system_role='member')
 
         messages.success(request, "Registration successful. Please log in.")
 
@@ -84,8 +85,6 @@ def core_register(request, system_name):
     # GET request: just render form
     return render(request, 'core/pages/register.html', {'system_name': system_name})
 
-
-
 def core_login(request, system_name=None):
     User = get_user_model()
     form = LoginForm(request.POST or None)
@@ -93,7 +92,6 @@ def core_login(request, system_name=None):
     if request.method == "POST" and form.is_valid():
         username = form.cleaned_data["username"]
         password = form.cleaned_data["password"]
-        
         
         user = authenticate(request, username=username, password=password)
         
@@ -104,13 +102,25 @@ def core_login(request, system_name=None):
             memberships = SystemMembership.objects.filter(user=user)
             
             accessible_systems = [
-                {"url": m.system_name, "name": m.system_name.title()} for m in memberships
+                {"url": m.system_name, "name": m.system_name.title(), "role": m.system_role} 
+                for m in memberships
             ]
             
-            # Determine the system the user should access
+            # Helper: determine redirect URL based on role
+            def get_dashboard_url(system):
+                """
+                Returns absolute dashboard URL based on system role.
+                """
+                if system.get("role") == "admin":
+                    return f"/{system['url']}/admin/dashboard/"  # note leading slash
+                if system["url"] == "core":
+                    return "/dashboard/"
+                return f"/{system['url']}/dashboard/"
+            
+            # 1 User logged in via a specific system URL
             if system_name and any(s['url'] == system_name for s in accessible_systems):
-                # User logged in via a specific system URL
-                AdminLog.objects.create(
+                target_system = next(s for s in accessible_systems if s['url'] == system_name)
+                Logs.objects.create(
                     user=user,
                     target_model="User",
                     system_name=system_name,
@@ -121,25 +131,25 @@ def core_login(request, system_name=None):
                     description=f"User logged in for {system_name}"
                 )
                 messages.success(request, f"Welcome {user.username}!")
-                return redirect(f"/{system_name}/dashboard/")
+                return redirect(get_dashboard_url(target_system))
                 
+            # 2 User has only one system
             elif len(accessible_systems) == 1:
-                # User has only one system
-                target_system = accessible_systems[0]['url']
-                AdminLog.objects.create(
+                target_system = accessible_systems[0]
+                Logs.objects.create(
                     user=user,
                     target_model="User",
-                    system_name=target_system,
+                    system_name=target_system['url'],
                     target_id=user.id,
                     action="LOGIN",
                     ip_address=get_client_ip(request),
                     user_agent=get_user_agent(request),
-                    description=f"User logged in for {target_system}"
+                    description=f"User logged in for {target_system['url']}"
                 )
-                return redirect(f"/{target_system}/dashboard/")
+                return redirect(get_dashboard_url(target_system))
                 
+            # 3 Multiple systems, let them choose
             elif len(accessible_systems) > 1:
-                # User has multiple systems - let them choose
                 request.session["accessible_systems"] = accessible_systems
                 messages.info(request, "Please select a system to continue.")
                 return redirect("core:system_selection")
@@ -174,7 +184,7 @@ def system_selection(request):
 
         # Verify the user has access to this system
         if any(s['url'] == selected_system for s in systems):
-            AdminLog.objects.create(
+            Logs.objects.create(
                 user=request.user,
                 target_model="User",
                 system_name=selected_system,
@@ -202,7 +212,6 @@ def system_selection(request):
         {'systems': systems}
     )
 
-
 def core_logout(request, system_name=None):
     # Resolve current system
     current_system = system_name or request.session.get('current_system', 'core')
@@ -212,7 +221,7 @@ def core_logout(request, system_name=None):
 
     # Log logout action
     if request.user.is_authenticated:
-        AdminLog.objects.create(
+        Logs.objects.create(
             user=request.user,
             target_model="User",
             system_name=current_system,
@@ -239,15 +248,31 @@ def core_logout(request, system_name=None):
 
     return redirect('core:core_login')
 
-
-def user_list(request):
+def dashboard(request):
+    # Get accessible systems from session
     systems = request.session.get('accessible_systems', [])
+    
+    # Get all users except the current user
+    users_qs = User.objects.exclude(id=request.user.id).order_by('-date_joined')
+    
+    # DEBUG: Print to console
+    print(f"Current user ID: {request.user.id}")
+    print(f"Current username: {request.user.username}")
+    print(f"Total users (excluding self): {users_qs.count()}")
+    
+    paginator = Paginator(users_qs, 10)
+    page_number = request.GET.get('page')
+    users = paginator.get_page(page_number)
 
-    if systems != 'core' and not request.user.is_superuser:
-        return render(request, '404.html', status=404)
-
-    users = User.objects.exclude(id=request.user.id).order_by('username')
-    return render(request, 'core/pages/user_list.html', {'users': users, 'systems': systems})
+    return render(
+        request,
+        'core/pages/dashboard.html',
+        {
+            'users': users,
+            'total_users': users_qs.count(),
+            'systems': systems,
+        }
+    )
 
 
 @user_passes_test(lambda u: u.is_superuser)
@@ -257,7 +282,6 @@ def manage_user_systems(request, user_id):
     if request.user == target_user:
         return render(request, '404.html', status=404)
 
-    # Fetch all distinct system names used in the app
     all_systems = SystemMembership.objects.values_list('system_name', flat=True).distinct()
 
     if request.method == 'POST':
@@ -269,13 +293,13 @@ def manage_user_systems(request, user_id):
             target_user.systemmembership_set.all().delete()
 
             for s in old_systems:
-                AdminLog.objects.create(
+                Logs.objects.create(
                     user=request.user,
                     system_name='core',
                     action='UPDATE',
                     target_model='User',
                     target_id=target_user.id,
-                    description=f"Cleared user from system '{s}'"
+                    description=f"Cleared user '{target_user.username}' from system '{s}'"
                 )
 
             return redirect('core:manage_user_systems', user_id=user_id)
@@ -284,35 +308,31 @@ def manage_user_systems(request, user_id):
         selected_systems = request.POST.getlist('systems')
         new_systems = set(selected_systems)
 
-        # Remove memberships not in the new selection
         target_user.systemmembership_set.exclude(system_name__in=new_systems).delete()
 
-        # Add new memberships
         for system_name in new_systems - old_systems:
             SystemMembership.objects.create(user=target_user, system_name=system_name)
-            AdminLog.objects.create(
+            Logs.objects.create(
                 user=request.user,
                 system_name='core',
                 action='UPDATE',
                 target_model='User',
                 target_id=target_user.id,
-                description=f"Added user to system '{system_name}'"
+                description=f"Added user '{target_user.username}' to system '{system_name}'"
             )
 
-        # Log removed systems
         for system_name in old_systems - new_systems:
-            AdminLog.objects.create(
+            Logs.objects.create(
                 user=request.user,
                 system_name='core',
                 action='UPDATE',
                 target_model='User',
                 target_id=target_user.id,
-                description=f"Removed user from system '{system_name}'"
+                description=f"Removed user '{target_user.username}' from system '{system_name}'"
             )
 
-        return redirect('core:user_list')
+        return redirect('core:core_dashboard')  # Changed to redirect to dashboard
 
-    # GET request: render current memberships
     user_systems = target_user.systemmembership_set.values_list('system_name', flat=True)
 
     return render(
@@ -325,38 +345,41 @@ def manage_user_systems(request, user_id):
         }
     )
 
+
+@require_http_methods(["POST"])
 def deactivate_user(request, user_id):
-    if request.method == "POST":
-        user = User.objects.get(id=user_id)
-        user.is_active = False
-        # user.groups.clear()  # Optionally clear groups on deactivation
-        AdminLog.objects.create(
-            user=request.user,
-            system_name='core',
-            action='UPDATE',
-            target_model='User',
-            target_id=user.id,
-            description=f"Deactivated user '{user.username}'"
-        )
-        user.save()
-    return redirect("core:user_list")
+    user = get_object_or_404(User, id=user_id)
+    user.is_active = False
+    user.save()
+    
+    Logs.objects.create(
+        user=request.user,
+        system_name='core',
+        action='UPDATE',
+        target_model='User',
+        target_id=user.id,  # Fixed: was target_user.id
+        description=f"Deactivated user '{user.username}'"
+    )
+    
+    return redirect("core:core_dashboard")  # Changed to redirect to dashboard
 
 
+@require_http_methods(["POST"])
 def activate_user(request, user_id):
-    if request.method == "POST":
-        user = User.objects.get(id=user_id)
-        user.is_active = True
-        AdminLog.objects.create(
-            user=request.user,
-            system_name='core',
-            action='UPDATE',
-            target_model='User',
-            target_id=target_user.id,
-            description=f"Activated user '{user.username}'"
-        )
-        user.save()
-    return redirect("core:user_list")
-
+    user = get_object_or_404(User, id=user_id)
+    user.is_active = True
+    user.save()
+    
+    Logs.objects.create(
+        user=request.user,
+        system_name='core',
+        action='UPDATE',
+        target_model='User',
+        target_id=user.id,  # Fixed: was target_user.id
+        description=f"Activated user '{user.username}'"
+    )
+    
+    return redirect("core:core_dashboard")  # Changed to redirect to dashboard
 
 @login_required
 def save_addresses(request):
@@ -385,7 +408,7 @@ def save_addresses(request):
     )
 
     if created:
-        AdminLog.objects.create(
+        Logs.objects.create(
             user=user,
             system_name='core',
             action='CREATE',
@@ -406,7 +429,7 @@ def save_addresses(request):
         home_address.updated_at = timezone.now()
         home_address.save()
 
-        AdminLog.objects.create(
+        Logs.objects.create(
             user=user,
             system_name='core',
             action='UPDATE',
@@ -439,7 +462,7 @@ def save_addresses(request):
         )
 
         if created:
-            AdminLog.objects.create(
+            Logs.objects.create(
                 user=user,
                 system_name='core',
                 action='CREATE',
@@ -459,7 +482,7 @@ def save_addresses(request):
             billing_address.updated_at = timezone.now()
             billing_address.save()
 
-            AdminLog.objects.create(
+            Logs.objects.create(
                 user=user,
                 system_name='core',
                 action='UPDATE',
@@ -487,7 +510,7 @@ def delete_address(request, address_id):
     if request.method == "POST":
         address.delete()
 
-        AdminLog.objects.create(
+        Logs.objects.create(
             user=request.user,
             system_name='core',
             action='DELETE',
@@ -514,7 +537,7 @@ def upload_avatar(request):
         request.user.avatar = avatar
         request.user.save()
 
-        AdminLog.objects.create(
+        Logs.objects.create(
             user=request.user,
             system_name='core',
             action='UPDATE',
@@ -539,7 +562,7 @@ def remove_avatar(request):
         request.user.avatar = None
         request.user.save()
     
-        AdminLog.objects.create(
+        Logs.objects.create(
             user=request.user,
             system_name='core',
             action='UPDATE',
@@ -581,7 +604,7 @@ def profile_update(request):
 
     user.save()
 
-    AdminLog.objects.create(
+    Logs.objects.create(
         user=user,
         system_name='core',
         action='UPDATE',
@@ -630,19 +653,101 @@ def change_password(request):
 
     # fallback for GET requests
     return redirect("projectmanagement:pm-settings")
+# ===========
+# # ADMIN CREATION VIEW
+# ===========
 
-def dashboard(request):
-    users_qs = User.objects.order_by('-date_joined')
-    paginator = Paginator(users_qs, 10)
+@user_passes_test(lambda u: u.is_superuser)
+def create_system_admin(request):
+    """
+    Create a new system admin user with access to selected systems.
+    Only accessible by superusers.
+    """
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password1 = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
+        system_access = request.POST.getlist('system_access')
 
-    page_number = request.GET.get('page')
-    users = paginator.get_page(page_number)
+        # Validation
+        if not username or not email or not password1:
+            messages.error(request, "Please fill in all required fields.")
+            return redirect('core:core_dashboard')
 
-    return render(
-        request,
-        'core/pages/dashboard.html',
-        {
-            'users': users,                 # iterable (Page object)
-            'total_users': paginator.count, # int
-        }
-    )
+        # Check if username already exists
+        if User.objects.filter(username=username).exists():
+            messages.error(request, f"Username '{username}' already exists.")
+            return redirect('core:core_dashboard')
+
+        # Check if email already exists
+        if User.objects.filter(email=email).exists():
+            messages.error(request, f"Email '{email}' is already registered.")
+            return redirect('core:core_dashboard')
+
+        # Validate passwords match
+        if password1 != password2:
+            messages.error(request, "Passwords do not match.")
+            return redirect('core:core_dashboard')
+
+        # Validate password length
+        if len(password1) < 8:
+            messages.error(request, "Password must be at least 8 characters long.")
+            return redirect('core:core_dashboard')
+
+        # Validate at least one system is selected
+        if not system_access:
+            messages.error(request, "Please select at least one system for the admin.")
+            return redirect('core:core_dashboard')
+
+        try:
+            # Create the admin user
+            admin_user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password1,
+                is_staff=True,  # Make them staff
+                is_active=True
+            )
+
+            # Log the admin creation
+            Logs.objects.create(
+                user=request.user,
+                system_name='core',
+                action='CREATE',
+                target_model='User',
+                target_id=admin_user.id,
+                ip_address=get_client_ip(request),
+                user_agent=get_user_agent(request),
+                description=f"Created admin user '{username}'"
+            )
+
+            # Assign system memberships with admin role
+            for system_name in system_access:
+                membership = SystemMembership.objects.create(
+                    user=admin_user,
+                    system_name=system_name.lower(),
+                    system_role='admin'
+                )
+
+                # Log system assignment
+                Logs.objects.create(
+                    user=request.user,
+                    system_name='core',
+                    action='CREATE',
+                    target_model='SystemMembership',
+                    target_id=membership.id,
+                    ip_address=get_client_ip(request),
+                    user_agent=get_user_agent(request),
+                    description=f"Assigned admin '{username}' to system '{system_name}' with admin role"
+                )
+
+            messages.success(request, f"Admin user '{username}' created successfully with access to {len(system_access)} system(s).")
+            return redirect('core:core_dashboard')
+
+        except Exception as e:
+            messages.error(request, f"Error creating admin user: {str(e)}")
+            return redirect('core:core_dashboard')
+
+    # GET request - shouldn't normally happen, redirect to dashboard
+    return redirect('core:core_dashboard')
