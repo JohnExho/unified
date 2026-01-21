@@ -1,4 +1,5 @@
 {% load static %}
+{% load user_role %}
 <!-- Sidebar Navigation -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
@@ -28,10 +29,8 @@
             </div>
           </a>
         </li>
-      </ul>
-      <ul>
         <li>
-          <a href="{% comment %} url 'projectmanagement:pm_user_dashboard' {% endcomment %}">
+          <a href="/404">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -48,10 +47,8 @@
             </div>
           </a>
         </li>
-       </ul>
-       <ul>
         <li>
-          <a href="{% comment %} url 'projectmanagement:pm_team_dashboard' {% endcomment %}">
+          <a href="/404">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -70,10 +67,8 @@
             </div>
           </a>
         </li>
-      </ul>
-      <ul>
         <li>
-            <a href="{% comment %} url 'projectmanagement:pm_calendar_dashboard' {% endcomment %}">
+            <a href="/404">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -92,11 +87,8 @@
             </div>
             </a>
         </li>
-        </ul>
-      <ul>
         <li>
-            {% comment %} notify {% endcomment %}
-            <a href="{% comment %} url 'projectmanagement:pm_notifications_dashboard' {% endcomment %}">
+            <a href="/404">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -113,10 +105,8 @@
             </div>
             </a>
         </li>
-        </ul>            
-    <ul>
         <li>
-          <a href="{% comment %} url 'projectmanagement:pm_reports_dashboard' {% endcomment %}">
+          <a href="/404">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -137,8 +127,6 @@
             </div>
           </a>
         </li>
-        </ul>
-        <ul>
         <li>
           <a href="{% url 'projectmanagement:pm_settings' %}">
             <svg    
@@ -162,7 +150,8 @@
       </ul>
     </div>
 
-  {% if current_user_role == 'admin' %}
+  {% get_user_role user current_system as user_role %}
+  {% if user_role == 'admin' or user_role == 'superadmin' %}
     <div class="nav-section">
       <div class="nav-section-title">Admin Modules</div>
       <ul>
@@ -186,29 +175,26 @@
             </div>
           </a>
         </li>
-
         <li>
-          <a href="{% comment %} url 'projectmanagement:pm_admin_dashboard' {% endcomment %}">
+          <a href="/404">
             <svg
-            class="nav-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
             >
-            <line x1="4" y1="20" x2="20" y2="20"></line>
-            <rect x="6" y="10" width="3" height="10"></rect>
-            <rect x="11" y="6" width="3" height="14"></rect>
-            <rect x="16" y="13" width="3" height="7"></rect>
+              <path d="M3 3h18v18H3z"></path>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="9" y1="21" x2="9" y2="9"></line>
             </svg>
             <div class="nav-text">
-              <h3>Reports</h3>
-              <p>Generate Reports</p>
+              <h3>System Logs</h3>
+              <p>View activity logs</p>
             </div>
           </a>
         </li>
+      </ul>
     </div>
     {% endif %}
 
@@ -257,7 +243,7 @@
         </li>
 
         <li>
-          <a href="{% comment %} url 'librarymanagement:library-dashboard'  {% endcomment %}">
+          <a href="/404">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -278,7 +264,7 @@
         </li>
 
         <li>
-          <a href="{% comment %} url 'inventorymanagement:inventory-dashboard' {% endcomment %}">
+          <a href="/404">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -300,7 +286,7 @@
       <ul>
         <li>
           <a
-            href="{% comment %} url 'informationmanagement:ims-dashboard' {% endcomment %}"
+            href="/404"
           >
             <svg
               class="nav-icon"
@@ -323,7 +309,7 @@
       <ul>
         <li>
           <a
-            href="{% comment %}  url 'communityextension:ces-dashboard' {% endcomment %}"
+            href="/404"
           >
             <svg
               class="nav-icon"
@@ -337,7 +323,7 @@
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
             <div class="nav-text">
-              <h3>CES System</h3>
+              <h3>Community Extension Services</h3>
               <p>Community services</p>
             </div>
           </a>
@@ -346,7 +332,7 @@
       <ul>
         <li>
           <a
-            href="{% comment %} url 'performanceevaluation:pes-dashboard' {% endcomment %}"
+            href="/404"
           >
             <svg
               class="nav-icon"
@@ -360,7 +346,7 @@
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
             <div class="nav-text">
-              <h3>PES System</h3>
+              <h3>Performance Evaluation System</h3>
               <p>Performance evaluation</p>
             </div>
           </a>

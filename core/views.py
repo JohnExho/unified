@@ -15,7 +15,6 @@ from django.views.decorators.http import require_POST, require_http_methods
 from django.core.paginator import Paginator
 from django.db import IntegrityError
 
-
 User = get_user_model()
 
 def core_register(request, system_name):
@@ -89,85 +88,106 @@ def core_register(request, system_name):
 def core_login(request, system_name=None):
     User = get_user_model()
     form = LoginForm(request.POST or None)
-    
+
     if request.method == "POST" and form.is_valid():
         username = form.cleaned_data["username"]
         password = form.cleaned_data["password"]
-        
+
         user = authenticate(request, username=username, password=password)
-        
-        if user:
-            login(request, user)
-            
-            # Fetch systems the user belongs to
-            memberships = SystemMembership.objects.filter(user=user)
-            
-            accessible_systems = [
-                {"url": m.system_name, "name": m.system_name.title(), "role": m.system_role} 
-                for m in memberships
-            ]
-            
-            # Helper: determine redirect URL based on role
-            def get_dashboard_url(system):
-                """
-                Returns absolute dashboard URL based on system role.
-                """
-                if system.get("role") == "admin":
-                    return f"/{system['url']}/admin/dashboard/"  # note leading slash
-                if system["url"] == "core":
-                    return "/dashboard/"
-                return f"/{system['url']}/dashboard/"
-            
-            # 1 User logged in via a specific system URL
-            if system_name and any(s['url'] == system_name for s in accessible_systems):
-                target_system = next(s for s in accessible_systems if s['url'] == system_name)
-                Logs.objects.create(
-                    user=user,
-                    target_model="User",
-                    system_name=system_name,
-                    target_id=user.id,
-                    action="LOGIN",
-                    ip_address=get_client_ip(request),
-                    user_agent=get_user_agent(request),
-                    description=f"User logged in for {system_name}"
-                )
-                messages.success(request, f"Welcome {user.username}!")
-                return redirect(get_dashboard_url(target_system))
-                
-            # 2 User has only one system
-            elif len(accessible_systems) == 1:
-                target_system = accessible_systems[0]
-                Logs.objects.create(
-                    user=user,
-                    target_model="User",
-                    system_name=target_system['url'],
-                    target_id=user.id,
-                    action="LOGIN",
-                    ip_address=get_client_ip(request),
-                    user_agent=get_user_agent(request),
-                    description=f"User logged in for {target_system['url']}"
-                )
-                return redirect(get_dashboard_url(target_system))
-                
-            # 3 Multiple systems, let them choose
-            elif len(accessible_systems) > 1:
-                request.session["accessible_systems"] = accessible_systems
-                messages.info(request, "Please select a system to continue.")
-                return redirect("core:system_selection")
-                
-            else:
-                messages.error(request, "You are not assigned to any system.")
-                return redirect('core:core_login')
-        else:
+
+        if not user:
             form.add_error(None, "Invalid username or password.")
+            return render(request, "core/pages/login.html", {"form": form, "system_name": system_name})
+
+        # Superuser-only check for /login
+        if not system_name and not user.is_superuser:
+            messages.error(request, "Oopps! You do not have access to the core system.")
+            return redirect('core:core_login')
+
+        login(request, user)
+
+        # Fetch systems the user belongs to
+        memberships = SystemMembership.objects.filter(user=user)
+        accessible_systems = [
+            {"url": m.system_name, "name": m.system_name.title(), "role": m.system_role} 
+            for m in memberships
+        ]
+
+        # Helper: determine dashboard URL
+        def get_dashboard_url(system):
+            if system.get("role") == "admin":
+                return f"/{system['url']}/admin/dashboard/"
+            if system["url"] == "core":
+                return "/dashboard/"
+            return f"/{system['url']}/dashboard/"
+
+        # 1. Login via specific system URL
+        if system_name and any(s['url'] == system_name for s in accessible_systems):
+            target_system = next(s for s in accessible_systems if s['url'] == system_name)
+            Logs.objects.create(
+                user=user,
+                target_model="User",
+                system_name=system_name,
+                target_id=user.id,
+                action="LOGIN",
+                ip_address=get_client_ip(request),
+                user_agent=get_user_agent(request),
+                description=f"User logged in for {system_name}"
+            )
+            messages.success(request, f"Welcome {user.username}!")
+            return redirect(get_dashboard_url(target_system))
+
+        # 2. User has only one system
+        elif len(accessible_systems) == 1:
+            target_system = accessible_systems[0]
+            Logs.objects.create(
+                user=user,
+                target_model="User",
+                system_name=target_system['url'],
+                target_id=user.id,
+                action="LOGIN",
+                ip_address=get_client_ip(request),
+                user_agent=get_user_agent(request),
+                description=f"User logged in for {target_system['url']}"
+            )
+            return redirect(get_dashboard_url(target_system))
+
+        # 3. Multiple systems, let them choose
+        elif len(accessible_systems) > 1:
+            request.session["accessible_systems"] = accessible_systems
+            messages.info(request, "Please select a system to continue.")
+            return redirect("core:system_selection")
+
+        # 4. No systems (only possible for superusers)
+        elif user.is_superuser:
+            system_names = [
+                'core',
+                'projectmanagement',
+                'librarymanagement',
+                'informationmanagement',
+                'inventorymanagement',
+                'performanceevaluation',
+                'communityextensionservices',
+            ]
+            for sys_name in system_names:
+                SystemMembership.objects.get_or_create(
+                    user=user,
+                    system_name=sys_name,
+                    defaults={'system_role': 'superadmin'}
+                )
+            return redirect('core:system_selection')
+
+        else:
+            messages.error(request, "You are not assigned to any system.")
+            return redirect('core:core_login')
 
     return render(request, "core/pages/login.html", {"form": form, "system_name": system_name})
 
 
 def system_selection(request):
     systems = request.session.get('accessible_systems')
-
-    if not systems:
+    
+    if not systems and not request.user.is_superuser:
         messages.error(request, "No Access.")
         return redirect('core:core_login')
 
@@ -799,14 +819,14 @@ def create_system_admin(request):
                 target_id=admin_user.id,
                 ip_address=get_client_ip(request),
                 user_agent=get_user_agent(request),
-                description=f"Created admin user '{username}'"
+                description=f"Created superadmin user '{username}'"
             )
 
             for system_name in system_access:
                 membership = SystemMembership.objects.create(
                     user=admin_user,
                     system_name=system_name.lower(),
-                    system_role='admin'
+                    system_role='superadmin'
                 )
 
                 Logs.objects.create(
@@ -818,8 +838,8 @@ def create_system_admin(request):
                     ip_address=get_client_ip(request),
                     user_agent=get_user_agent(request),
                     description=(
-                        f"Assigned admin '{username}' "
-                        f"to system '{system_name}' with admin role"
+                        f"Assigned superadmin '{username}' "
+                        f"to system '{system_name}' with superadmin role"
                     )
                 )
 

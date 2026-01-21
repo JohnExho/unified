@@ -40,14 +40,16 @@ def dashboard(request):
     )
 
 
+
 def admin_dashboard(request):
     current_system = request.current_system  # set by middleware
 
     users_qs = (
         User.objects
         .filter(systemmembership__system_name=current_system)
+        .exclude(is_superuser=True)
         .exclude(id=request.user.id)
-        .exclude(systemmembership__system_role='admin') 
+        .exclude(systemmembership__system_role='superadmin') 
         .distinct()
         .order_by('-date_joined')
     )

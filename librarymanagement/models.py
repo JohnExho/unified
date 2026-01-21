@@ -4,7 +4,11 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 import uuid
+from django.utils import timezone
+import datetime
 
+def manila_now():
+    return timezone.now().astimezone(timezone.get_fixed_timezone(8*60))
 # Create your models here.
 
 class Library(models.Model):
