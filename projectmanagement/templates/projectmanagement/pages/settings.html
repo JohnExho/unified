@@ -1,77 +1,17 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Profile Settings</title>
-    <style>
-      * { margin:0; padding:0; box-sizing:border-box; }
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
-        background: #f5f7fa;
-        display:flex;
-        height:100vh;
-        overflow:hidden;
-      }
-      .main-content { flex:1; overflow-y:auto; padding:2rem; }
-      .profile-container { max-width:800px; margin:0 auto; }
-      .profile-header, .profile-card { background:white; border-radius:12px; padding:2rem; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom:2rem; }
-      .profile-header h1 { font-size:1.75rem; color:#1a202c; margin-bottom:0.5rem; }
-      .profile-header p { color:#718096; font-size:0.95rem; }
-      .card-title { font-size:1.25rem; color:#1a202c; margin-bottom:1.5rem; font-weight:600; }
-      .profile-avatar { display:flex; align-items:center; gap:2rem; margin-bottom:2rem; }
-      .avatar-circle { width: 100px; height: 100px;  border-radius: 50%;  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  display: flex; align-items: center;
-       justify-content: center;  color: white; font-size: 2.5rem; font-weight: 600;  background-repeat: no-repeat;  background-position: center;
-       background-size: cover; /* ensures image covers the circle without stretching */}
-      .avatar-actions { display:flex; gap:1rem; }
-      .btn {text-decoration:none; padding:0.625rem 1.25rem; border-radius:8px; border:none; font-size:0.875rem; font-weight:500; cursor:pointer; transition:all 0.2s; }
-      .btn-primary { background:#667eea; color:white; }
-      .btn-primary:hover { background:#5568d3; }
-      .btn-secondary { background:#e2e8f0; color:#4a5568; }
-      .btn-secondary:hover { background:#cbd5e0; }
-      .btn-danger { background:#f56565; color:white; }
-      .btn-danger:hover { background:#e53e3e; }
-      .form-group { margin-bottom:1.5rem; }
-      .form-group label { display:block; margin-bottom:0.5rem; color:#4a5568; font-size:0.875rem; font-weight:500; }
-      .form-group input, .form-group textarea, .form-group select { width:100%; padding:0.75rem; border:1px solid #e2e8f0; border-radius:8px; font-size:0.95rem; transition:border-color 0.2s; }
-      .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline:none; border-color:#667eea; }
-      .form-group textarea { resize:vertical; min-height:100px; }
-      .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
-      .logout-section { margin-right:auto; }
-      .form-actions { display:flex; justify-content:flex-end; gap:1rem; margin-top:2rem; padding-top:2rem; border-top:1px solid #e2e8f0; }
-      .change-password-form { display:flex; justify-content:space-between; gap:1rem; margin-top:2rem; padding-top:2rem; border-top:1px solid #e2e8f0; }
-      .success-message { background:#c6f6d5; border:1px solid #9ae6b4; color:#22543d; padding:1rem; border-radius:8px; margin-bottom:1.5rem; display:none; }
-      .address-block { margin-bottom: 1rem; }
-      .address-block input { margin-bottom: 0.4rem; }
-      .text-start { text-align: left; }
-      .mt-2 { margin-top: 0.5rem; }
+{% extends 'projectmanagement/base.html' %}
+{% load static %}
+{% block title %}Settings - Project Management{% endblock %}
 
-      @media (max-width:768px) {
-        .main-content { padding:1rem; }
-        .form-row { grid-template-columns:1fr; }
-        .profile-avatar { flex-direction:column; align-items:flex-start; }
-      }
-
-      /* Modal */
-      .modal.hidden { display:none; }
-      .modal { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:50; }
-      .modal-content { background:white; border-radius:12px; width:24rem; padding:1.5rem; }
-    </style>
-  </head>
-  <body>
-    {% include 'projectmanagement/components/sidebar.html' %}
-
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'projectmanagement/css/pages/settings.css' %}">
+{% endblock %}
+{% block content %}
     <div class="main-content">
       <div class="profile-container">
         <div class="profile-header">
           <h1>Profile Settings</h1>
           <p>Manage your account information and preferences</p>
         </div>
-
-        <div id="successMessage" class="success-message">
-          Profile updated successfully!
-        </div>
-
         <!-- Profile Picture Card -->
         <div class="profile-card">
         <h2 class="card-title">Profile Picture</h2>
@@ -240,115 +180,7 @@
     </div>
   </form>
 </div>
-
-
-    <!-- Scripts -->
-    <script>
-    (() => {
-      const profileForm = document.getElementById("profileForm");
-      const successMsg = document.getElementById("successMessage");
-      const firstNameInput = document.getElementById("firstName");
-      const lastNameInput = document.getElementById("lastName");
-      const avatarCircle = document.getElementById("avatarCircle");
-      const avatarInput = document.getElementById("avatarInput");
-      const modal = document.getElementById("addressModal");
-      const openBtn = document.getElementById("openAddressModal");
-      const closeBtn = document.getElementById("closeModal");
-      const country2Input = document.getElementById("country2");
-      const address2Fields = document.getElementById("address2Fields");
-
-      // Profile Form submit
-      /* profileForm?.addEventListener("submit", e => {
-        e.preventDefault();
-        successMsg.style.display = "block";
-        window.scrollTo({ top:0, behavior:"smooth" });
-        setTimeout(()=>successMsg.style.display="none",3000);
-      });
-        */
-      // Cancel
-      window.handleCancel = () => { if(confirm("Discard changes?")) location.reload(); }
-
-      // Avatar initials
-      const updateAvatar = () => {
-        const initials = (firstNameInput.value.charAt(0)+lastNameInput.value.charAt(0)).toUpperCase();
-        avatarCircle.textContent = initials || "JD";
-      };
-      firstNameInput?.addEventListener("input", updateAvatar);
-      lastNameInput?.addEventListener("input", updateAvatar);
-
-      // Avatar upload
-      window.handleUploadPhoto = () => avatarInput?.click();
-      avatarInput?.addEventListener("change", async () => {
-        const file = avatarInput.files[0];
-        if(!file) return;
-        const formData = new FormData();
-        formData.append("avatar", file);
-        const res = await fetch("{% url 'core:upload_avatar' %}", {
-          method:"POST",
-          headers:{"X-CSRFToken":"{{ csrf_token }}"},
-          body:formData
-        });
-        const data = await res.json();
-        if(data.success){
-          avatarCircle.style.backgroundImage = `url(${data.avatar_url})`;
-          avatarCircle.textContent = "";
-        }
-      });
-
-      // Avatar remove
-      window.handleRemovePhoto = () => {
-        if(!confirm("Remove profile photo?")) return;
-        fetch("{% url 'core:remove_avatar' %}", {method:"POST", headers:{"X-CSRFToken":"{{ csrf_token }}"}})
-          .then(()=>{ avatarCircle.style.backgroundImage=""; avatarCircle.textContent="JD"; });
-      };
-
-      // Address modal
-      openBtn?.addEventListener("click", ()=>modal.classList.remove("hidden"));
-      closeBtn?.addEventListener("click", ()=>modal.classList.add("hidden"));
-      modal?.addEventListener("click", e=>{if(e.target===modal) modal.classList.add("hidden")});
-
-      // Address 2 toggle
-      country2Input?.addEventListener("input", ()=>{
-        if(country2Input.value.trim()!=="") address2Fields.classList.remove("hidden");
-        else {
-          address2Fields.classList.add("hidden");
-          address2Fields.querySelectorAll("input").forEach(i=>i.value="");
-        }
-      });
-
-        const phoneInput = document.getElementById("phone");
-        phoneInput.addEventListener("input", () => {
-            phoneInput.value = phoneInput.value.replace(/\D/g, "");
-        if (phoneInput.value.length > 20) {
-            phoneInput.value = phoneInput.value.slice(0, 20);
-           }
-        });
-
-    })();
-    </script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    {% if messages %}
-      {% for message in messages %}
-        Swal.fire({
-          toast: true,
-          position: 'top-end',  // top-right corner
-          icon: "{% if message.tags == 'error' %}error{% else %}success{% endif %}",
-          title: "{{ message }}",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-          background: "#fff",
-          iconColor: "{% if message.tags == 'error' %}#f56565{% else %}#48bb78{% endif %}",
-          customClass: {
-            popup: "shadow-lg rounded-md p-3"
-          }
-        });
-      {% endfor %}
-    {% endif %}
-  });
-</script>
-
-  </body>
-</html>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{% static 'projectmanagement/js/pages/profile.js' %}"></script>
+{% endblock %}

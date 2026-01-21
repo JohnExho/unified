@@ -1,5 +1,4 @@
 media/avatar/*
-!media/avatar/.gitkeep
 .venv
 **/pr/
 *.sqlite3

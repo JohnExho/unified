@@ -13,6 +13,7 @@ import random, uuid
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_http_methods
 from django.core.paginator import Paginator
+from django.db import IntegrityError
 
 
 User = get_user_model()
@@ -255,11 +256,6 @@ def dashboard(request):
     # Get all users except the current user
     users_qs = User.objects.exclude(id=request.user.id).order_by('-date_joined')
     
-    # DEBUG: Print to console
-    print(f"Current user ID: {request.user.id}")
-    print(f"Current username: {request.user.username}")
-    print(f"Total users (excluding self): {users_qs.count()}")
-    
     paginator = Paginator(users_qs, 10)
     page_number = request.GET.get('page')
     users = paginator.get_page(page_number)
@@ -278,50 +274,47 @@ def dashboard(request):
 @user_passes_test(lambda u: u.is_superuser)
 def manage_user_systems(request, user_id):
     target_user = get_object_or_404(User, id=user_id)
-    
+
     if request.user == target_user:
         return render(request, '404.html', status=404)
 
-    all_systems = SystemMembership.objects.values_list('system_name', flat=True).distinct()
+    all_systems = (
+        SystemMembership.objects
+        .values_list('system_name', flat=True)
+        .distinct()
+    )
 
     if request.method == 'POST':
         action = request.POST.get('action')
-        old_systems = set(target_user.systemmembership_set.values_list('system_name', flat=True))
+
+        old_memberships = {
+            m.system_name: m
+            for m in target_user.systemmembership_set.all()
+        }
+        old_systems = set(old_memberships.keys())
 
         # CLEAR ALL FEATURE
         if action == 'clear':
             target_user.systemmembership_set.all().delete()
 
-            for s in old_systems:
+            for system_name in old_systems:
                 Logs.objects.create(
                     user=request.user,
                     system_name='core',
                     action='UPDATE',
                     target_model='User',
                     target_id=target_user.id,
-                    description=f"Cleared user '{target_user.username}' from system '{s}'"
+                    description=f"Cleared user '{target_user.username}' from system '{system_name}'"
                 )
 
             return redirect('core:manage_user_systems', user_id=user_id)
 
         # NORMAL SAVE FLOW
-        selected_systems = request.POST.getlist('systems')
-        new_systems = set(selected_systems)
+        selected_systems = set(request.POST.getlist('systems'))
 
-        target_user.systemmembership_set.exclude(system_name__in=new_systems).delete()
-
-        for system_name in new_systems - old_systems:
-            SystemMembership.objects.create(user=target_user, system_name=system_name)
-            Logs.objects.create(
-                user=request.user,
-                system_name='core',
-                action='UPDATE',
-                target_model='User',
-                target_id=target_user.id,
-                description=f"Added user '{target_user.username}' to system '{system_name}'"
-            )
-
-        for system_name in old_systems - new_systems:
+        # REMOVE systems
+        for system_name in old_systems - selected_systems:
+            old_memberships[system_name].delete()
             Logs.objects.create(
                 user=request.user,
                 system_name='core',
@@ -331,9 +324,58 @@ def manage_user_systems(request, user_id):
                 description=f"Removed user '{target_user.username}' from system '{system_name}'"
             )
 
-        return redirect('core:core_dashboard')  # Changed to redirect to dashboard
+        # ADD or UPDATE systems + roles
+        for system_name in selected_systems:
+            role = request.POST.get(f'role_{system_name}', 'admin')
 
-    user_systems = target_user.systemmembership_set.values_list('system_name', flat=True)
+            if system_name in old_memberships:
+                membership = old_memberships[system_name]
+
+                if membership.system_role != role:
+                    membership.system_role = role
+                    membership.save(update_fields=['system_role'])
+
+                    Logs.objects.create(
+                        user=request.user,
+                        system_name='core',
+                        action='UPDATE',
+                        target_model='User',
+                        target_id=target_user.id,
+                        description=(
+                            f"Updated role for user '{target_user.username}' "
+                            f"in system '{system_name}' to '{role}'"
+                        )
+                    )
+            else:
+                SystemMembership.objects.create(
+                    user=target_user,
+                    system_name=system_name,
+                    system_role='admin'
+                )
+
+                Logs.objects.create(
+                    user=request.user,
+                    system_name='core',
+                    action='UPDATE',
+                    target_model='User',
+                    target_id=target_user.id,
+                    description=(
+                        f"Added user '{target_user.username}' "
+                        f"to system '{system_name}' with role '{role}'"
+                    )
+                )
+
+        return redirect('core:core_dashboard')
+
+    # GET
+    user_systems = target_user.systemmembership_set.values_list(
+        'system_name', flat=True
+    )
+
+    system_roles = {
+        m.system_name: m.system_role
+        for m in target_user.systemmembership_set.all()
+    }
 
     return render(
         request,
@@ -341,7 +383,8 @@ def manage_user_systems(request, user_id):
         {
             'target_user': target_user,
             'all_systems': all_systems,
-            'user_systems': user_systems
+            'user_systems': user_systems,
+            'system_roles': system_roles,
         }
     )
 
@@ -381,10 +424,57 @@ def activate_user(request, user_id):
     
     return redirect("core:core_dashboard")  # Changed to redirect to dashboard
 
+def core_delete_user(request, user_id):
+    """
+    Delete a user by their ID.
+    Only accessible by superusers.
+    """
+    if not request.user.is_superuser:
+        messages.error(request, "You do not have permission to perform this action.")
+        return redirect('core:core_dashboard')
+
+    target_user = get_object_or_404(User, id=user_id)
+
+    if request.user == target_user:
+        messages.error(request, "You cannot delete your own account.")
+        return redirect('core:core_dashboard')
+
+    if request.method == 'POST':
+        username = target_user.username
+        target_user.delete()
+
+        Logs.objects.create(
+            user=request.user,
+            system_name='core',
+            action='DELETE',
+            target_model='User',
+            target_id=user_id,
+            description=f"Deleted user '{username}'",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+
+        Logs.objects.create(
+            user=request.user,
+            system_name='core',
+            action='DELETE',
+            target_model='SystemMembership',
+            target_id=None,
+            description=f"Deleted all system memberships for user '{username}'",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+
+        messages.success(request, f"User '{username}' has been deleted.")
+        return redirect('core:core_dashboard')
+
+    # If not POST, redirect to dashboard
+    return redirect('core:core_dashboard')
+
 @login_required
 def save_addresses(request):
     if request.method != "POST":
-        return redirect("projectmanagement:pm-settings")
+        return redirect("projectmanagement:pm_settings")
 
     user = request.user
 
@@ -493,7 +583,7 @@ def save_addresses(request):
                 user_agent=get_user_agent(request),
             )
 
-    return redirect("projectmanagement:pm-settings")
+    return redirect("projectmanagement:pm_settings")
 
 @login_required
 def delete_address(request, address_id):
@@ -505,7 +595,7 @@ def delete_address(request, address_id):
 
     # Never allow deleting home address
     if address.type == 'home':
-        return redirect('projectmanagement:pm-settings')
+        return redirect('projectmanagement:pm_settings')
 
     if request.method == "POST":
         address.delete()
@@ -521,7 +611,7 @@ def delete_address(request, address_id):
             user_agent=get_user_agent(request),
         )
 
-    return redirect('projectmanagement:pm-settings')
+    return redirect('projectmanagement:pm_settings')
 
 
 @login_required
@@ -551,7 +641,7 @@ def upload_avatar(request):
 
     # Redirect back to profile page to refresh
         messages.success(request, "Avatar uploaded successfully.")
-    return redirect('projectmanagement:pm-settings') 
+    return redirect('projectmanagement:pm_settings') 
 
 
 @login_required
@@ -574,7 +664,7 @@ def remove_avatar(request):
         )
 
     messages.success(request, "Avatar removed successfully.")
-    return redirect('projectmanagement:pm-settings') 
+    return redirect('projectmanagement:pm_settings') 
 
 @login_required
 @require_POST
@@ -616,7 +706,7 @@ def profile_update(request):
     )
 
     messages.success(request, "Profile updated successfully.")
-    return redirect("projectmanagement:pm-settings")
+    return redirect("projectmanagement:pm_settings")
 
 @login_required
 def change_password(request):
@@ -629,17 +719,17 @@ def change_password(request):
         # Check current password
         if not user.check_password(current_password):
             messages.error(request, "Current password is incorrect.")
-            return redirect("projectmanagement:pm-settings")  # redirect to your profile page
+            return redirect("projectmanagement:pm_settings")  # redirect to your profile page
 
         # Check new passwords match
         if new_password1 != new_password2:
             messages.error(request, "New passwords do not match.")
-            return redirect("projectmanagement:pm-settings")
+            return redirect("projectmanagement:pm_settings")
 
         # Optional: validate password strength
         if len(new_password1) < 8:
             messages.error(request, "New password must be at least 8 characters long.")
-            return redirect("projectmanagement:pm-settings")
+            return redirect("projectmanagement:pm_settings")
 
         # Set new password
         user.set_password(new_password1)
@@ -649,20 +739,16 @@ def change_password(request):
         update_session_auth_hash(request, user)
 
         messages.success(request, "Password changed successfully.")
-        return redirect("projectmanagement:pm-settings")
+        return redirect("projectmanagement:pm_settings")
 
     # fallback for GET requests
-    return redirect("projectmanagement:pm-settings")
+    return redirect("projectmanagement:pm_settings")
 # ===========
 # # ADMIN CREATION VIEW
 # ===========
 
 @user_passes_test(lambda u: u.is_superuser)
 def create_system_admin(request):
-    """
-    Create a new system admin user with access to selected systems.
-    Only accessible by superusers.
-    """
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         email = request.POST.get('email', '').strip()
@@ -675,42 +761,36 @@ def create_system_admin(request):
             messages.error(request, "Please fill in all required fields.")
             return redirect('core:core_dashboard')
 
-        # Check if username already exists
-        if User.objects.filter(username=username).exists():
-            messages.error(request, f"Username '{username}' already exists.")
-            return redirect('core:core_dashboard')
-
-        # Check if email already exists
-        if User.objects.filter(email=email).exists():
-            messages.error(request, f"Email '{email}' is already registered.")
-            return redirect('core:core_dashboard')
-
-        # Validate passwords match
         if password1 != password2:
             messages.error(request, "Passwords do not match.")
             return redirect('core:core_dashboard')
 
-        # Validate password length
         if len(password1) < 8:
             messages.error(request, "Password must be at least 8 characters long.")
             return redirect('core:core_dashboard')
 
-        # Validate at least one system is selected
         if not system_access:
             messages.error(request, "Please select at least one system for the admin.")
             return redirect('core:core_dashboard')
 
+        # Friendly pre-checks (UX)
+        if User.objects.filter(username=username).exists():
+            messages.info(request, f"Username '{username}' already exists.")
+            return redirect('core:core_dashboard')
+
+        if User.objects.filter(email=email).exists():
+            messages.info(request, f"Email '{email}' is already registered.")
+            return redirect('core:core_dashboard')
+
         try:
-            # Create the admin user
             admin_user = User.objects.create_user(
                 username=username,
                 email=email,
                 password=password1,
-                is_staff=True,  # Make them staff
+                is_staff=True,
                 is_active=True
             )
 
-            # Log the admin creation
             Logs.objects.create(
                 user=request.user,
                 system_name='core',
@@ -722,7 +802,6 @@ def create_system_admin(request):
                 description=f"Created admin user '{username}'"
             )
 
-            # Assign system memberships with admin role
             for system_name in system_access:
                 membership = SystemMembership.objects.create(
                     user=admin_user,
@@ -730,7 +809,6 @@ def create_system_admin(request):
                     system_role='admin'
                 )
 
-                # Log system assignment
                 Logs.objects.create(
                     user=request.user,
                     system_name='core',
@@ -739,15 +817,32 @@ def create_system_admin(request):
                     target_id=membership.id,
                     ip_address=get_client_ip(request),
                     user_agent=get_user_agent(request),
-                    description=f"Assigned admin '{username}' to system '{system_name}' with admin role"
+                    description=(
+                        f"Assigned admin '{username}' "
+                        f"to system '{system_name}' with admin role"
+                    )
                 )
 
-            messages.success(request, f"Admin user '{username}' created successfully with access to {len(system_access)} system(s).")
+            messages.success(
+                request,
+                f"Admin user '{username}' created successfully."
+            )
             return redirect('core:core_dashboard')
 
-        except Exception as e:
-            messages.error(request, f"Error creating admin user: {str(e)}")
+        except IntegrityError:
+            # Race-condition safe fallback
+            messages.info(
+                request,
+                "A user with this username or email already exists."
+            )
             return redirect('core:core_dashboard')
 
-    # GET request - shouldn't normally happen, redirect to dashboard
+        except Exception:
+            # True unexpected failure
+            messages.error(
+                request,
+                "An unexpected error occurred while creating the admin user."
+            )
+            return redirect('core:core_dashboard')
+
     return redirect('core:core_dashboard')

@@ -359,7 +359,7 @@ body {
 
 /* =========================
            Responsive Design
-        ========================= */
+  ========================= */
 @media (max-width: 1024px) {
   :root {
     --sidebar-width: 220px;

@@ -6,7 +6,7 @@ from .views import (
     deactivate_user, activate_user, save_addresses,
     delete_address, upload_avatar, remove_avatar,
     profile_update, change_password, dashboard,
-    create_system_admin
+    create_system_admin, core_delete_user
 )
 
 app_name = "core"
@@ -38,6 +38,7 @@ urlpatterns = [
     path("profile/update/", profile_update, name="profile_update"),
     path('change-password/', change_password, name='change_password'),
     path('create/system-admin/', create_system_admin, name='create_system_admin'),
+    path('delete/user/<uuid:user_id>/', core_delete_user, name='core_delete_user'),
     
     # User group management
     path('users/<uuid:user_id>/access/',

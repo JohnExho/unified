@@ -1,1 +1,191 @@
-admin dashboard for projectmanagement system
+{% extends 'projectmanagement/base.html' %}
+{% load static %}
+{% load dict_extras %}
+{% block title %}Admin Dashboard - Project Management{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'projectmanagement/css/pages/admin/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+        <!-- Sidebar Toggle (Mobile) -->
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+
+        <!-- Sidebar Overlay (Mobile) -->
+        <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        {% include 'projectmanagement/components/sidebar.html' %}
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Project Management – Admin Dashboard</h1>
+                <p>Users with access to this system</p>
+            </header>
+
+            <div class="content-body">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Users</h3>
+                        <div class="stat-value">{{ total_users }}</div>
+                    </div>
+                </div>
+
+                <!-- User Management Section -->
+                <section class="user-list-section">
+                    <div class="section-header">
+                        <h2>User Access Management</h2>
+                    </div>
+
+                {% if users %}
+                    <table class="user-list-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td><strong>{{ user.username }}</strong></td>
+                                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    {% with role=system_roles|get_item:user.id %}
+                                        {% if role %}
+                                            <span class="role-badge role-{{ role|lower }}">
+                                                {{ role|capfirst }}
+                                            </span>
+                                        {% else %}
+                                            <span class="muted-text">Unknown</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        {% comment %} <a class="btn-primary btn-sm"
+                                           href="{% url 'core:manage_user_systems' user.id %}">
+                                            Manage Access
+                                        </a> {% endcomment %}
+
+                                        {% if user.is_active %}
+                                            <form method="post"
+                                                  action="{% url 'projectmanagement:deactivate_user' user.id %}"
+                                                  style="display:inline">
+                                                {% csrf_token %}
+                                                <button type="submit"
+                                                        class="btn-danger btn-sm"
+                                                        onclick="return confirm('Deactivate this user?');">
+                                                    Deactivate
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <form method="post"
+                                                  action="{% url 'projectmanagement:activate_user' user.id %}"
+                                                  style="display:inline">
+                                                {% csrf_token %}
+                                                <button type="submit"
+                                                        class="btn-success btn-sm">
+                                                    Activate
+                                                </button>
+                                            </form>
+                                        {% endif %}
+
+                                        <form method="post"
+                                              action="{% url 'projectmanagement:delete_user' user.id %}"
+                                              style="display:inline">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                    class="btn-danger btn-sm"
+                                                    onclick="return confirm('Delete this user? This action cannot be undone.');">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    {% if users.has_other_pages %}
+                    <div class="pagination">
+                        {% if users.has_previous %}
+                            <a href="?page=1" class="pagination-btn">&laquo; First</a>
+                            <a href="?page={{ users.previous_page_number }}" class="pagination-btn">Previous</a>
+                        {% else %}
+                            <span class="pagination-btn disabled">&laquo; First</span>
+                            <span class="pagination-btn disabled">Previous</span>
+                        {% endif %}
+
+                        <span class="pagination-info">
+                            Page {{ users.number }} of {{ users.paginator.num_pages }}
+                        </span>
+
+                        {% if users.has_next %}
+                            <a href="?page={{ users.next_page_number }}" class="pagination-btn">Next</a>
+                            <a href="?page={{ users.paginator.num_pages }}" class="pagination-btn">Last &raquo;</a>
+                        {% else %}
+                            <span class="pagination-btn disabled">Next</span>
+                            <span class="pagination-btn disabled">Last &raquo;</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <p class="muted-text">No users found for this system.</p>
+                {% endif %}
+                </section>
+            </div>
+        </main>
+
+        {% include 'core/modals/create_user_modal.html' %}
+    </div>
+{% endblock %}
+{% block extra_scripts %}
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        document.querySelectorAll('.sidebar-nav a:not(.disabled)').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+    </script>
+
+{% if messages %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  {% for message in messages %}
+    Swal.fire({
+      toast: true,
+      icon: "{{ message.tags|default:'info' }}",
+      title: "{{ message|escapejs }}",
+      timer: 4000,
+      timerProgressBar: true,
+      showConfirmButton: false,
+      position: "top-end"
+    });
+  {% endfor %}
+</script>
+{% endif %}
+{% endblock %}
