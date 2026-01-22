@@ -1,13 +1,9 @@
+{% extends 'core/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
-</head>
-<body>
+    {% block extra_head%}
+    <link rel="stylesheet" href="{% static 'core/css/pages/dashboard.css' %}">
+    {% endblock %}
+{% block content %}
     <div class="dashboard-layout">
         <!-- Sidebar Toggle (Mobile) -->
         <button class="sidebar-toggle" onclick="toggleSidebar()">
@@ -143,7 +139,8 @@
         </main>
         {% include 'core/modals/create_user_modal.html' %}
     </div>
-
+{% endblock%}
+{% block 'extra_scripts'%}
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -161,21 +158,4 @@
             });
         });
     </script>
-{% if messages %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-  {% for message in messages %}
-    Swal.fire({
-      toast: true,
-      icon: "{{ message.tags|default:'info' }}",
-      title: "{{ message|escapejs }}",
-      timer: 4000,
-      timerProgressBar: true,
-      showConfirmButton: false,
-      position: "top-end"
-    });
-  {% endfor %}
-</script>
-{% endif %}
-</body>
-</html>
+{% endblock %}

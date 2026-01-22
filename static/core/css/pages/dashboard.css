@@ -1,19 +1,21 @@
+/* dashboard.css */
+
 /* =========================
            Global Reset & Variables
         ========================= */
 :root {
   --sidebar-width: 260px;
   --header-height: 70px;
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #9b8165;
+  --primary-hover: #7a6347;
   --bg-color: #f8fafc;
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --border-color: #e2e8f0;
   --card-bg: #ffffff;
-  --sidebar-bg: #1e293b;
-  --sidebar-text: #cbd5e1;
-  --sidebar-active: #3b82f6;
+  --sidebar-bg: #7a6347;
+  --sidebar-text: #e8dfd5;
+  --sidebar-active: #9b8165;
 }
 
 * {
@@ -37,144 +39,6 @@ body {
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
-}
-
-/* =========================
-           Sidebar
-        ========================= */
-.sidebar {
-  width: var(--sidebar-width);
-  background: var(--sidebar-bg);
-  color: var(--sidebar-text);
-  position: fixed;
-  left: 0;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  transition: transform 0.3s ease;
-  z-index: 1000;
-}
-
-.sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.sidebar-header h2 {
-  color: #ffffff;
-  font-size: 1.4rem;
-  font-weight: 700;
-}
-
-.sidebar-header p {
-  font-size: 0.85rem;
-  color: var(--sidebar-text);
-  margin-top: 4px;
-}
-
-.sidebar-nav {
-  padding: 20px 0;
-}
-
-.nav-section {
-  margin-bottom: 24px;
-}
-
-.nav-section-title {
-  padding: 0 20px;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #94a3b8;
-  margin-bottom: 8px;
-  font-weight: 600;
-}
-
-.sidebar-nav ul {
-  list-style: none;
-}
-
-.sidebar-nav a {
-  display: flex;
-  align-items: center;
-  padding: 12px 20px;
-  color: var(--sidebar-text);
-  text-decoration: none;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.sidebar-nav a:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffffff;
-}
-
-.sidebar-nav a.active {
-  background: rgba(59, 130, 246, 0.1);
-  color: #ffffff;
-  border-right: 3px solid var(--sidebar-active);
-}
-
-.sidebar-nav a.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.sidebar-nav a.disabled:hover {
-  background: transparent;
-  color: var(--sidebar-text);
-}
-
-.nav-icon {
-  width: 20px;
-  height: 20px;
-  margin-right: 12px;
-  flex-shrink: 0;
-}
-
-.nav-text {
-  flex: 1;
-}
-
-.nav-text h3 {
-  font-size: 0.95rem;
-  font-weight: 500;
-  margin-bottom: 2px;
-}
-
-.nav-text p {
-  font-size: 0.75rem;
-  color: #94a3b8;
-}
-
-/* Mobile toggle */
-.sidebar-toggle {
-  display: none;
-  position: fixed;
-  top: 18px;
-  left: 20px;
-  z-index: 1001;
-  background: var(--sidebar-bg);
-  color: white;
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.sidebar-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
 }
 
 /* =========================
@@ -241,7 +105,7 @@ body {
   left: 0;
   width: 100%;
   height: 4px;
-  background: linear-gradient(90deg, var(--primary-color), #3b82f6);
+  background: linear-gradient(90deg, var(--primary-color), #7a6347);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.3s ease;
@@ -249,9 +113,9 @@ body {
 
 .stat-card:hover {
   box-shadow: 
-    0 4px 12px rgba(37, 99, 235, 0.15),
+    0 4px 12px rgba(155, 129, 101, 0.2),
     0 20px 40px rgba(0, 0, 0, 0.1);
-  border-color: rgba(37, 99, 235, 0.3);
+  border-color: rgba(155, 129, 101, 0.3);
 }
 
 .stat-card:hover::before {
@@ -294,7 +158,7 @@ body {
 .stat-card .stat-value {
   font-size: 2.75rem;
   font-weight: 800;
-  background: linear-gradient(135deg, var(--primary-color) 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #7a6347 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -661,8 +525,8 @@ body {
 .system-tag {
   display: inline-block;
   padding: 4px 10px;
-  background: #e0f2fe;
-  color: #0369a1;
+  background: #f4ede4;
+  color: #7a6347;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 500;
@@ -690,7 +554,7 @@ body {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #94a3b8;
+  color: #c4b5a3;
   margin-bottom: 8px;
   font-weight: 600;
 }

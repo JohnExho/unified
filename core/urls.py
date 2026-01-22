@@ -8,6 +8,7 @@ from .views import (
     profile_update, change_password, dashboard,
     create_system_admin, core_delete_user
 )
+from django_ratelimit.decorators import ratelimit
 
 app_name = "core"
 
@@ -18,7 +19,11 @@ def core_root(request):
 
 urlpatterns = [
     # Auth - Generic login (no system specified)
-    path('login/', core_login, name='core_login'),
+    path(
+        "login/",
+        ratelimit(key="ip", rate="5/m", block=True)(core_login),
+        name="core_login"
+    ),
     path('', core_root, name='core_login_root'),  # Root redirect
     
     # Auth - System-specific
