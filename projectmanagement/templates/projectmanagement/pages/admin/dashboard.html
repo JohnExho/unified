@@ -80,12 +80,18 @@
                                 <td>
                                     <div class="action-buttons">
                                         {% if current_user_role == 'superadmin'%}
-                                        <button class="btn-primary btn-sm manage-access-btn"
-                                                data-user-id="{{ user.id }}"
-                                                data-username="{{ user.username }}"
-                                                data-role="{{ role_tuple.0|default:'user' }}">
-                                            Manage Access
-                                        </button>
+                                        {% with role_tuple=system_roles|get_item:user.id %}
+                                            {% if role_tuple %}
+                                                <button class="btn-primary btn-sm manage-access-btn"
+                                                        data-user-id="{{ user.id }}"
+                                                        data-username="{{ user.username }}"
+                                                        data-role="{{ role_tuple.0 }}">
+                                                    Manage Access
+                                                </button>
+                                            {% else %}
+                                                <span class="muted-text">Unknown</span>
+                                            {% endif %}
+                                        {% endwith %}
                                         {% endif%}
 
 
