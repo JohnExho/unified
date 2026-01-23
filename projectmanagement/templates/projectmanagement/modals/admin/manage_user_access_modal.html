@@ -1,0 +1,76 @@
+<div id="manageUserAccessModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeManageAccessModal()">&times;</span>
+        <h2>Manage Access for <span class="modal-username"></span></h2>
+        <p class="current-role-text">Current Role: <strong><span class="modal-current-role"></span></strong></p>
+        <form id="manageAccessForm" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="accessLevel">Access Level:</label>
+                <select name="access_level" id="accessLevel" required>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    {% if user.is_superuser %}
+                        <option value="superadmin">Super Admin</option>
+                    {% endif %}
+                </select> 
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="button" class="btn btn-secondary" onclick="closeManageAccessModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openManageAccessModal(userId, username, role) {
+        console.log('Opening modal for user:', userId, username, role);
+        const modal = document.getElementById('manageUserAccessModal');
+        if (!modal) {
+            console.error('Modal element not found');
+            return;
+        }
+
+        // Populate modal with username and role
+        const modalUsername = modal.querySelector('.modal-username');
+        if (modalUsername) modalUsername.textContent = username;
+
+        const modalRole = modal.querySelector('.modal-current-role');
+        if (modalRole) modalRole.textContent = (role || 'user').charAt(0).toUpperCase() + (role || 'user.bio').slice(1);
+
+        // Set the select value to current role
+        const accessLevelSelect = modal.querySelector('#accessLevel');
+        if (accessLevelSelect) accessLevelSelect.value = (role || 'user').toLowerCase();
+
+        // Set the form action with the correct user ID
+        const form = modal.querySelector('#manageAccessForm');
+        if (form) {
+            form.action = `/projectmanagement/admin/${userId}/manage_access/`;
+        }
+
+        modal.dataset.userId = userId;
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+        console.log('Modal display set to:', modal.style.display);
+    }
+
+    function closeManageAccessModal() {
+        const modal = document.getElementById('manageUserAccessModal');
+        if (!modal) return;
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+
+    // Setup click outside to close
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('manageUserAccessModal');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeManageAccessModal();
+                }
+            });
+        }
+    });
+</script>

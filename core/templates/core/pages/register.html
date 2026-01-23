@@ -1,60 +1,176 @@
+{% extends 'core/base.html' %}
 {% load static %}
-<!-- core/register.html -->
-<head>
-  <title>Register - {{ system_name|title }}</title>
-  {% if system_name == 'projectmanagement' %}
-  <link
-    rel="stylesheet"
-    type="text/css"
-    href="{% static 'core/css/styles.css' %}"
-  />
-  {% elif system_name == 'librarymanagement' %}
-  <link
-    rel="stylesheet"
-    type="text/css"
-    href="{% static 'core/css/library_styles.css' %}"
-  />
-  {% else %}
-  <link
-    rel="stylesheet"
-    type="text/css"
-    href="{% static 'core/css/default_styles.css' %}"
-  />
-  {% endif %}
-  <script src="{% static 'core/js/scripts.js' %}"></script>
-</head>
-<body>
-  <h2>Register for {{ system_name|title }}</h2>
 
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <input type="text" name="username" placeholder="Username" required />
-    <input type="password" name="password" placeholder="Password" required />
-    {% if system_name != 'inventorymanagement' %}
-    <input type="text" name="first_name" placeholder="First Name" />
-    <input type="text" name="middle_name" placeholder="Middle Name" />
-    <input type="text" name="last_name" placeholder="Last Name" />
-    {% endif %}
-    <input type="email" name="email" placeholder="Email" />
-    <input type="checkbox" name="terms_accepted" value="true" /> Accept Terms
-    <input type="file" name="avatar" />
-    <input type="hidden" name="system_name" value="{{ system_name }}" />
-    <button type="submit">Register</button>
-  </form>
-{% if messages %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-  {% for message in messages %}
-    Swal.fire({
-      toast: true,
-      icon: "{{ message.tags|default:'info' }}",
-      title: "{{ message|escapejs }}",
-      timer: 4000,
-      timerProgressBar: true,
-      showConfirmButton: false,
-      position: "top-end"
-    });
-  {% endfor %}
-</script>
+{% block title %}Register - {{ system_name|title }}{% endblock %}
+
+{% block content %}
+<!-- Dynamic CSS Loading -->
+{% if system_name == 'projectmanagement' %}
+<link rel="stylesheet" type="text/css" href="{% static 'projectmanagement/css/pages/register.css' %}" />
+{% elif system_name == 'librarymanagement' %}
+<link rel="stylesheet" type="text/css" href="{% static 'core/css/library_register_styles.css' %}" />
+{% else %}
+<link rel="stylesheet" type="text/css" href="{% static 'core/css/default_register_styles.css' %}" />
 {% endif %}
-</body>
+
+<script src="{% static 'core/js/register.js' %}" defer></script>
+
+<div class="container">
+
+  <div class="register-layout">
+    <!-- Logo Section -->
+    <div class="logo-section">
+      <div class="logo">
+        {% if system_name == 'projectmanagement' %}
+        P
+        {% elif system_name == 'librarymanagement' %}
+        L
+        {% elif system_name == 'inventorymanagement' %}
+        I
+        {% else %}
+        {{ system_name|slice:":1"|upper }}
+        {% endif %}
+      </div>
+      <div class="logo-text">{{system_info.description}}</div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="form-section">
+      <h2>Register</h2>
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Username -->
+        <div class="input-wrapper">
+          <label for="username">Username *</label>
+          <input 
+            type="text" 
+            id="username"
+            name="username" 
+            placeholder="Enter your username" 
+            required 
+            autocomplete="username"
+          />
+        </div>
+
+        <!-- Password -->
+        <div class="input-wrapper">
+          <label for="password">Password *</label>
+          <input 
+            type="password" 
+            id="password"
+            name="password" 
+            placeholder="Enter your password" 
+            required 
+            autocomplete="new-password"
+          />
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="input-wrapper">
+          <label for="confirm_password">Confirm Password *</label>
+          <input 
+            type="password" 
+            id="confirm_password"
+            name="confirm_password" 
+            placeholder="Confirm your password" 
+            required 
+            autocomplete="new-password"
+          />
+          <span class="password-match-indicator" id="passwordMatchIndicator"></span>
+        </div>
+
+        <!-- Conditional Fields (not for inventory management) -->
+        {% if system_name != 'inventorymanagement' %}
+        <!-- First Name -->
+        <div class="input-wrapper">
+          <label for="first_name">First Name</label>
+          <input 
+            type="text" 
+            id="first_name"
+            name="first_name" 
+            placeholder="Enter your first name"
+            autocomplete="given-name"
+          />
+        </div>
+
+        <!-- Middle Name -->
+        <div class="input-wrapper">
+          <label for="middle_name">Middle Name</label>
+          <input 
+            type="text" 
+            id="middle_name"
+            name="middle_name" 
+            placeholder="Enter your middle name"
+            autocomplete="additional-name"
+          />
+        </div>
+
+        <!-- Last Name -->
+        <div class="input-wrapper">
+          <label for="last_name">Last Name</label>
+          <input 
+            type="text" 
+            id="last_name"
+            name="last_name" 
+            placeholder="Enter your last name"
+            autocomplete="family-name"
+          />
+        </div>
+        {% endif %}
+
+        <!-- Email -->
+        <div class="input-wrapper">
+          <label for="email">Email</label>
+          <input 
+            type="email" 
+            id="email"
+            name="email" 
+            placeholder="Enter your email address"
+            autocomplete="email"
+          />
+        </div>
+
+        <!-- Avatar Upload -->
+        <div class="input-wrapper">
+          <label for="avatar">Profile Picture</label>
+          <input 
+            type="file" 
+            id="avatar"
+            name="avatar" 
+            accept="image/*"
+          />
+        </div>
+
+        <!-- Hidden Terms Acceptance Field -->
+        <input type="hidden" id="termsAcceptedHidden" name="terms_accepted" value="false" />
+
+        <!-- Hidden System Name -->
+        <input type="hidden" name="system_name" value="{{ system_name }}" />
+
+        <!-- View Terms Link -->
+        <div class="terms-link-wrapper">
+          <a href="#" onclick="openTermsModal(); return false;" class="view-terms-link">
+            View Terms and Conditions
+          </a>
+        </div>
+
+        <!-- Submit Button - Disabled by default -->
+        <button type="submit" disabled>Please Accept Terms to Register</button>
+      
+      </form>
+
+      <!-- Login Link -->
+      <div class="login-link">
+        Already have an account? 
+        <a href="/{{ system_name }}/login/">Login here</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include Terms Modal -->
+{% include 'core/modals/terms_modal.html' %}
+
+{% endblock %}

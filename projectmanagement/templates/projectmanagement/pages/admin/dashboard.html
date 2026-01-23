@@ -5,6 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'projectmanagement/css/pages/admin/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'projectmanagement/css/modals/manage_user_access_modal.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -43,6 +44,9 @@
                 <section class="user-list-section">
                     <div class="section-header">
                         <h2>User Access Management</h2>
+                        <button type="button" id="openTosModal" class="btn btn-primary">
+                            Update Terms of Service
+                        </button>
                     </div>
 
                 {% if users %}
@@ -75,10 +79,15 @@
                                 </td>
                                 <td>
                                     <div class="action-buttons">
-                                        {% comment %} <a class="btn-primary btn-sm"
-                                           href="{% url 'core:manage_user_systems' user.id %}">
+                                        {% if current_user_role == 'superadmin'%}
+                                        <button class="btn-primary btn-sm manage-access-btn"
+                                                data-user-id="{{ user.id }}"
+                                                data-username="{{ user.username }}"
+                                                data-role="{% with role=system_roles|get_item:user.id %}{{ role|default:'user' }}{% endwith %}">
                                             Manage Access
-                                        </a> {% endcomment %}
+                                        </button>
+                                        {% endif%}
+
 
                                         {% if user.is_active %}
                                             <form method="post"
@@ -151,7 +160,8 @@
             </div>
         </main>
 
-        {% include 'core/modals/create_user_modal.html' %}
+        {% include 'projectmanagement/modals/admin/manage_user_access_modal.html' %}
+        {% include 'projectmanagement/modals/admin/update_tos_modal.html' %}
     </div>
 {% endblock %}
 {% block extra_scripts %}
@@ -170,22 +180,52 @@
                 }
             });
         });
-    </script>
 
-{% if messages %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-  {% for message in messages %}
-    Swal.fire({
-      toast: true,
-      icon: "{{ message.tags|default:'info' }}",
-      title: "{{ message|escapejs }}",
-      timer: 4000,
-      timerProgressBar: true,
-      showConfirmButton: false,
-      position: "top-end"
-    });
-  {% endfor %}
-</script>
-{% endif %}
+        // Handle manage access button clicks
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.manage-access-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.dataset.userId;
+                    const username = this.dataset.username;
+                    const role = this.dataset.role;
+                    openManageAccessModal(userId, username, role);
+                });
+            });
+
+            // Handle Terms of Service modal
+            const openTosBtn = document.getElementById('openTosModal');
+            const tosModal = document.getElementById('tosModal');
+            const closeTosBtn = document.getElementById('closeTosModal');
+            const cancelTosBtn = document.getElementById('cancelTos');
+
+            if (openTosBtn && tosModal) {
+                openTosBtn.addEventListener('click', function() {
+                    tosModal.style.display = 'flex';
+                    tosModal.classList.add('active');
+                });
+            }
+
+            if (closeTosBtn && tosModal) {
+                closeTosBtn.addEventListener('click', function() {
+                    tosModal.style.display = 'none';
+                    tosModal.classList.remove('active');
+                });
+            }
+
+            if (cancelTosBtn && tosModal) {
+                cancelTosBtn.addEventListener('click', function() {
+                    tosModal.style.display = 'none';
+                    tosModal.classList.remove('active');
+                });
+            }
+
+            // Close modal when clicking outside of it
+            window.addEventListener('click', function(event) {
+                if (tosModal && event.target === tosModal) {
+                    tosModal.style.display = 'none';
+                    tosModal.classList.remove('active');
+                }
+            });
+        });
+    </script>
 {% endblock %}

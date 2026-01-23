@@ -1,0 +1,334 @@
+/* =========================
+   System Logs Page Styles
+========================= */
+
+/* Header Section */
+.admin-header {
+  background: white;
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 32px;
+}
+
+.admin-header h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.admin-header p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Main Content Container */
+.main-content {
+  background: var(--bg-color);
+  min-height: 100vh;
+}
+
+/* Logs Table Section */
+.logs-table-wrapper {
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin: 0 32px 32px;
+}
+
+/* Table Styles */
+.logs-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+}
+
+.logs-table thead {
+  background: var(--bg-color);
+}
+
+.logs-table th {
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--border-color);
+  white-space: nowrap;
+}
+
+/* Column Widths for Better Readability */
+.logs-table th:nth-child(1) { width: 10%; } /* User */
+.logs-table th:nth-child(2) { width: 8%; }  /* Action */
+.logs-table th:nth-child(3) { width: 10%; } /* Target Model */
+.logs-table th:nth-child(4) { width: 12%; } /* IP Address */
+.logs-table th:nth-child(5) { width: 25%; } /* Description */
+.logs-table th:nth-child(6) { width: 15%; } /* Timestamp */
+
+.logs-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s;
+}
+
+.logs-table tbody tr:hover {
+  background: var(--bg-color);
+}
+
+.logs-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.logs-table td {
+  padding: 16px 20px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  vertical-align: middle;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* User Column */
+.logs-table td:nth-child(1) {
+  font-weight: 500;
+}
+
+/* Action Column Badge Styling */
+.logs-table td:nth-child(2) {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+/* Add color coding for actions */
+.action-login {
+  color: #059669;
+}
+
+.action-logout {
+  color: #dc2626;
+}
+
+.action-register {
+  color: #2563eb;
+}
+
+.action-update {
+  color: #f59e0b;
+}
+
+.action-delete {
+  color: #dc2626;
+}
+
+.action-create {
+  color: #059669;
+}
+
+/* Target Model Column */
+.logs-table td:nth-child(3) {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+/* IP Address Column */
+.logs-table td:nth-child(4) {
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+/* Description Column */
+.logs-table td:nth-child(5) {
+  max-width: 350px;
+  word-wrap: break-word;
+  white-space: normal;
+  line-height: 1.5;
+}
+
+/* Timestamp Styling */
+.logs-table td:nth-child(6) {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+/* Empty State */
+.main-content > p {
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  padding: 48px 32px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0 32px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+}
+
+.pagination a {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: white;
+  border: 1px solid var(--border-color);
+  text-decoration: none;
+  transition: all 0.2s;
+  min-width: 40px;
+  text-align: center;
+}
+
+.pagination a:hover:not(.active) {
+  background: var(--bg-color);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  transform: translateY(-1px);
+}
+
+.pagination a.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .admin-header {
+    padding: 20px 24px;
+  }
+
+  .logs-table-wrapper {
+    margin: 0 24px 24px;
+  }
+
+  .logs-table th,
+  .logs-table td {
+    padding: 12px 16px;
+  }
+
+  .logs-table td {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-header {
+    padding: 20px;
+  }
+
+  .admin-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .logs-table-wrapper {
+    margin: 0 20px 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Horizontal scroll for table on mobile */
+  .logs-table {
+    min-width: 800px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    padding: 16px;
+  }
+
+  .pagination a {
+    font-size: 0.8125rem;
+    padding: 6px 12px;
+    min-width: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-header {
+    padding: 16px;
+  }
+
+  .admin-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .logs-table-wrapper {
+    margin: 0 16px 16px;
+  }
+
+  .pagination a {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    min-width: 32px;
+  }
+
+  /* Stack pagination controls */
+  .pagination {
+    gap: 4px;
+  }
+}
+
+/* Alternative: Card-based mobile layout (optional) */
+@media (max-width: 640px) {
+  .logs-table-card-view .logs-table {
+    display: block;
+    min-width: auto;
+  }
+
+  .logs-table-card-view .logs-table thead {
+    display: none;
+  }
+
+  .logs-table-card-view .logs-table tbody {
+    display: block;
+  }
+
+  .logs-table-card-view .logs-table tbody tr {
+    display: block;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    background: var(--card-bg);
+  }
+
+  .logs-table-card-view .logs-table td {
+    display: block;
+    padding: 8px 0;
+    border: none;
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .logs-table-card-view .logs-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}

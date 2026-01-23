@@ -1,5 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load system_extras %}
     {% block extra_head%}
     <link rel="stylesheet" href="{% static 'core/css/pages/dashboard.css' %}">
     {% endblock %}
@@ -67,7 +68,9 @@
                                         {% if memberships %}
                                             <div class="system-tags">
                                                 {% for membership in memberships %}
-                                                    <span class="system-tag">{{ membership.system_name }}</span>
+                                                    {% with system=membership.system_name|lookup_system %}
+                                                        <span class="system-tag">{{ system.description }}</span>
+                                                    {% endwith %}
                                                 {% endfor %}
                                             </div>
                                         {% else %}

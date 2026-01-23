@@ -37,26 +37,82 @@ class CustomUser(AbstractUser):
     #     self.save(update_fields=['email_verification_token', 'email_verification_sent_at'])
     #     return self.email_verification_token
 
+
+class Systems(models.Model):
+    DefaultSystems = [
+        ('core', 'Core'),
+        ('projectmanagement', 'Project Management'),
+        ('librarymanagement', 'Library Management'),
+        ('inventorymanagement', 'Inventory Management'),
+        ('communityextensionservices', 'Community Extension Services'),
+        ('informationmanagement', 'Information Management'),
+        ('performanceevaluation', 'Performance Evaluation'),
+    ]
+    name = models.CharField(max_length=50, choices=DefaultSystems, unique=True)
+    description = models.TextField(blank=True)
+    terms_of_service = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.get_name_display()
+
 class SystemMembership(models.Model):
+    SYSTEM_CHOICES = [
+        ('core', 'Core'),
+        ('projectmanagement', 'Project Management'),
+        ('librarymanagement', 'Library Management'),
+        ('inventorymanagement', 'Inventory Management'),
+        ('communityextensionservices', 'Community Extension Services'),
+        ('informationmanagement', 'Information Management'),
+        ('performanceevaluation', 'Performance Evaluation'),
+    ]
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    system_name = models.CharField(max_length=50)  # e.g., 'core', 'projectmanagement'
-    system_role = models.CharField(max_length=50, blank=True, null=True)  # e.g., 'admin', 'member' 
+    system_name = models.CharField(
+        max_length=50,
+        choices=SYSTEM_CHOICES,
+        default='core',  # optional default
+    )
+    system_role = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        choices=[('admin', 'Admin'), ('user', 'User'), ('superadmin', 'Super Admin')],
+    )
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('user', 'system_name')
 
     def __str__(self):
-        return f"{self.user.username} - {self.system_name}"   
+        return f"{self.user.username} - {self.get_system_name_display()}"
+
 
 class Logs(models.Model):
 
+    SYSTEM_CHOICES = [
+        ('core', 'Core'),
+        ('projectmanagement', 'Project Management'),
+        ('librarymanagement', 'Library Management'),
+        ('inventorymanagement', 'Inventory Management'),
+        ('communityextensionservices', 'Community Extension Services'),
+        ('informationmanagement', 'Information Management'),
+        ('performanceevaluation', 'Performance Evaluation'),
+    ]
+
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     action = models.CharField(max_length=20, blank=False)  # e.g., 'CREATE', 'UPDATE', 'DELETE'
-    system_name = models.CharField(max_length=50, blank=False)  # e.g., 'core', 'users'
+    system_name = models.CharField(
+        max_length=50,
+        choices=SYSTEM_CHOICES,
+        default='core',  # optional default
+    )
     target_model = models.CharField(max_length=50, blank=True, null=True)  # model affected
     target_id = models.UUIDField(blank=True, null=True)
     description = models.TextField(blank=True)  # optional detailed message
+    hidden_description = models.TextField(blank=True)  # for superusers
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

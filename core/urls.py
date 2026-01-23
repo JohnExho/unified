@@ -3,9 +3,7 @@ from django.shortcuts import redirect
 from .views import (
     core_login, core_logout, system_selection,
     core_register, manage_user_systems,
-    deactivate_user, activate_user, save_addresses,
-    delete_address, upload_avatar, remove_avatar,
-    profile_update, change_password, dashboard,
+    deactivate_user, activate_user, dashboard,
     create_system_admin, core_delete_user
 )
 from django_ratelimit.decorators import ratelimit
@@ -36,12 +34,7 @@ urlpatterns = [
     # User flow
     path('dashboard/', dashboard, name='core_dashboard'),
     path('select-system/', system_selection, name='system_selection'),
-    path('save-addresses/', save_addresses, name='save_addresses'),
-    path('address/delete/<uuid:address_id>/', delete_address, name='delete_address'),
-    path("avatar/upload/", upload_avatar, name="upload_avatar"),
-    path("avatar/remove/", remove_avatar, name="remove_avatar"),
-    path("profile/update/", profile_update, name="profile_update"),
-    path('change-password/', change_password, name='change_password'),
+
     path('create/system-admin/', create_system_admin, name='create_system_admin'),
     path('delete/user/<uuid:user_id>/', core_delete_user, name='core_delete_user'),
     

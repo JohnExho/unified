@@ -1,0 +1,75 @@
+{% extends 'projectmanagement/base.html' %}
+{% load static %}
+{% block title %}System Logs - Admin - Project Management{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'projectmanagement/css/pages/admin/system_logs.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="admin-header">
+        <h1>System Logs</h1>
+        <p>View and manage system logs for auditing and monitoring purposes.</p>
+    </div>
+
+    <!-- Logs Table -->
+    {% if logs %}
+    <div class="logs-table-wrapper">
+        <table class="logs-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Target Model</th>
+                    <th>IP Address</th>
+                    <th>Description</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.user.username }}</td>
+                    <td>
+                        <span class="action-{{ log.action|lower }}">
+                            {{ log.action }}
+                        </span>
+                    </td>
+                    <td>{{ log.target_model }}</td>
+                    <td>{{ log.ip_address }}</td>
+                    {% if user.is_superuser %}
+                    <td>{{ log.hidden_description }}</td>
+                    {% else %}
+                    <td>{{ log.description }}</td>
+                    {% endif %}
+                    <td>{{ log.created_at|date:"M d, Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            {% if logs.has_previous %}
+                <a href="?page={{ logs.previous_page_number }}">&laquo; Previous</a>
+            {% endif %}
+
+            {% for num in logs.paginator.page_range %}
+                {% if logs.number == num %}
+                    <a class="active">{{ num }}</a>
+                {% else %}
+                    <a href="?page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if logs.has_next %}
+                <a href="?page={{ logs.next_page_number }}">Next &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+        <p>No logs available for this system.</p>
+    {% endif %}
+</div>
+{% endblock %}

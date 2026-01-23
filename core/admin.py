@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser,  SystemMembership, Logs, Address
+from .models import CustomUser, Systems, SystemMembership, Logs, Address
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -7,11 +7,16 @@ from django.contrib.auth.admin import UserAdmin
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'is_email_verified', 'is_staff', 'is_active')
     fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': ('middle_name', 'avatar', 'bio', '_phone_number', 'is_email_verified',)}),
+        (None, {'fields': ( 'middle_name', 'avatar', 'bio', '_phone_number', 'is_email_verified',)}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        (None, {'fields': ('middle_name', 'avatar', 'bio', '_phone_number', 'is_email_verified')}),
+        (None, {'fields': ('email', 'middle_name', 'avatar', 'bio', '_phone_number', 'is_email_verified')}),
     )
+
+@admin.register(Systems)
+class SystemsAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description', 'terms_of_service', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
 
 @admin.register(SystemMembership)
 class SystemMembershipAdmin(admin.ModelAdmin):

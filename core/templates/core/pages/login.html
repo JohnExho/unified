@@ -1,10 +1,7 @@
+{% extends 'core/base.html'%}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login{% if system_name %} - {{ system_name|title }}{% endif %}</title>
+{% block title %}Login{% if system_info %} - {{ system_info.display_name }}{% elif system_name %} - {{ system_name|title }}{% endif %}{% endblock%}
+{% block extra_head %}
 {% if system_name == 'projectmanagement' %}
 <link rel="stylesheet" href="{% static 'projectmanagement/css/pages/login.css' %}" />
 {% elif system_name == 'librarymanagement' %}
@@ -12,9 +9,8 @@
 {% else %}
 <link rel="stylesheet" href="{% static 'core/css/pages/login.css' %}" />
 {% endif %}
-<script src="{% static 'core/js/scripts.js' %}"></script>
-</head>
-<body>
+{% endblock %}
+{% block content %}
 <div class="container">
   <div class="login-layout">
     <!-- Logo Section (Left side on desktop) -->
@@ -25,7 +21,11 @@
       </div>
       {% else %}
       <div class="logo">{{ system_name|slice:":1"|upper }}</div>
+      {% if system_info %}
+      <div class="logo-text">{{ system_info.display_name }}</div>
+      {% else %}
       <div class="logo-text">{{ system_name|title }}</div>
+      {% endif %}
       {% endif %}
     </div>
 
@@ -93,7 +93,8 @@
     </div>
   </div>
 </div>
-
+{% endblock %}
+{% block extra_scripts %}
 <script>
 function togglePassword() {
   const passwordInput = document.getElementById('id_password');
@@ -109,21 +110,4 @@ function togglePassword() {
   eyeIcon.innerHTML = isPassword ? eyeClosedPath : eyeOpenPath;
 }
 </script>
-{% if messages %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-  {% for message in messages %}
-    Swal.fire({
-      toast: true,
-      icon: "{{ message.tags|default:'info' }}",
-      title: "{{ message|escapejs }}",
-      timer: 3000,
-      timerProgressBar: true,
-      showConfirmButton: false,
-      position: "top-end"
-    });
-  {% endfor %}
-</script>
-{% endif %}
-</body>
-</html>
+{% endblock%}

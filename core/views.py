@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect,  get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth import get_user_model, update_session_auth_hash
-from .models import CustomUser, Logs, Address, SystemMembership
+from .models import CustomUser, Logs, Address, Systems, SystemMembership
 from .utils import get_client_ip, get_user_agent, encrypt, decrypt
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.models import Group
@@ -19,10 +19,30 @@ User = get_user_model()
 
 def core_register(request, system_name):
     User = get_user_model()
-
+    
+    # Fetch the system and its terms of service
+    # Note: 'name' is the field in Systems table, not 'system_name'
+    try:
+        system = Systems.objects.get(name=system_name)
+        system_info = {
+            'name': system.name,
+            'description': system.description,
+            'terms_of_service': system.terms_of_service,
+            'display_name': system.display_name if hasattr(system, 'display_name') else system.name.title()
+        }
+    except Systems.DoesNotExist:
+        system_info = {
+            'name': system_name,
+            'description': None,
+            'terms_of_service': None,
+            'display_name': system_name.title()
+        }
+        messages.warning(request, f"System '{system_name}' not found in database.")
+    
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
         first_name = request.POST.get('first_name')
         middle_name = request.POST.get('middle_name')
         last_name = request.POST.get('last_name')
@@ -30,20 +50,49 @@ def core_register(request, system_name):
         terms_accepted = request.POST.get('terms_accepted')
         avatar = request.FILES.get('avatar')
         avatar_url = request.POST.get('avatar_url')
-
+        
         # Validate terms
         if terms_accepted != 'true':
             messages.error(request, "You must accept the Terms and Conditions to register.")
-            return render(request, 'core/pages/register.html', {'error': 'Accept the Terms and Conditions', 'system_name': system_name})
-
+            return render(request, 'core/pages/register.html', {
+                'error': 'Accept the Terms and Conditions', 
+                'system_name': system_name,
+                'system_info': system_info
+            })
+        
         if not username or not password:
             messages.error(request, "Please fill in all required fields.")
-            return render(request, 'core/pages/register.html', {'error': 'Fill all required fields', 'system_name': system_name})
-    
+            return render(request, 'core/pages/register.html', {
+                'error': 'Fill all required fields', 
+                'system_name': system_name,
+                'system_info': system_info
+            })
+
+        if password and len(password) < 8:
+            messages.error(request, "Password must be at least 8 characters long.")
+            return render(request, 'core/pages/register.html', {
+                'error': 'Password too short', 
+                'system_name': system_name,
+                'system_info': system_info
+            })
+        
+        # Check password confirmation
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return render(request, 'core/pages/register.html', {
+                'error': 'Passwords do not match', 
+                'system_name': system_name,
+                'system_info': system_info
+            })
+        
         if User.objects.filter(username=username).exists():
             messages.error(request, "Username already exists.")
-            return render(request, 'core/pages/register.html', {'error': 'Username already exists', 'system_name': system_name})
-
+            return render(request, 'core/pages/register.html', {
+                'error': 'Username already exists', 
+                'system_name': system_name,
+                'system_info': system_info
+            })
+        
         # Create the user
         user = User.objects.create_user(
             username=username,
@@ -54,11 +103,11 @@ def core_register(request, system_name):
             last_name=last_name,
             avatar_url=avatar_url
         )
-
+        
         if avatar:
             user.avatar = avatar
             user.save()
-
+        
         # Log registration
         Logs.objects.create(
             user=user,
@@ -68,26 +117,47 @@ def core_register(request, system_name):
             target_id=user.id,
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
-            description=f"User '{username}' registered for {system_name}"
+            description=f"User '{username}' registered.",
+            hidden_description=f"User '{username}' registered for {system_name}"
         )
-
+        
         # Assign system membership
-        SystemMembership.objects.create(user=user, system_name=system_name, system_role='member')
-
+        SystemMembership.objects.create(user=user, system_name=system_name, system_role='user')
+        
         messages.success(request, "Registration successful. Please log in.")
-
-        # --- Redirect to system-specific login like core_logout ---
+        
+        # Redirect to system-specific login
         if system_name != 'core':
             messages.info(request, f"You can now log in.")
             return redirect(f'/{system_name}/login/')
         return redirect('core:core_login')
-
-    # GET request: just render form
-    return render(request, 'core/pages/register.html', {'system_name': system_name})
+    
+    # GET request: render form with terms
+    return render(request, 'core/pages/register.html', {
+        'system_name': system_name,
+        'system_info': system_info
+    })
 
 def core_login(request, system_name=None):
     User = get_user_model()
     form = LoginForm(request.POST or None)
+    
+    # Fetch system info if system_name is provided
+    system_info = None
+    if system_name:
+        try:
+            system = Systems.objects.get(name=system_name)
+            system_info = {
+                'name': system.name,
+                'description': system.description,
+                'display_name': system.display_name if hasattr(system, 'display_name') else system.description or system.name.title()
+            }
+        except Systems.DoesNotExist:
+            system_info = {
+                'name': system_name,
+                'description': None,
+                'display_name': system_name.title()
+            }
 
     if request.method == "POST" and form.is_valid():
         username = form.cleaned_data["username"]
@@ -97,7 +167,11 @@ def core_login(request, system_name=None):
 
         if not user:
             form.add_error(None, "Invalid username or password.")
-            return render(request, "core/pages/login.html", {"form": form, "system_name": system_name})
+            return render(request, "core/pages/login.html", {
+                "form": form, 
+                "system_name": system_name,
+                "system_info": system_info
+            })
 
         # Superuser-only check for /login
         if not system_name and not user.is_superuser:
@@ -132,7 +206,8 @@ def core_login(request, system_name=None):
                 action="LOGIN",
                 ip_address=get_client_ip(request),
                 user_agent=get_user_agent(request),
-                description=f"User logged in for {system_name}"
+                description=f"User logged in.",
+                hidden_description=f"User logged in for {system_name}"
             )
             messages.success(request, f"Welcome {user.username}!")
             return redirect(get_dashboard_url(target_system))
@@ -148,7 +223,8 @@ def core_login(request, system_name=None):
                 action="LOGIN",
                 ip_address=get_client_ip(request),
                 user_agent=get_user_agent(request),
-                description=f"User logged in for {target_system['url']}"
+                description=f"User logged in.",
+                hidden_description=f"User logged in for {target_system['url']}"
             )
             return redirect(get_dashboard_url(target_system))
 
@@ -157,31 +233,16 @@ def core_login(request, system_name=None):
             request.session["accessible_systems"] = accessible_systems
             messages.info(request, "Please select a system to continue.")
             return redirect("core:system_selection")
-
-        # 4. No systems (only possible for superusers)
-        elif user.is_superuser:
-            system_names = [
-                'core',
-                'projectmanagement',
-                'librarymanagement',
-                'informationmanagement',
-                'inventorymanagement',
-                'performanceevaluation',
-                'communityextensionservices',
-            ]
-            for sys_name in system_names:
-                SystemMembership.objects.get_or_create(
-                    user=user,
-                    system_name=sys_name,
-                    defaults={'system_role': 'superadmin'}
-                )
-            return redirect('core:system_selection')
-
+            
         else:
             messages.error(request, "You are not assigned to any system.")
             return redirect('core:core_login')
 
-    return render(request, "core/pages/login.html", {"form": form, "system_name": system_name})
+    return render(request, "core/pages/login.html", {
+        "form": form, 
+        "system_name": system_name,
+        "system_info": system_info
+    })
 
 
 def system_selection(request):
@@ -213,7 +274,8 @@ def system_selection(request):
                 action="LOGIN",
                 ip_address=get_client_ip(request),
                 user_agent=get_user_agent(request),
-                description=f"User logged in for {selected_system}"
+                description=f"User logged in.",
+                hidden_description=f"User logged in for {selected_system}"
             )
 
             # Clear selection list after use
@@ -250,7 +312,8 @@ def core_logout(request, system_name=None):
             action='LOGOUT',
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
-            description=f'User logged out from {current_system}'
+            description=f'User logged out.',
+            hidden_description=f'User logged out from {current_system}'
         )
 
     # Logout and clear session
@@ -270,9 +333,10 @@ def core_logout(request, system_name=None):
     return redirect('core:core_login')
 
 def dashboard(request):
-    # Get accessible systems from session
-    systems = request.session.get('accessible_systems', [])
-    
+    # Get accessible systems from db with their actual names
+    systems = Systems.objects.values('name', 'description')  # or 'label' if you have that
+    logs = Logs.objects.all().order_by('-created_at')[:10]  # recent 10 logs
+
     # Get all users except the current user
     users_qs = User.objects.exclude(id=request.user.id).order_by('-date_joined')
     
@@ -287,6 +351,7 @@ def dashboard(request):
             'users': users,
             'total_users': users_qs.count(),
             'systems': systems,
+            'logs': logs,
         }
     )
 
@@ -298,11 +363,7 @@ def manage_user_systems(request, user_id):
     if request.user == target_user:
         return render(request, '404.html', status=404)
 
-    all_systems = (
-        SystemMembership.objects
-        .values_list('system_name', flat=True)
-        .distinct()
-    )
+    all_systems = Systems.objects.values('name', 'description')
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -324,7 +385,8 @@ def manage_user_systems(request, user_id):
                     action='UPDATE',
                     target_model='User',
                     target_id=target_user.id,
-                    description=f"Cleared user '{target_user.username}' from system '{system_name}'"
+                    description=f"Cleared user '{target_user.username}' from system '{system_name}'",
+                    hidden_description=f"Cleared user '{target_user.username}' from system '{system_name}'"
                 )
 
             return redirect('core:manage_user_systems', user_id=user_id)
@@ -341,7 +403,8 @@ def manage_user_systems(request, user_id):
                 action='UPDATE',
                 target_model='User',
                 target_id=target_user.id,
-                description=f"Removed user '{target_user.username}' from system '{system_name}'"
+                description=f"Removed user '{target_user.username}' from system '{system_name}'",
+                hidden_description=f"Removed user '{target_user.username}' from system '{system_name}'"
             )
 
         # ADD or UPDATE systems + roles
@@ -364,6 +427,10 @@ def manage_user_systems(request, user_id):
                         description=(
                             f"Updated role for user '{target_user.username}' "
                             f"in system '{system_name}' to '{role}'"
+                        ),
+                        hidden_description=(
+                            f"Updated role for user '{target_user.username}' "
+                            f"in system '{system_name}' to '{role}'"
                         )
                     )
             else:
@@ -380,6 +447,10 @@ def manage_user_systems(request, user_id):
                     target_model='User',
                     target_id=target_user.id,
                     description=(
+                        f"Added user '{target_user.username}' "
+                        f"to system '{system_name}' with role '{role}'"
+                    ),
+                    hidden_description=(
                         f"Added user '{target_user.username}' "
                         f"to system '{system_name}' with role '{role}'"
                     )
@@ -421,7 +492,8 @@ def deactivate_user(request, user_id):
         action='UPDATE',
         target_model='User',
         target_id=user.id,  # Fixed: was target_user.id
-        description=f"Deactivated user '{user.username}'"
+        description=f"Deactivated user '{user.username}'",
+        hidden_description=f"Deactivated user '{user.username}'"
     )
     
     return redirect("core:core_dashboard")  # Changed to redirect to dashboard
@@ -439,7 +511,8 @@ def activate_user(request, user_id):
         action='UPDATE',
         target_model='User',
         target_id=user.id,  # Fixed: was target_user.id
-        description=f"Activated user '{user.username}'"
+        description=f"Activated user '{user.username}'",
+        hidden_description=f"Activated user '{user.username}'"
     )
     
     return redirect("core:core_dashboard")  # Changed to redirect to dashboard
@@ -472,6 +545,7 @@ def core_delete_user(request, user_id):
             description=f"Deleted user '{username}'",
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
+            hidden_description=f"Deleted user '{username}'"
         )
 
         Logs.objects.create(
@@ -483,6 +557,7 @@ def core_delete_user(request, user_id):
             description=f"Deleted all system memberships for user '{username}'",
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
+            hidden_description=f"Deleted all system memberships for user '{username}'"
         )
 
         messages.success(request, f"User '{username}' has been deleted.")
@@ -490,282 +565,6 @@ def core_delete_user(request, user_id):
 
     # If not POST, redirect to dashboard
     return redirect('core:core_dashboard')
-
-@login_required
-def save_addresses(request):
-    if request.method != "POST":
-        return redirect("projectmanagement:pm_settings")
-
-    user = request.user
-
-    # ------------------------
-    # Handle Address 1 (home)
-    # ------------------------
-    home_address, created = Address.objects.get_or_create(
-        user=user,
-        type="home",
-        defaults={
-            "id": uuid.uuid4(),
-            "full_address": encrypt(request.POST.get("address1", "")),
-            "city": encrypt(request.POST.get("city1", "")),
-            "province": encrypt(request.POST.get("province1", "")),
-            "postal_code": encrypt(request.POST.get("zip1", "")),
-            "country": encrypt(request.POST.get("country1", "")),
-            "phone": encrypt(request.POST.get("phone1", "")),
-            "created_at": timezone.now(),
-            "updated_at": timezone.now(),
-        }
-    )
-
-    if created:
-        Logs.objects.create(
-            user=user,
-            system_name='core',
-            action='CREATE',
-            target_model='Address',
-            target_id=home_address.id,
-            description=f"Created home address for user '{user.username}'",
-            ip_address=get_client_ip(request),
-            user_agent=get_user_agent(request),
-        )
-    else:
-        # Update existing home address
-        home_address.full_address = encrypt(request.POST.get("address1", ""))
-        home_address.city = encrypt(request.POST.get("city1", ""))
-        home_address.province = encrypt(request.POST.get("province1", ""))
-        home_address.postal_code = encrypt(request.POST.get("zip1", ""))
-        home_address.country = encrypt(request.POST.get("country1", ""))
-        home_address.phone = encrypt(request.POST.get("phone1", ""))
-        home_address.updated_at = timezone.now()
-        home_address.save()
-
-        Logs.objects.create(
-            user=user,
-            system_name='core',
-            action='UPDATE',
-            target_model='Address',
-            target_id=home_address.id,
-            description=f"Updated home address for user '{user.username}'",
-            ip_address=get_client_ip(request),
-            user_agent=get_user_agent(request),
-        )
-
-    # ------------------------
-    # Handle Address 2 (billing/secondary)
-    # ------------------------
-    address2_value = request.POST.get("address2", "").strip()
-    if address2_value:
-        billing_address, created = Address.objects.get_or_create(
-            user=user,
-            type="billing",
-            defaults={
-                "id": uuid.uuid4(),
-                "full_address": encrypt(address2_value),
-                "city": encrypt(request.POST.get("city2", "")),
-                "province": encrypt(request.POST.get("province2", "")),
-                "postal_code": encrypt(request.POST.get("zip2", "")),
-                "country": encrypt(request.POST.get("country2", "")),
-                "phone": encrypt(request.POST.get("phone2", "")),
-                "created_at": timezone.now(),
-                "updated_at": timezone.now(),
-            }
-        )
-
-        if created:
-            Logs.objects.create(
-                user=user,
-                system_name='core',
-                action='CREATE',
-                target_model='Address',
-                target_id=billing_address.id,
-                description=f"Created billing address for user '{user.username}'",
-                ip_address=get_client_ip(request),
-                user_agent=get_user_agent(request),
-            )
-        else:
-            billing_address.full_address = encrypt(address2_value)
-            billing_address.city = encrypt(request.POST.get("city2", ""))
-            billing_address.province = encrypt(request.POST.get("province2", ""))
-            billing_address.postal_code = encrypt(request.POST.get("zip2", ""))
-            billing_address.country = encrypt(request.POST.get("country2", ""))
-            billing_address.phone = encrypt(request.POST.get("phone2", ""))
-            billing_address.updated_at = timezone.now()
-            billing_address.save()
-
-            Logs.objects.create(
-                user=user,
-                system_name='core',
-                action='UPDATE',
-                target_model='Address',
-                target_id=billing_address.id,
-                description=f"Updated billing address for user '{user.username}'",
-                ip_address=get_client_ip(request),
-                user_agent=get_user_agent(request),
-            )
-
-    return redirect("projectmanagement:pm_settings")
-
-@login_required
-def delete_address(request, address_id):
-    address = get_object_or_404(
-        Address,
-        id=address_id,
-        user=request.user
-    )
-
-    # Never allow deleting home address
-    if address.type == 'home':
-        return redirect('projectmanagement:pm_settings')
-
-    if request.method == "POST":
-        address.delete()
-
-        Logs.objects.create(
-            user=request.user,
-            system_name='core',
-            action='DELETE',
-            target_model='Address',
-            target_id=address.id,
-            description=f"Deleted address for user '{user.username}'",
-            ip_address=get_client_ip(request),
-            user_agent=get_user_agent(request),
-        )
-
-    return redirect('projectmanagement:pm_settings')
-
-
-@login_required
-@require_POST
-def upload_avatar(request):
-    avatar = request.FILES.get("avatar")
-    if avatar:
-        # Delete old avatar if exists
-        if request.user.avatar:
-            request.user.avatar.delete(save=False)
-
-        # Save new avatar
-        request.user.avatar = avatar
-        request.user.save()
-
-        Logs.objects.create(
-            user=request.user,
-            system_name='core',
-            action='UPDATE',
-            target_model='User',
-            target_id=request.user.id,
-            description=f"Updated avatar for user '{request.user.username}'",
-            ip_address=get_client_ip(request),
-            user_agent=get_user_agent(request),
-        )
-
-
-    # Redirect back to profile page to refresh
-        messages.success(request, "Avatar uploaded successfully.")
-    return redirect('projectmanagement:pm_settings') 
-
-
-@login_required
-@require_POST
-def remove_avatar(request):
-    if request.user.avatar:
-        request.user.avatar.delete(save=False)
-        request.user.avatar = None
-        request.user.save()
-    
-        Logs.objects.create(
-            user=request.user,
-            system_name='core',
-            action='UPDATE',
-            target_model='User',
-            target_id=request.user.id,
-            description=f"Removed avatar for user '{request.user.username}'",
-            ip_address=get_client_ip(request),
-            user_agent=get_user_agent(request),
-        )
-
-    messages.success(request, "Avatar removed successfully.")
-    return redirect('projectmanagement:pm_settings') 
-
-@login_required
-@require_POST
-def profile_update(request):
-    user = request.user
-
-    # Get form data
-    first_name = request.POST.get("first_name", "").strip()
-    middle_name = request.POST.get("middle_name", "").strip()
-    last_name = request.POST.get("last_name", "").strip()
-    username = request.POST.get("username", "").strip()
-    phone = request.POST.get("phone", "").strip()
-    bio = request.POST.get("bio", "").strip()
-
-    # Update user fields
-    if first_name:
-        user.first_name = first_name
-    user.middle_name = middle_name  # middle name can be blank
-    if last_name:
-        user.last_name = last_name
-    if username:
-        user.username = username
-    if phone:
-        user.phone_number = phone
-    if bio:
-        user.bio = bio
-
-    user.save()
-
-    Logs.objects.create(
-        user=user,
-        system_name='core',
-        action='UPDATE',
-        target_model='User',
-        target_id=user.id,
-        description=f"Updated profile for user '{user.username}'",
-        ip_address=get_client_ip(request),
-        user_agent=get_user_agent(request),
-    )
-
-    messages.success(request, "Profile updated successfully.")
-    return redirect("projectmanagement:pm_settings")
-
-@login_required
-def change_password(request):
-    if request.method == "POST":
-        current_password = request.POST.get("current_password")
-        new_password1 = request.POST.get("new_password1")
-        new_password2 = request.POST.get("new_password2")
-        user = request.user
-
-        # Check current password
-        if not user.check_password(current_password):
-            messages.error(request, "Current password is incorrect.")
-            return redirect("projectmanagement:pm_settings")  # redirect to your profile page
-
-        # Check new passwords match
-        if new_password1 != new_password2:
-            messages.error(request, "New passwords do not match.")
-            return redirect("projectmanagement:pm_settings")
-
-        # Optional: validate password strength
-        if len(new_password1) < 8:
-            messages.error(request, "New password must be at least 8 characters long.")
-            return redirect("projectmanagement:pm_settings")
-
-        # Set new password
-        user.set_password(new_password1)
-        user.save()
-
-        # Keep user logged in after password change
-        update_session_auth_hash(request, user)
-
-        messages.success(request, "Password changed successfully.")
-        return redirect("projectmanagement:pm_settings")
-
-    # fallback for GET requests
-    return redirect("projectmanagement:pm_settings")
-# ===========
-# # ADMIN CREATION VIEW
-# ===========
 
 @user_passes_test(lambda u: u.is_superuser)
 def create_system_admin(request):
@@ -819,7 +618,8 @@ def create_system_admin(request):
                 target_id=admin_user.id,
                 ip_address=get_client_ip(request),
                 user_agent=get_user_agent(request),
-                description=f"Created superadmin user '{username}'"
+                description=f"Created superadmin user '{username}'",
+                hidden_description=f"Created superadmin user '{username}'"
             )
 
             for system_name in system_access:
@@ -840,12 +640,16 @@ def create_system_admin(request):
                     description=(
                         f"Assigned superadmin '{username}' "
                         f"to system '{system_name}' with superadmin role"
+                    ),
+                    hidden_description=(
+                        f"Assigned superadmin '{username}' "
+                        f"to system '{system_name}' with superadmin role"
                     )
                 )
 
             messages.success(
                 request,
-                f"Admin user '{username}' created successfully."
+                f"Super Admin user '{username}' created successfully."
             )
             return redirect('core:core_dashboard')
 

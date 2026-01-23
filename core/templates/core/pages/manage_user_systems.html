@@ -1,13 +1,10 @@
+{% extends 'core/base.html'%}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage User Access</title>
+{% block title %}Manage User Access{% endblock %}
+{% block extra_head %}
     <link rel="stylesheet" href="{% static 'core/css/pages/manage_user_systems.css' %}">
-</head>
-<body>
+{% endblock %}
+{% block content %}
     <div class="dashboard-layout">
         <!-- Sidebar Toggle (Mobile) -->
         <button class="sidebar-toggle" onclick="toggleSidebar()">
@@ -172,14 +169,15 @@
                                         <input
                                             type="checkbox"
                                             name="systems"
-                                            value="{{ system }}"
-                                            {% if system in user_systems %}checked{% endif %}
+                                            value="{{ system.name }}"
+                                            {% if system.name in user_systems %}checked{% endif %}
                                         >
-                                        <span class="checkbox-text">{{ system }}</span>
+                                        <span class="checkbox-text">{{ system.description }}</span>
                                     </label>
                                 </div>
                             {% endfor %}
                         </div>
+
 
                         <div class="form-actions">
                             <button type="submit" class="btn-primary">
@@ -219,205 +217,8 @@
             </div>
         </main>
     </div>
-
-    <style>
-        /* Additional styles for manage access page */
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .btn-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 18px;
-            background: white;
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .btn-secondary:hover {
-            background: #f8fafc;
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .access-form {
-            padding: 24px;
-        }
-
-        .checkbox-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .checkbox-item {
-            background: #f8fafc;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 16px;
-            transition: all 0.2s ease;
-        }
-
-        .checkbox-item:hover {
-            background: white;
-            border-color: var(--primary-color);
-        }
-
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-        }
-
-        .checkbox-label input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: var(--primary-color);
-        }
-
-        .checkbox-text {
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            padding-bottom: 24px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .btn-primary, .btn-danger, .btn-cancel {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-hover);
-        }
-
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #b91c1c;
-        }
-
-        .btn-cancel {
-            background: #e5e7eb;
-            color: var(--text-primary);
-        }
-
-        .btn-cancel:hover {
-            background: #d1d5db;
-        }
-
-        .warning-box {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            margin-top: 24px;
-            padding: 16px;
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: 8px;
-            color: #991b1b;
-        }
-
-        .warning-box svg {
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .warning-box p {
-            margin: 0;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-
-        .sidebar-footer {
-            padding: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            margin-top: auto;
-        }
-
-        .logout-form {
-            margin: 0;
-        }
-
-        .logout-btn {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            border-radius: 6px;
-            color: #fca5a5;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .logout-btn:hover {
-            background: rgba(239, 68, 68, 0.2);
-            border-color: rgba(239, 68, 68, 0.4);
-            color: #fecaca;
-        }
-
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .checkbox-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-actions {
-                flex-direction: column;
-            }
-
-            .btn-primary, .btn-danger, .btn-cancel {
-                width: 100%;
-                justify-content: center;
-            }
-        }
+{% endblock %}
+{% block extra_scripts %}
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -434,5 +235,4 @@
             });
         });
     </script>
-</body>
-</html>
+{% endblock %}

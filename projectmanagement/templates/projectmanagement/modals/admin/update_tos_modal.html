@@ -1,0 +1,65 @@
+<!-- projectmanagement/modals/tos_modal.html -->
+<div id="tosModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="modal-close" id="closeTosModal">&times;</span>
+        <h2>Update Terms of Service</h2>
+        <form id="tosForm" method="post" action="{% url 'projectmanagement:update_tos' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="tosText">Terms of Service</label>
+                <textarea id="tosText" name="tos_text" rows="20" required>{{ tos_text }}</textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelTos">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save TOS</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<style>
+/* Simple modal styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+}
+.modal.active {
+    display: flex;
+}
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 95%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.modal-close:hover {
+    color: #e74c3c;
+}
+#tosText {
+    resize: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+</style>

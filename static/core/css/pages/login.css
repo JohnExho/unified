@@ -159,7 +159,7 @@ input[type="email"]:focus {
 .toggle-password {
   position: absolute;
   right: 14px;
-  top: 38px;
+  top: 32px;
   background: none;
   border: none;
   cursor: pointer;

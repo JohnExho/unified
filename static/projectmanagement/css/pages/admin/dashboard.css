@@ -135,12 +135,12 @@
   color: #1e40af;
 }
 
-.role-badge.role-manager {
+.role-badge.role-superadmin {
   background: #fef3c7;
   color: #92400e;
 }
 
-.role-badge.role-member {
+.role-badge.role-user {
   background: #d1fae5;
   color: #065f46;
 }
