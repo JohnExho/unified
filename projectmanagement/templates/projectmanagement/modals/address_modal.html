@@ -81,7 +81,7 @@
 <div id="addressModal" class="modal hidden">
   <div class="modal-content">
     <h2 class="text-xl font-semibold mb-4">Update Addresses</h2>
-    <form id="addressForm" method="post" action="{% url 'core:save_addresses' %}">
+    <form id="addressForm" method="post" action="{% url 'projectmanagement:save_addresses' %}">
       {% csrf_token %}
       
       <!-- Address 1 (Home) -->

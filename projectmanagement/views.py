@@ -1,44 +1,114 @@
 from django.shortcuts import render, redirect,  get_object_or_404
 from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
-from .models import Project
-from core.models import Logs
+from .models import Project, Task
+from core.models import Logs, SystemMembership, Systems
 from core.utils import get_client_ip, get_user_agent, decrypt, encrypt
 from django.contrib import messages
-from core.models import SystemMembership, Systems
+from django.utils import timezone
 from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib.auth.decorators import login_required
+
+now = timezone.now()
 User = get_user_model()
 
 
 def dashboard(request):
-    current_system = request.current_system  # set by middleware
+    current_system = request.current_system
 
-    # Superuser bypass
+    # ---- Access control ----
     if not request.user.is_superuser and not SystemMembership.objects.filter(
-        user=request.user, system_name=current_system
+        user=request.user,
+        system_name=current_system
     ).exists():
         return render(request, '404.html', status=404)
 
-    systems = request.session.get('accessible_systems', [])
-    projects = Project.objects.all()
+    # ---- Base querysets ----
+    projects = Project.objects.prefetch_related("tasks")
+    all_tasks = Task.objects.select_related("assigned_to", "project")
 
-    current_user_role = SystemMembership.objects.filter(
-        user=request.user,
-        system_name=current_system
-    ).values_list('system_role', flat=True).first()
+    # ---- Apply visibility scope ----
+    if not request.user.is_superuser:
+        all_tasks = all_tasks.filter(assigned_to=request.user)
+        projects = projects.filter(tasks__assigned_to=request.user).distinct()
+
+    # ---- Time-aware project states ----
+    active_projects = projects.filter(
+        start_date__lte=now,
+        end_date__gte=now
+    )
+
+    past_projects = projects.filter(
+        end_date__lt=now
+    )
+
+    active_projects_count = active_projects.count()
+
+    # ---- Time-aware task states ----
+    active_tasks = all_tasks.exclude(
+        status='completed'
+    ).filter(
+        due_date__gte=now
+    )
+
+    overdue_tasks = all_tasks.exclude(
+        status='completed'
+    ).filter(
+        due_date__lt=now
+    )
+
+    active_tasks_count = active_tasks.count()
+
+    # ---- Assignment stats ----
+    if request.user.is_superuser:
+        assigned_projects_count = projects.count()
+        assigned_tasks_count = all_tasks.count()
+    else:
+        assigned_projects_count = active_projects.count()
+        assigned_tasks_count = all_tasks.count()
+
+    # ---- Late/Overdue stats ----
+    late_projects_count = past_projects.count()
+    late_tasks_count = overdue_tasks.count()
+
+    # ---- Kanban buckets ----
+    todo_tasks = all_tasks.filter(
+        status='todo'
+    )
+
+    in_progress_tasks = all_tasks.filter(
+        status='in_progress'
+    )
+
+    completed_tasks = all_tasks.filter(
+        status='completed'
+    )
 
     return render(
         request,
         'projectmanagement/pages/dashboard.html',
         {
             'projects': projects,
-            'systems': systems,
-            'current_user_role': current_user_role,
             'current_system': current_system,
+            'now': now,
+            # Stats
+            'active_projects_count': active_projects_count,
+            'active_tasks_count': active_tasks_count,
+            'assigned_projects_count': assigned_projects_count,
+            'assigned_tasks_count': assigned_tasks_count,
+            'late_projects_count': late_projects_count,
+            'late_tasks_count': late_tasks_count,
+
+            # Kanban
+            'todo_tasks': todo_tasks,
+            'in_progress_tasks': in_progress_tasks,
+            'completed_tasks': completed_tasks,
+
+            # Optional future use
+            'overdue_task_ids': set(overdue_tasks.values_list('id', flat=True)),
+            'past_projects': past_projects,
         }
     )
-
 
 
 def admin_dashboard(request):
@@ -155,7 +225,8 @@ def deactivate_user(request, user_id):
         action='UPDATE',
         target_model='User',
         target_id=user.id,  # Fixed: was target_user.id
-        description=f"Deactivated user '{user.username}'"
+        description=f"Deactivated user '{user.username}'",
+        hidden_description=f"Deactivated user '{user.username}'"
     )
 
     return redirect("projectmanagement:pm_admin_dashboard") 
@@ -173,7 +244,8 @@ def activate_user(request, user_id):
         action='UPDATE',
         target_model='User',
         target_id=user.id,  # Fixed: was target_user.id
-        description=f"Activated user '{user.username}'"
+        description=f"Activated user '{user.username}'",
+        hidden_description=f"Activated user '{user.username}'"
     )
     
     return redirect("projectmanagement:pm_admin_dashboard") 
@@ -558,10 +630,11 @@ def profile_update(request):
     phone = request.POST.get("phone", "").strip()
     bio = request.POST.get("bio", "").strip()
 
-    # Update user fields
+    # Update user fields (properties will auto-encrypt)
     if first_name:
         user.first_name = first_name
-    user.middle_name = middle_name  # middle name can be blank
+    if middle_name:
+        user.middle_name = middle_name
     if last_name:
         user.last_name = last_name
     if username:

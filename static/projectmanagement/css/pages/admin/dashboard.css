@@ -66,12 +66,20 @@
   padding: 24px 32px;
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* vertically center items */
 }
 
 .section-header h2 {
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.section-header .btn-sm {
+  padding: 8px 18px; /* Slightly bigger than table buttons */
+  font-size: 0.875rem;
 }
 
 /* Table Styles */

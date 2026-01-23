@@ -29,7 +29,7 @@
             </div>
             <div class="avatar-actions">
             <!-- Upload Form -->
-            <form method="post" action="{% url 'core:upload_avatar' %}" enctype="multipart/form-data">
+            <form method="post" action="{% url 'projectmanagement:upload_avatar' %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="file" name="avatar" id="avatarInput" accept="image/*" style="display:none;" onchange="this.form.submit()" />
                 <button type="button" class="btn btn-primary" onclick="document.getElementById('avatarInput').click()">Upload Photo</button>
@@ -37,7 +37,7 @@
 
             <!-- Remove Form -->
             {% if user.avatar %}
-            <form method="post" action="{% url 'core:remove_avatar' %}">
+            <form method="post" action="{% url 'projectmanagement:remove_avatar' %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-secondary" onclick="return confirm('Remove profile photo?')">Remove</button>
             </form>
@@ -49,7 +49,7 @@
         <!-- Personal Info Form -->
         <div class="profile-card">
           <h2 class="card-title">Personal Information</h2>
-          <form id="profileForm" method="post" action="{% url 'core:profile_update' %}">
+          <form id="profileForm" method="post" action="{% url 'projectmanagement:profile_update' %}">
             {% csrf_token %}
             <div class="form-row">
               <div class="form-group">
@@ -129,7 +129,7 @@
                     {% endif %}
                     
                     <div class="form-actions">
-                        <form method="post" action="{% url 'core:delete_address' secondary_address.id %}" style="display:inline-block; margin:0;">
+                        <form method="post" action="{% url 'projectmanagement:delete_address' secondary_address.id %}" style="display:inline-block; margin:0;">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this address?');">
                                 Delete 2nd Address
@@ -156,7 +156,7 @@
         
 <div class="profile-card">
   <h2 class="card-title">Change Password</h2>
-  <form method="post" action="{% url 'core:change_password' %}">
+  <form method="post" action="{% url 'projectmanagement:change_password' %}">
     {% csrf_token %}
     <div class="form-group">
       <label for="currentPassword">Current Password</label>

@@ -34,10 +34,14 @@ def create_default_systems(apps, schema_editor):
 def create_super_user(apps, schema_editor):
     CustomUser = apps.get_model('core', 'CustomUser')
     if not CustomUser.objects.filter(username='admin').exists():
+        # Note: first_name, middle_name, last_name properties will auto-encrypt these values
         user = CustomUser.objects.create_user(
             username='admin',
             email='admin@example.com',
             password='password',
+            _first_name='System',
+            _middle_name='D.',
+            _last_name='Administrator',
         )
         user.is_superuser = True
         user.is_staff = True  # Admin access to Django admin

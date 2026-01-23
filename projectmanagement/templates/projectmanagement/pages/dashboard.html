@@ -14,263 +14,349 @@
     
     <div class="top-actions">
       <div class="view-selector">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
         </svg>
-        <span>Kanban</span>
-        <svg style="width: 14px; height: 14px; margin-left: 4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        <span id="current-view">Kanban View</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
         <div class="view-dropdown">
-          <div class="view-option">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+          <div class="view-option" data-view="kanban">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
             </svg>
-            Kanban
+            Kanban View
           </div>
-          <div class="view-option">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          <div class="view-option" data-view="table">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
-            Table
-          </div>
-          <div class="view-option">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
-            Gantt
+            Table View
           </div>
         </div>
       </div>
-      
       <div class="search-box">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="M21 21l-4.35-4.35"></path>
         </svg>
-        <input type="text" placeholder="Search tasks...">
+        <input type="text" placeholder="Search tasks..." id="task-search">
       </div>
-      
-      <button class="filter-btn">
-        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-        </svg>
-        Filter
-      </button>
-      
       <button class="new-task-btn">
-        <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
         New Task
       </button>
     </div>
   </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-container">
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-projects">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Projects</div>
+        <div class="stat-value">{{ active_projects_count }}</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-tasks">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"></path>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Tasks</div>
+        <div class="stat-value">{{ active_tasks_count }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-late-projects">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Late Projects</div>
+        <div class="stat-value">{{ late_projects_count }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-late-tasks">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label">Late Tasks</div>
+        <div class="stat-value">{{ late_tasks_count }}</div>
+      </div>
+    </div>
+  </div>
   
-  <div class="kanban-container">
+  <!-- Kanban View -->
+  <div class="kanban-container" id="kanban-view">
     <div class="kanban-board">
-      <!-- To-Do Column -->
       <div class="kanban-column">
         <div class="column-header">
           <div class="column-title">
-            To-Do
-            <span class="column-count">4</span>
+            <span>To Do</span>
+            <span class="column-count">{{ todo_tasks|length }}</span>
           </div>
-          <button class="add-card-btn">
-            <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
         </div>
         <div class="cards-container">
-          <div class="task-card">
-            <div class="task-title">Design new landing page for product launch</div>
+          {% for task in todo_tasks %}
+          <div class="task-card {% if task.id in overdue_task_ids %}late{% endif %}">
+            <div class="task-title">{{ task.title }}</div>
+            {% if task.id in overdue_task_ids %}<div class="late-badge">Late</div>{% endif %}
             <div class="task-footer">
               <div class="task-assignee">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23667eea'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.35em' fill='white' font-family='Arial'%3EAM%3C/text%3E%3C/svg%3E" alt="Alex Morgan" class="assignee-avatar">
-                <span class="assignee-name">Alex Morgan</span>
+              {% if task.assigned_to.get_full_name %}
+                <span class="assignee-name">{{ task.assigned_to.get_full_name }}</span>
+              {% else %}
+                <span class="assignee-name">{{ task.assigned_to.username }}</span>
+              {% endif %}
               </div>
-              <span class="priority-badge priority-high">High</span>
+              <span class="priority-badge priority-{{ task.priority|lower }}">{{ task.priority }}</span>
             </div>
           </div>
-          
-          <div class="task-card">
-            <div class="task-title">Update API documentation</div>
-            <div class="task-footer">
-              <div class="task-assignee">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23f59e0b'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.35em' fill='white' font-family='Arial'%3EJL%3C/text%3E%3C/svg%3E" alt="Jordan Lee" class="assignee-avatar">
-                <span class="assignee-name">Jordan Lee</span>
-              </div>
-              <span class="priority-badge priority-medium">Medium</span>
-            </div>
-          </div>
-          
-          <div class="task-card">
-            <div class="task-title">Fix authentication bug on mobile app</div>
-            <div class="task-footer">
-              <div class="task-assignee">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2310b981'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.35em' fill='white' font-family='Arial'%3EST%3C/text%3E%3C/svg%3E" alt="Sam Taylor" class="assignee-avatar">
-                <span class="assignee-name">Sam Taylor</span>
-              </div>
-              <span class="priority-badge priority-high">High</span>
-            </div>
-          </div>
+          {% empty %}
+          <div class="empty-state">No tasks</div>
+          {% endfor %}
         </div>
       </div>
-      
-      <!-- Work in Progress Column -->
+
       <div class="kanban-column">
         <div class="column-header">
           <div class="column-title">
-            Work in Progress
-            <span class="column-count">3</span>
+            <span>In Progress</span>
+            <span class="column-count">{{ in_progress_tasks|length }}</span>
           </div>
-          <button class="add-card-btn">
-            <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
         </div>
         <div class="cards-container">
-          <div class="task-card">
-            <div class="task-title">Implement dark mode toggle</div>
+          {% for task in in_progress_tasks %}
+          <div class="task-card {% if task.id in overdue_task_ids %}late{% endif %}">
+            <div class="task-title">{{ task.title }}</div>
+            {% if task.id in overdue_task_ids %}<div class="late-badge">Late</div>{% endif %}
             <div class="task-footer">
               <div class="task-assignee">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23667eea'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.35em' fill='white' font-family='Arial'%3EAM%3C/text%3E%3C/svg%3E" alt="Alex Morgan" class="assignee-avatar">
-                <span class="assignee-name">Alex Morgan</span>
+              {% if task.assigned_to.get_full_name %}
+                <span class="assignee-name">{{ task.assigned_to.get_full_name }}</span>
+              {% else %}
+                <span class="assignee-name">{{ task.assigned_to.username }}</span>
+              {% endif %}
               </div>
-              <span class="priority-badge priority-low">Low</span>
+              <span class="priority-badge priority-{{ task.priority|lower }}">{{ task.priority }}</span>
             </div>
           </div>
-          
-          <div class="task-card">
-            <div class="task-title">Optimize database queries for performance</div>
-            <div class="task-footer">
-              <div class="task-assignee">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23f59e0b'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.35em' fill='white' font-family='Arial'%3EJL%3C/text%3E%3C/svg%3E" alt="Jordan Lee" class="assignee-avatar">
-                <span class="assignee-name">Jordan Lee</span>
-              </div>
-              <span class="priority-badge priority-high">High</span>
-            </div>
-          </div>
-          
-          <div class="task-card">
-            <div class="task-title">Conduct user testing sessions</div>
-            <div class="task-footer">
-              <div class="task-assignee">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2310b981'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.35em' fill='white' font-family='Arial'%3EST%3C/text%3E%3C/svg%3E" alt="Sam Taylor" class="assignee-avatar">
-                <span class="assignee-name">Sam Taylor</span>
-              </div>
-              <span class="priority-badge priority-medium">Medium</span>
-            </div>
-          </div>
+          {% empty %}
+          <div class="empty-state">No tasks</div>
+          {% endfor %}
         </div>
       </div>
-      
-      <!-- Finished Column -->
+
       <div class="kanban-column">
         <div class="column-header">
           <div class="column-title">
-            Finished
-            <span class="column-count">4</span>
+            <span>Completed</span>
+            <span class="column-count">{{ completed_tasks|length }}</span>
           </div>
-          <button class="add-card-btn">
-            <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
         </div>
         <div class="cards-container">
-          <div class="task-card">
-            <div class="task-title">Set up CI/CD pipeline</div>
+          {% for task in completed_tasks %}
+          <div class="task-card {% if task.id in overdue_task_ids %}late{% endif %}">
+            <div class="task-title">{{ task.title }}</div>
+            {% if task.id in overdue_task_ids %}<div class="late-badge">Late</div>{% endif %}
             <div class="task-footer">
               <div class="task-assignee">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23ef4444'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.35em' fill='white' font-family='Arial'%3ECR%3C/text%3E%3C/svg%3E" alt="Casey Rivera" class="assignee-avatar">
-                <span class="assignee-name">Casey Rivera</span>
+             {% if task.assigned_to.get_full_name %}
+                <span class="assignee-name">{{ task.assigned_to.get_full_name }}</span>
+              {% else %}
+                <span class="assignee-name">{{ task.assigned_to.username }}</span>
+              {% endif %}
               </div>
-              <span class="priority-badge priority-high">High</span>
+              <span class="priority-badge priority-{{ task.priority|lower }}">{{ task.priority }}</span>
             </div>
           </div>
-          
-          <div class="task-card">
-            <div class="task-title">Write unit tests for payment module</div>
-            <div class="task-footer">
-              <div class="task-assignee">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23667eea'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.35em' fill='white' font-family='Arial'%3EAM%3C/text%3E%3C/svg%3E" alt="Alex Morgan" class="assignee-avatar">
-                <span class="assignee-name">Alex Morgan</span>
-              </div>
-              <span class="priority-badge priority-medium">Medium</span>
-            </div>
-          </div>
-          
-          <div class="task-card">
-            <div class="task-title">Deploy staging environment</div>
-            <div class="task-footer">
-              <div class="task-assignee">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23f59e0b'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.35em' fill='white' font-family='Arial'%3EJL%3C/text%3E%3C/svg%3E" alt="Jordan Lee" class="assignee-avatar">
-                <span class="assignee-name">Jordan Lee</span>
-              </div>
-              <span class="priority-badge priority-low">Low</span>
-            </div>
-          </div>
-          
-          <div class="task-card">
-            <div class="task-title">Research competitor features</div>
-            <div class="task-footer">
-              <div class="task-assignee">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%234a5568'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.35em' fill='white' font-family='Arial'%3ESC%3C/text%3E%3C/svg%3E" alt="Sarah Chen" class="assignee-avatar">
-                <span class="assignee-name">Sarah Chen</span>
-              </div>
-              <span class="priority-badge priority-low">Low</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Cancelled Column -->
-      <div class="kanban-column">
-        <div class="column-header">
-          <div class="column-title">
-            Cancelled
-            <span class="column-count">1</span>
-          </div>
-          <button class="add-card-btn">
-            <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
-        </div>
-        <div class="cards-container">
-          <div class="task-card">
-            <div class="task-title">Implement payment gateway integration</div>
-            <div class="task-footer">
-              <div class="task-assignee">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23ef4444'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.35em' fill='white' font-family='Arial'%3ECR%3C/text%3E%3C/svg%3E" alt="Casey Rivera" class="assignee-avatar">
-                <span class="assignee-name">Casey Rivera</span>
-              </div>
-              <span class="priority-badge priority-medium">Medium</span>
-            </div>
-          </div>
+          {% empty %}
+          <div class="empty-state">No tasks</div>
+          {% endfor %}
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Table View -->
+  <div class="table-container" id="table-view" style="display: none;">
+    <h2>Projects</h2>
+    <table class="projects-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Tasks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for project in projects %}
+        <tr class="project-row" data-project-id="{{ project.id }}">
+          <td class="expand-cell">
+            <button class="expand-btn">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </td>
+          <td class="project-name">{{ project.name }}</td>
+          <td><span class="status-badge status-{{ project.status|lower }}">{{ project.status }}</span></td>
+          <td>{{ project.start_date|date:"M d, Y" }}</td>
+          <td>{{ project.end_date|date:"M d, Y" }}</td>
+          <td><span class="task-count">{{ project.tasks.count }} task{{ project.tasks.count|pluralize }}</span></td>
+        </tr>
+        <tr class="tasks-row" id="tasks-{{ project.id }}" style="display: none;">
+          <td colspan="6" class="tasks-cell">
+            <div class="tasks-wrapper">
+              <table class="tasks-table">
+                <thead>
+                  <tr>
+                    <th>Task</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th>Due Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for task in project.tasks.all %}
+                  <tr {% if task.id in overdue_task_ids %}class="late-row"{% endif %}>
+                    <td>{{ task.title }}</td>
+                    <td><span class="status-badge status-{{ task.status|lower }}">{{ task.status }}</span></td>
+                    <td>{% if task.assigned_to.get_full_name %}
+                       <span class="assignee-name">{{ task.assigned_to.get_full_name }}</span>
+                        {% else %}
+                        <span class="assignee-name">{{ task.assigned_to.username }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ task.due_date|date:"M d, Y" }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="4" class="empty-state">No tasks for this project.</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="empty-state">No projects found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </main>
-{% endblock %}
-{% block extra_scripts%}
-{% if messages %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-  {% for message in messages %}
-    Swal.fire({
-      toast: true,
-      icon: "{{ message.tags|default:'info' }}",
-      title: "{{ message|escapejs }}",
-      timer: 4000,
-      timerProgressBar: true,
-      showConfirmButton: false,
-      position: "top-end"
+document.addEventListener('DOMContentLoaded', function() {
+  // View Switching with localStorage caching and click dropdown
+  const viewSelector = document.querySelector('.view-selector');
+  const viewDropdown = document.querySelector('.view-dropdown');
+  const viewOptions = document.querySelectorAll('.view-option');
+  const kanbanView = document.getElementById('kanban-view');
+  const tableView = document.getElementById('table-view');
+  const currentViewText = document.getElementById('current-view');
+  
+  // Toggle dropdown on click
+  viewSelector.addEventListener('click', function(e) {
+    e.stopPropagation();
+    viewDropdown.classList.toggle('show');
+  });
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function() {
+    viewDropdown.classList.remove('show');
+  });
+  
+  // Load saved view preference
+  const savedView = localStorage.getItem('dashboard-view') || 'kanban';
+  
+  function setView(view) {
+    if (view === 'kanban') {
+      kanbanView.style.display = 'flex';
+      tableView.style.display = 'none';
+      currentViewText.textContent = 'Kanban View';
+    } else {
+      kanbanView.style.display = 'none';
+      tableView.style.display = 'block';
+      currentViewText.textContent = 'Table View';
+    }
+    localStorage.setItem('dashboard-view', view);
+  }
+  
+  // Set initial view from cache
+  setView(savedView);
+  
+  viewOptions.forEach(option => {
+    option.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const view = this.dataset.view;
+      setView(view);
+      viewDropdown.classList.remove('show');
     });
-  {% endfor %}
+  });
+
+  // Table Expand/Collapse
+ const projectRows = document.querySelectorAll('.project-row');
+
+  projectRows.forEach(row => {
+    const expandBtn = row.querySelector('.expand-btn');
+    const projectId = row.dataset.projectId;
+    const tasksRow = document.getElementById(`tasks-${projectId}`);
+
+    if (!expandBtn || !tasksRow) return;
+
+    function toggleRow() {
+      const isExpanded = tasksRow.style.display === 'table-row';
+
+      tasksRow.style.display = isExpanded ? 'none' : 'table-row';
+      expandBtn.classList.toggle('expanded', !isExpanded);
+    }
+
+    // Click anywhere on the row
+    row.addEventListener('click', toggleRow);
+
+    // Click arrow only (prevent double toggle)
+    expandBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      toggleRow();
+    });
+  });
+});
 </script>
-{% endif %}
 {% endblock %}

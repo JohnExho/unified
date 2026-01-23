@@ -417,6 +417,7 @@
   flex-wrap: wrap;
   padding-bottom: 24px;
   border-bottom: 1px solid var(--border-color);
+  justify-content: flex-end;
 }
 
 /* =========================

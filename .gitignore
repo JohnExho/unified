@@ -1,4 +1,4 @@
-media/avatar/*
+media/avatars/*
 .venv
 **/pr/
 *.sqlite3

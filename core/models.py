@@ -7,7 +7,9 @@ from .utils import encrypt, decrypt
 
 class CustomUser(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    middle_name = models.CharField(max_length=30, blank=True)
+    _first_name = models.CharField(max_length=255, blank=True, db_column='first_name')
+    _middle_name = models.CharField(max_length=255, blank=True, db_column='middle_name')
+    _last_name = models.CharField(max_length=255, blank=True, db_column='last_name')
     is_email_verified = models.BooleanField(default=False)
     bio = models.TextField(blank=True)
     _phone_number = models.CharField(max_length=255, blank=True, db_column='phone_number')
@@ -20,6 +22,31 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+
+    # Properties for automatic encryption/decryption of PII
+    @property
+    def first_name(self):
+        return decrypt(self._first_name) if self._first_name else ''
+
+    @first_name.setter
+    def first_name(self, value):
+        self._first_name = encrypt(value) if value else ''
+
+    @property
+    def middle_name(self):
+        return decrypt(self._middle_name) if self._middle_name else ''
+
+    @middle_name.setter
+    def middle_name(self, value):
+        self._middle_name = encrypt(value) if value else ''
+
+    @property
+    def last_name(self):
+        return decrypt(self._last_name) if self._last_name else ''
+
+    @last_name.setter
+    def last_name(self, value):
+        self._last_name = encrypt(value) if value else ''
 
     @property
     def phone_number(self):
