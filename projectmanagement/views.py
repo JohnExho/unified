@@ -114,6 +114,14 @@ def dashboard(request):
 def admin_dashboard(request):
     current_system = request.current_system  # set by middleware
 
+    ROLE_LABELS = {
+        'superadmin': 'Super Admin',
+        'admin': 'Admin',
+        'user': 'User',
+        # add other roles as needed
+    }
+
+
     # Fetch the Terms of Service for the current system
     tos_text = Systems.objects.filter(name=current_system).values_list('terms_of_service', flat=True).first() or ''
 
@@ -140,7 +148,7 @@ def admin_dashboard(request):
 
     # Fetch roles for users in this system
     system_roles = {
-        m.user_id: m.system_role
+            m.user_id: (m.system_role, ROLE_LABELS.get(m.system_role, m.system_role.title()))
         for m in SystemMembership.objects.filter(
             system_name=current_system,
             user__in=users_qs

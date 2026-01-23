@@ -67,15 +67,15 @@
                                 <td>{{ user.first_name }} {{ user.last_name }}</td>
                                 <td>{{ user.email }}</td>
                                 <td>
-                                    {% with role=system_roles|get_item:user.id %}
-                                        {% if role %}
-                                            <span class="role-badge role-{{ role|lower }}">
-                                                {{ role|capfirst }}
-                                            </span>
-                                        {% else %}
-                                            <span class="muted-text">Unknown</span>
-                                        {% endif %}
-                                    {% endwith %}
+                                {% with role_tuple=system_roles|get_item:user.id %}
+                                    {% if role_tuple %}
+                                        <span class="role-badge role-{{ role_tuple.0 }}">
+                                            {{ role_tuple.1 }}
+                                        </span>
+                                    {% else %}
+                                        <span class="muted-text">Unknown</span>
+                                    {% endif %}
+                                {% endwith %}
                                 </td>
                                 <td>
                                     <div class="action-buttons">
@@ -83,7 +83,7 @@
                                         <button class="btn-primary btn-sm manage-access-btn"
                                                 data-user-id="{{ user.id }}"
                                                 data-username="{{ user.username }}"
-                                                data-role="{% with role=system_roles|get_item:user.id %}{{ role|default:'user' }}{% endwith %}">
+                                                data-role="{{ role_tuple.0|default:'user' }}">
                                             Manage Access
                                         </button>
                                         {% endif%}
