@@ -944,7 +944,7 @@ def projects(request):
 @login_required
 @require_http_methods(["GET", "POST"])
 def edit_project(request, project_id):
-    """Edit a project"""
+    """Edit a project via modal or AJAX"""
     project = get_object_or_404(Project, id=project_id)
     current_system = request.current_system
     
@@ -957,15 +957,48 @@ def edit_project(request, project_id):
     is_admin = request.user.is_superuser or user_role in ['admin', 'superadmin']
     
     if not is_admin and project.created_by != request.user:
-        messages.error(request, "You don't have permission to edit this project.")
-        return redirect('projectmanagement:pm_projects')
+
+        return JsonResponse({'error': "You don't have permission to edit this project."}, status=403)
     
     if request.method == 'POST':
         project.name = request.POST.get('name', project.name)
         project.description = request.POST.get('description', project.description)
         project.status = request.POST.get('status', project.status)
-        project.start_date = request.POST.get('start_date', project.start_date)
-        project.end_date = request.POST.get('end_date', project.end_date)
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        
+        if start_date:
+            project.start_date = start_date
+        if end_date:
+            project.end_date = end_date
+        
+        # Validate start date is before end date
+        if project.start_date and project.end_date:
+            from datetime import date
+            # Convert to date objects if they're strings
+            if isinstance(project.start_date, str):
+                project_start_date = date.fromisoformat(project.start_date)
+            else:
+                project_start_date = project.start_date
+                
+            if isinstance(project.end_date, str):
+                project_end_date = date.fromisoformat(project.end_date)
+            else:
+                project_end_date = project.end_date
+            
+            if project_start_date > project_end_date:
+                error_message = f"Project start date ({project_start_date.strftime('%b %d, %Y')}) cannot be after end date ({project_end_date.strftime('%b %d, %Y')})."
+                
+                # Return JSON error for AJAX requests
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'error': error_message
+                    }, status=400)
+                
+                messages.error(request, error_message)
+                return redirect('projectmanagement:pm_projects')
+            
         project.save()
         
         Logs.objects.create(
@@ -980,8 +1013,37 @@ def edit_project(request, project_id):
             user_agent=get_user_agent(request),
         )
         
+        # Return JSON response for AJAX requests
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': f"Project '{project.name}' updated successfully.",
+                'project': {
+                    'id': str(project.id),
+                    'name': project.name,
+                    'description': project.description,
+                    'status': project.status,
+                    'start_date': project.start_date.isoformat() if hasattr(project.start_date, 'isoformat') else str(project.start_date),
+                    'end_date': project.end_date.isoformat() if hasattr(project.end_date, 'isoformat') else str(project.end_date),
+                }
+            })
+        
         messages.success(request, f"Project '{project.name}' updated successfully.")
         return redirect('projectmanagement:pm_projects')
+    
+    # GET request - return form data as JSON for modal
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'project': {
+                'id': str(project.id),
+                'name': project.name,
+                'description': project.description,
+                'status': project.status,
+                'start_date': project.start_date.isoformat(),
+                'end_date': project.end_date.isoformat(),
+            }
+        })
     
     return render(request, 'projectmanagement/pages/edit_project.html', {
         'project': project,
@@ -1028,7 +1090,7 @@ def delete_project(request, project_id):
 @login_required
 @require_http_methods(["GET", "POST"])
 def edit_task(request, task_id):
-    """Edit a task"""
+    """Edit a task via modal or AJAX"""
     task = get_object_or_404(Task, id=task_id)
     current_system = request.current_system
     
@@ -1040,16 +1102,44 @@ def edit_task(request, task_id):
     user_role = user_membership.system_role if user_membership else None
     is_admin = request.user.is_superuser or user_role in ['admin', 'superadmin']
     
-    if not is_admin and task.assigned_to != request.user:
-        messages.error(request, "You don't have permission to edit this task.")
-        return redirect('projectmanagement:pm_projects')
+    # Check if user is assigned to task
+    is_assigned = task.assigned_to.filter(id=request.user.id).exists()
+    
+    if not is_admin and not is_assigned:
+        return JsonResponse({'error': "You don't have permission to edit this task."}, status=403)
     
     if request.method == 'POST':
         task.title = request.POST.get('title', task.title)
         task.description = request.POST.get('description', task.description)
         task.status = request.POST.get('status', task.status)
         task.priority = request.POST.get('priority', task.priority)
-        task.due_date = request.POST.get('due_date', task.due_date)
+        due_date = request.POST.get('due_date')
+        
+        if due_date:
+            task.due_date = due_date
+        
+        # Validate due date against project end date
+        if task.due_date and task.project.end_date:
+            from datetime import date
+            # Convert to date object if it's a string
+            if isinstance(task.due_date, str):
+                task_due_date = date.fromisoformat(task.due_date)
+            else:
+                task_due_date = task.due_date
+            
+            if task_due_date > task.project.end_date:
+                error_message = f"Task due date ({task_due_date.strftime('%b %d, %Y')}) cannot exceed project end date ({task.project.end_date.strftime('%b %d, %Y')})."
+                
+                # Return JSON error for AJAX requests
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'error': error_message
+                    }, status=400)
+                
+                messages.error(request, error_message)
+                return redirect('projectmanagement:pm_projects')
+            
         task.save()
         
         Logs.objects.create(
@@ -1064,8 +1154,43 @@ def edit_task(request, task_id):
             user_agent=get_user_agent(request),
         )
         
+        # Return JSON response for AJAX requests
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            due_date_str = None
+            if task.due_date:
+                due_date_str = task.due_date.isoformat() if hasattr(task.due_date, 'isoformat') else str(task.due_date)
+            
+            return JsonResponse({
+                'success': True,
+                'message': f"Task '{task.title}' updated successfully.",
+                'task': {
+                    'id': str(task.id),
+                    'title': task.title,
+                    'description': task.description,
+                    'status': task.status,
+                    'priority': task.priority,
+                    'due_date': due_date_str,
+                }
+            })
+        
         messages.success(request, f"Task '{task.title}' updated successfully.")
         return redirect('projectmanagement:pm_projects')
+    
+    # GET request - return form data as JSON for modal
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'task': {
+                'id': str(task.id),
+                'title': task.title,
+                'description': task.description,
+                'status': task.status,
+                'priority': task.priority,
+                'due_date': task.due_date.isoformat() if task.due_date else None,
+                'project_id': str(task.project.id),
+                'project_name': task.project.name,
+            }
+        })
     
     return render(request, 'projectmanagement/pages/edit_task.html', {
         'task': task,

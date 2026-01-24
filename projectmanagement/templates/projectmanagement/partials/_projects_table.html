@@ -1,4 +1,5 @@
 {% load static %}
+{% load assignee_utils %}
 
 {% if projects %}
 <div class="projects-table-wrapper">
@@ -64,12 +65,12 @@
                 </td>
                 <td>
                     <div class="action-buttons" onclick="event.stopPropagation();">
-                        <a href="{% url 'projectmanagement:edit_project' project.id %}" class="btn-action btn-edit" title="Edit Project">
+                        <button type="button" class="btn-action btn-edit" title="Edit Project" onclick="openEditProjectModal('{{ project.id }}')">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                             </svg>
-                        </a>
+                        </button>
                         <form method="post" action="{% url 'projectmanagement:delete_project' project.id %}" style="display:inline" onclick="event.stopPropagation();">
                             {% csrf_token %}
                             <button type="submit" class="btn-action btn-delete" title="Delete Project" onclick="return confirm('Delete this project and all its tasks?');">
@@ -83,13 +84,14 @@
                 </td>
             </tr>
             <tr class="tasks-row" id="tasks-{{ project.id }}" style="display: none;">
-                <td colspan="7" class="tasks-cell">
+                <td colspan="12" class="tasks-cell">
                     <div class="tasks-wrapper">
                         <table class="tasks-table">
                             <thead>
                                 <tr>
                                     <th>Task</th>
                                     <th>Status</th>
+                                    <th>Priority</th>
                                     <th>Assigned To</th>
                                     <th>Due Date</th>
                                     <th style="width: 180px;">Actions</th>
@@ -101,25 +103,39 @@
                                     <td>{{ task.title }}</td>
                                     <td><span class="status-badge status-{{ task.status|lower }}">{{ task.get_status_display }}</span></td>
                                     <td>
-                                        {% if task.assigned_to %}
-                                            {% if task.assigned_to.get_full_name %}
-                                                <span class="assignee-name">{{ task.assigned_to.get_full_name }}</span>
+                                        <span class="priority-badge priority-{{ task.priority }}">
+                                            P{{ task.priority }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="assignee-list">
+                                            {% task_assignee_user_list task as users %}
+                                            {% if users %}
+                                                {% for user in users %}
+                                                    <span class="assignee-badge">{{ user.username }}</span>
+                                                {% endfor %}
                                             {% else %}
-                                                <span class="assignee-name">{{ task.assigned_to.username }}</span>
+                                                <span class="muted-text">Unassigned</span>
                                             {% endif %}
-                                        {% else %}
-                                            <span class="muted-text">Unassigned</span>
-                                        {% endif %}
+                                        </div>
                                     </td>
                                     <td>{{ task.due_date|date:"M d, Y" }}</td>
                                     <td>
                                         <div class="action-buttons">
-                                            <a href="{% url 'projectmanagement:edit_task' task.id %}" class="btn-action btn-edit" title="Edit Task">
+                                            <button type="button" class="btn-action btn-view-assignees" title="View Assignees" onclick="openAssigneesModal('{{ task.id }}')"> 
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="9" cy="7" r="4"></circle>
+                                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                            </svg>
+                                            </button>
+                                            <button type="button" class="btn-action btn-edit" title="Edit Task" onclick="openEditTaskModal('{{ task.id }}')">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                                 </svg>
-                                            </a>
+                                            </button>
                                             {% if task.status != 'completed' %}
                                             <form method="post" action="{% url 'projectmanagement:complete_task' task.id %}" style="display:inline">
                                                 {% csrf_token %}
@@ -144,7 +160,7 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="5" class="empty-state">No tasks for this project.</td>
+                                    <td colspan="6" class="empty-state">No tasks for this project.</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -203,6 +219,57 @@
     {% endif %}
   </div>
 </div>
+
+<style>
+.priority-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.priority-badge.priority-1 {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.priority-badge.priority-2 {
+    background-color: #fecaca;
+    color: #7f1d1d;
+}
+
+.priority-badge.priority-3 {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.priority-badge.priority-4 {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.priority-badge.priority-5 {
+    background-color: #d1d5db;
+    color: #374151;
+}
+
+.assignee-list {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.assignee-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: #e0e7ff;
+    color: #3730a3;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+</style>
 {% endif %}
 
 {% else %}

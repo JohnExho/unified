@@ -43,6 +43,19 @@ class Project(models.Model):
             ("access_project_management_system", "Can access Project Management system"),
         ]
 
+    def clean(self):
+        # Validate that start_date is before end_date
+        if self.start_date and self.end_date:
+            if self.start_date > self.end_date:
+                raise ValidationError({
+                    'start_date': f"Project start date ({self.start_date}) cannot be after end date ({self.end_date})."
+                })
+
+    def save(self, *args, **kwargs):
+        # Ensure clean() runs on save
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 

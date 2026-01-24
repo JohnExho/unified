@@ -1,0 +1,336 @@
+<!-- Edit Project Modal -->
+<div id="edit-project-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Project</h2>
+            <button type="button" class="modal-close" aria-label="Close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <form id="edit-project-form" method="post" enctype="application/x-www-form-urlencoded">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="project-name">Project Name</label>
+                <input 
+                    type="text" 
+                    id="project-name" 
+                    name="name" 
+                    required
+                    placeholder="Enter project name"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="project-description">Description</label>
+                <textarea 
+                    id="project-description" 
+                    name="description" 
+                    rows="4"
+                    placeholder="Enter project description"
+                ></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="project-status">Status</label>
+                    <select id="project-status" name="status" required>
+                        <option value="planning">Planning</option>
+                        <option value="active">Active</option>
+                        <option value="on_hold">On Hold</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="project-start-date">Start Date</label>
+                    <input 
+                        type="date" 
+                        id="project-start-date" 
+                        name="start_date" 
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="project-end-date">End Date</label>
+                    <input 
+                        type="date" 
+                        id="project-end-date" 
+                        name="end_date" 
+                        required
+                    >
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal.show {
+    display: flex !important;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #1f2937;
+}
+
+#edit-project-form {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+}
+
+.btn-secondary {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editProjectModal = document.getElementById('edit-project-modal');
+    const editProjectForm = document.getElementById('edit-project-form');
+    const closeButtons = editProjectModal.querySelectorAll('.modal-close');
+
+    // Close modal
+    closeButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            editProjectModal.classList.remove('show');
+        });
+    });
+
+    // Close on outside click
+    editProjectModal.addEventListener('click', function(e) {
+        if (e.target === editProjectModal) {
+            editProjectModal.classList.remove('show');
+        }
+    });
+
+    // Form submission
+    editProjectForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(editProjectForm);
+        const projectId = editProjectForm.dataset.projectId;
+
+        fetch(`/projectmanagement/projects/${projectId}/edit/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData,
+        })
+        .then(response => {
+            return response.json().then(data => {
+                return { ok: response.ok, status: response.status, data: data };
+            });
+        })
+        .then(result => {
+            if (result.ok && result.data.success) {
+                editProjectModal.classList.remove('show');
+                // Show success toast using SweetAlert2
+                Swal.fire({
+                    icon: 'success',
+                    title: result.data.message || 'Project updated successfully',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                // Show error message
+                Swal.fire({
+                    icon: 'error',
+                    title: result.data.error || 'Failed to update project',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'An error occurred while updating the project',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
+        });
+    });
+
+    // Expose function to open modal
+    window.openEditProjectModal = function(projectId) {
+        editProjectForm.dataset.projectId = projectId;
+
+        // Fetch project data
+        fetch(`/projectmanagement/projects/${projectId}/edit/`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const project = data.project;
+                document.getElementById('project-name').value = project.name;
+                document.getElementById('project-description').value = project.description || '';
+                document.getElementById('project-status').value = project.status;
+                document.getElementById('project-start-date').value = project.start_date;
+                document.getElementById('project-end-date').value = project.end_date;
+
+                editProjectModal.classList.add('show');
+            } else {
+                alert('Error: ' + (data.error || 'Failed to load project'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while loading the project.');
+        });
+    };
+});
+</script>

@@ -13,6 +13,8 @@
 <body>
     {% include 'projectmanagement/components/sidebar.html' %} 
     {% block content %}{% endblock %}
+    {% include 'projectmanagement/modals/edit_project_modal.html' %}
+    {% include 'projectmanagement/modals/edit_task_modal.html' %}
     <script>
         window.DJANGO_MESSAGES = [
         {% for message in messages %}
