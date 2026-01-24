@@ -1,13 +1,18 @@
 from django.shortcuts import render, redirect,  get_object_or_404
 from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
+from django.contrib.auth import update_session_auth_hash
 from .models import Project, Task
-from core.models import Logs, SystemMembership, Systems
+from core.models import Logs, SystemMembership, Systems, Address
 from core.utils import get_client_ip, get_user_agent, decrypt, encrypt
+import uuid
 from django.contrib import messages
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.template.loader import render_to_string
+from django.http import JsonResponse
 
 now = timezone.now()
 User = get_user_model()
@@ -23,14 +28,43 @@ def dashboard(request):
     ).exists():
         return render(request, '404.html', status=404)
 
+    # ---- Get current user's role ----
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin_or_superadmin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+
+    # ---- Get search query ----
+    search_query = request.GET.get('search', '').strip()
+
     # ---- Base querysets ----
     projects = Project.objects.prefetch_related("tasks")
-    all_tasks = Task.objects.select_related("assigned_to", "project")
-
-    # ---- Apply visibility scope ----
-    if not request.user.is_superuser:
+    all_tasks = (
+        Task.objects
+        .select_related("project")
+        .prefetch_related("assigned_to", "assigned_team__members")
+    )
+    
+    # ---- Apply visibility scope based on user role ----
+    if not is_admin_or_superadmin:
+        # Regular users only see tasks assigned to them
         all_tasks = all_tasks.filter(assigned_to=request.user)
         projects = projects.filter(tasks__assigned_to=request.user).distinct()
+    # Admins and superusers can see all projects and tasks (no filtering)
+
+    # ---- Apply search filter ----
+    if search_query:
+        all_tasks = all_tasks.filter(
+            Q(title__icontains=search_query) |
+            Q(project__name__icontains=search_query)
+        )
+        
+        projects = projects.filter(
+            Q(name__icontains=search_query) |
+            Q(tasks__title__icontains=search_query)
+        ).distinct()
 
     # ---- Time-aware project states ----
     active_projects = projects.filter(
@@ -60,56 +94,78 @@ def dashboard(request):
     active_tasks_count = active_tasks.count()
 
     # ---- Assignment stats ----
-    if request.user.is_superuser:
-        assigned_projects_count = projects.count()
-        assigned_tasks_count = all_tasks.count()
-    else:
-        assigned_projects_count = active_projects.count()
-        assigned_tasks_count = all_tasks.count()
+    assigned_projects_count = projects.count()
+    assigned_tasks_count = all_tasks.count()
 
     # ---- Late/Overdue stats ----
     late_projects_count = past_projects.count()
     late_tasks_count = overdue_tasks.count()
 
     # ---- Kanban buckets ----
-    todo_tasks = all_tasks.filter(
-        status='todo'
-    )
+    # Normalize status to lowercase for consistent matching
+    todo_tasks = all_tasks.filter(status='todo')
+    in_progress_tasks = all_tasks.filter(status='in_progress')
+    completed_tasks = all_tasks.filter(status='completed')
 
-    in_progress_tasks = all_tasks.filter(
-        status='in_progress'
-    )
+    # ---- Pagination ----
+    paginator_projects = Paginator(projects, 5)  # 5 projects per page
+    page_number = request.GET.get('page', 1)
+    projects_page = paginator_projects.get_page(page_number)
 
-    completed_tasks = all_tasks.filter(
-        status='completed'
-    )
+    context = {
+        'projects': projects_page,
+        'projects_paginator': paginator_projects,
+        'projects_page_number': page_number,
+        'current_system': current_system,
+        'now': now,
+        # Stats
+        'active_projects_count': active_projects_count,
+        'active_tasks_count': active_tasks_count,
+        'assigned_projects_count': assigned_projects_count,
+        'assigned_tasks_count': assigned_tasks_count,
+        'late_projects_count': late_projects_count,
+        'late_tasks_count': late_tasks_count,
+        # Kanban
+        'todo_tasks': todo_tasks,
+        'in_progress_tasks': in_progress_tasks,
+        'completed_tasks': completed_tasks,
+        # Optional future use
+        'overdue_task_ids': set(overdue_tasks.values_list('id', flat=True)),
+        'past_projects': past_projects,
+        'search_query': search_query,
+    }
 
+    # ---- Handle AJAX requests ----
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        kanban_html = render_to_string(
+            'projectmanagement/partials/_kanban_view.html',
+            context,
+            request=request
+        )
+        table_html = render_to_string(
+            'projectmanagement/partials/_table_view.html',
+            context,
+            request=request
+        )
+        stats_html = render_to_string(
+            'projectmanagement/partials/_stats.html',
+            context,
+            request=request
+        )
+        
+        return JsonResponse({
+            'kanban_html': kanban_html,
+            'table_html': table_html,
+            'stats_html': stats_html,
+            'search_query': search_query,
+        })
+
+    # ---- Regular page load ----
     return render(
         request,
         'projectmanagement/pages/dashboard.html',
-        {
-            'projects': projects,
-            'current_system': current_system,
-            'now': now,
-            # Stats
-            'active_projects_count': active_projects_count,
-            'active_tasks_count': active_tasks_count,
-            'assigned_projects_count': assigned_projects_count,
-            'assigned_tasks_count': assigned_tasks_count,
-            'late_projects_count': late_projects_count,
-            'late_tasks_count': late_tasks_count,
-
-            # Kanban
-            'todo_tasks': todo_tasks,
-            'in_progress_tasks': in_progress_tasks,
-            'completed_tasks': completed_tasks,
-
-            # Optional future use
-            'overdue_task_ids': set(overdue_tasks.values_list('id', flat=True)),
-            'past_projects': past_projects,
-        }
+        context
     )
-
 
 def admin_dashboard(request):
     current_system = request.current_system  # set by middleware
@@ -121,9 +177,11 @@ def admin_dashboard(request):
         # add other roles as needed
     }
 
-
     # Fetch the Terms of Service for the current system
     tos_text = Systems.objects.filter(name=current_system).values_list('terms_of_service', flat=True).first() or ''
+
+    # ---- Get search query ----
+    search_query = request.GET.get('search', '').strip()
 
     # Get users based on superuser or normal admin role
     if request.user.is_superuser:
@@ -146,17 +204,37 @@ def admin_dashboard(request):
             .order_by('-date_joined')
         )
 
+    # ---- Apply search filter ----
+    if search_query:
+        q_lower = search_query.lower()
+        matched_ids = []
+
+        # Names are decrypted via model properties; email is plaintext.
+        for u in users_qs:
+            fields = [
+                str(getattr(u, 'username', '') or ''),
+                (getattr(u, 'first_name', '') or ''),
+                (getattr(u, 'last_name', '') or ''),
+                str(getattr(u, 'email', '') or ''),
+            ]
+
+            if any(q_lower in (f or '').lower() for f in fields):
+                matched_ids.append(u.id)
+
+        users_qs = users_qs.filter(id__in=matched_ids)
+
     # Fetch roles for users in this system
     system_roles = {
-            m.user_id: (m.system_role, ROLE_LABELS.get(m.system_role, m.system_role.title()))
+        m.user_id: (m.system_role, ROLE_LABELS.get(m.system_role, m.system_role.title()))
         for m in SystemMembership.objects.filter(
             system_name=current_system,
             user__in=users_qs
         )
     }
 
-    paginator = Paginator(users_qs, 10)
-    page_number = request.GET.get('page')
+    paginator = Paginator(users_qs, 2)
+    # Honor requested page even when searching
+    page_number = request.GET.get('page') or 1
     users = paginator.get_page(page_number)
 
     current_user_role = SystemMembership.objects.filter(
@@ -164,17 +242,35 @@ def admin_dashboard(request):
         system_name=current_system
     ).values_list('system_role', flat=True).first()
 
+    context = {
+        'users': users,
+        'total_users': users_qs.count(),
+        'current_system': current_system,
+        'system_roles': system_roles,
+        'current_user_role': current_user_role,
+        'tos_text': tos_text,
+        'search_query': search_query,
+    }
+
+    # ---- Handle AJAX requests ----
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        user_list_html = render_to_string(
+            'projectmanagement/partials/admin/_user_access_view.html',
+            context,
+            request=request
+        )
+        
+        return JsonResponse({
+            'user_list_html': user_list_html,
+            'total_users': users_qs.count(),
+            'search_query': search_query,
+        })
+
+    # ---- Regular page load ----
     return render(
         request,
         'projectmanagement/pages/admin/dashboard.html',
-        {
-            'users': users,
-            'total_users': users_qs.count(),
-            'current_system': current_system,
-            'system_roles': system_roles,
-            'current_user_role': current_user_role,
-            'tos_text': tos_text,  # Pass TOS to template
-        }
+        context
     )
 
 
@@ -291,7 +387,7 @@ def delete_user(request, user_id):
             action='DELETE',
             target_model='User',
             target_id=user_id,
-            description=f"Deleted user '{username}'",
+            description=f"Deleted user '{request.user.username}'",
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
         )
@@ -397,37 +493,89 @@ def update_tos(request):
     messages.success(request, "Terms of Service updated successfully.")
     return redirect("projectmanagement:pm_admin_dashboard") 
 
+
 def system_logs(request):
     current_system = request.current_system  # set by middleware
 
-    # Superuser bypass
+    # Access control
     if not request.user.is_superuser and not SystemMembership.objects.filter(
-        user=request.user, system_name=current_system
+        user=request.user,
+        system_name=current_system
     ).exists():
         return render(request, '404.html', status=404)
 
-    logs_qs = Logs.objects.filter(system_name=current_system).order_by('-created_at')
+    # ---- Get search query ----
+    search_query = request.GET.get('search', '').strip()
+
+    logs_qs = Logs.objects.filter(system_name=current_system)
+
+    # 🔒 Hide superuser logs from non-superusers
+    if not request.user.is_superuser:
+        logs_qs = logs_qs.filter(
+            Q(user__is_superuser=False) | Q(user__isnull=True)
+        )
+
+    # ---- Apply search filter ----
+    if search_query:
+        if request.user.is_superuser:
+            logs_qs = logs_qs.filter(
+                Q(user__username__icontains=search_query) |
+                Q(action__icontains=search_query) |
+                Q(target_model__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(hidden_description__icontains=search_query) |
+                Q(ip_address__icontains=search_query) |
+                Q(user_agent__icontains=search_query)
+            )
+        else:
+            # For non-superusers, only search visible fields
+            logs_qs = logs_qs.filter(
+                Q(user__username__icontains=search_query) |
+                Q(action__icontains=search_query) |
+                Q(target_model__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(ip_address__icontains=search_query) |
+                Q(user_agent__icontains=search_query)
+            )
+
+    logs_qs = logs_qs.order_by('-created_at')
 
     paginator = Paginator(logs_qs, 10)
-    page_number = request.GET.get('page')
+    # Honor requested page even when searching
+    page_number = request.GET.get('page') or 1
     logs = paginator.get_page(page_number)
-
 
     current_user_role = SystemMembership.objects.filter(
         user=request.user,
         system_name=current_system
     ).values_list('system_role', flat=True).first()
 
+    context = {
+        'logs': logs,
+        'total_logs': logs_qs.count(),
+        'current_system': current_system,
+        'current_user_role': current_user_role,
+        'search_query': search_query,
+    }
+
+    # ---- Handle AJAX requests ----
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        logs_list_html = render_to_string(
+            'projectmanagement/partials/admin/_system_logs_table.html',
+            context,
+            request=request
+        )
+
+        return JsonResponse({
+            'logs_list_html': logs_list_html,
+            'total_logs': logs_qs.count(),
+            'search_query': search_query,
+        })
 
     return render(
         request,
         'projectmanagement/pages/admin/system_logs.html',
-        {
-            'logs': logs,
-            'total_logs': logs_qs.count(),
-            'current_system': current_system,
-            'current_user_role': current_user_role,
-        }
+        context
     )
 
 @login_required
@@ -565,7 +713,7 @@ def delete_address(request, address_id):
             action='DELETE',
             target_model='Address',
             target_id=address.id,
-            description=f"Deleted address for user '{user.username}'",
+            description=f"Deleted address for user '{request.user.username}'",
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
         )
@@ -703,3 +851,297 @@ def change_password(request):
 
     # fallback for GET requests
     return redirect("projectmanagement:pm_settings")
+
+@login_required
+def projects(request):
+    """
+    Display user's projects in a table format with search and pagination.
+    """
+    current_system = request.current_system
+
+    # ---- Access control ----
+    if not request.user.is_superuser and not SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).exists():
+        return render(request, '404.html', status=404)
+
+    # ---- Get current user's role ----
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin_or_superadmin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+
+    # ---- Get search query ----
+    search_query = request.GET.get('search', '').strip()
+
+    # ---- Base queryset ----
+    projects_qs = Project.objects.prefetch_related("tasks").all()
+    
+    # ---- Apply visibility scope based on user role ----
+    if not is_admin_or_superadmin:
+        # Regular users only see projects with tasks assigned to them
+        projects_qs = projects_qs.filter(tasks__assigned_to=request.user).distinct()
+    # Admins and superusers can see all projects
+
+    # ---- Apply search filter ----
+    if search_query:
+        projects_qs = projects_qs.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(tasks__title__icontains=search_query)
+        ).distinct()
+
+    # Order by start date
+    projects_qs = projects_qs.order_by('-start_date')
+
+    # ---- Pagination ----
+    paginator = Paginator(projects_qs, 5)  # 5 projects per page
+    page_number = request.GET.get('page') or 1
+    projects = paginator.get_page(page_number)
+
+    # ---- Calculate progress for each project ----
+    for project in projects:
+        total_tasks = project.tasks.count()
+        completed_tasks = project.tasks.filter(status='completed').count()
+        project.progress_percentage = (completed_tasks * 100 // total_tasks) if total_tasks > 0 else 0
+
+    current_user_role = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).values_list('system_role', flat=True).first()
+
+    context = {
+        'projects': projects,
+        'projects_paginator': paginator,
+        'total_projects': projects_qs.count(),
+        'current_system': current_system,
+        'current_user_role': current_user_role,
+        'search_query': search_query,
+        'now': now,
+    }
+
+    # ---- Handle AJAX requests ----
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        projects_table_html = render_to_string(
+            'projectmanagement/partials/_projects_table.html',
+            context,
+            request=request
+        )
+        # Return HTML directly, not JSON for this simple case
+        from django.http import HttpResponse
+        return HttpResponse(projects_table_html)
+
+    # ---- Regular page load ----
+    return render(
+        request,
+        'projectmanagement/pages/projects.html',
+        context
+    )
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def edit_project(request, project_id):
+    """Edit a project"""
+    project = get_object_or_404(Project, id=project_id)
+    current_system = request.current_system
+    
+    # Check permissions
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+    
+    if not is_admin and project.created_by != request.user:
+        messages.error(request, "You don't have permission to edit this project.")
+        return redirect('projectmanagement:pm_projects')
+    
+    if request.method == 'POST':
+        project.name = request.POST.get('name', project.name)
+        project.description = request.POST.get('description', project.description)
+        project.status = request.POST.get('status', project.status)
+        project.start_date = request.POST.get('start_date', project.start_date)
+        project.end_date = request.POST.get('end_date', project.end_date)
+        project.save()
+        
+        Logs.objects.create(
+            user=request.user,
+            system_name='projectmanagement',
+            action='UPDATE',
+            target_model='Project',
+            target_id=project.id,
+            description=f"Updated project '{project.name}'",
+            hidden_description=f"User '{request.user.username}' updated project '{project.name}'",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+        
+        messages.success(request, f"Project '{project.name}' updated successfully.")
+        return redirect('projectmanagement:pm_projects')
+    
+    return render(request, 'projectmanagement/pages/edit_project.html', {
+        'project': project,
+        'current_system': current_system,
+    })
+
+@login_required
+@require_http_methods(["POST"])
+def delete_project(request, project_id):
+    """Delete a project"""
+    project = get_object_or_404(Project, id=project_id)
+    current_system = request.current_system
+    
+    # Check permissions
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+    
+    if not is_admin and project.created_by != request.user:
+        messages.error(request, "You don't have permission to delete this project.")
+        return redirect('projectmanagement:pm_projects')
+    
+    project_name = project.name
+    project.delete()
+    
+    Logs.objects.create(
+        user=request.user,
+        system_name='projectmanagement',
+        action='DELETE',
+        target_model='Project',
+        target_id=project_id,
+        description=f"Deleted project '{project_name}'",
+        hidden_description=f"User '{request.user.username}' deleted project '{project_name}'",
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+    
+    messages.success(request, f"Project '{project_name}' deleted successfully.")
+    return redirect('projectmanagement:pm_projects')
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def edit_task(request, task_id):
+    """Edit a task"""
+    task = get_object_or_404(Task, id=task_id)
+    current_system = request.current_system
+    
+    # Check permissions
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+    
+    if not is_admin and task.assigned_to != request.user:
+        messages.error(request, "You don't have permission to edit this task.")
+        return redirect('projectmanagement:pm_projects')
+    
+    if request.method == 'POST':
+        task.title = request.POST.get('title', task.title)
+        task.description = request.POST.get('description', task.description)
+        task.status = request.POST.get('status', task.status)
+        task.priority = request.POST.get('priority', task.priority)
+        task.due_date = request.POST.get('due_date', task.due_date)
+        task.save()
+        
+        Logs.objects.create(
+            user=request.user,
+            system_name='projectmanagement',
+            action='UPDATE',
+            target_model='Task',
+            target_id=task.id,
+            description=f"Updated task '{task.title}' in project '{task.project.name}'",
+            hidden_description=f"User '{request.user.username}' updated task '{task.title}' in project '{task.project.name}'",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+        
+        messages.success(request, f"Task '{task.title}' updated successfully.")
+        return redirect('projectmanagement:pm_projects')
+    
+    return render(request, 'projectmanagement/pages/edit_task.html', {
+        'task': task,
+        'current_system': current_system,
+    })
+
+@login_required
+@require_http_methods(["POST"])
+def delete_task(request, task_id):
+    """Delete a task"""
+    task = get_object_or_404(Task, id=task_id)
+    current_system = request.current_system
+    
+    # Check permissions
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+    
+    if not is_admin and task.assigned_to != request.user:
+        messages.error(request, "You don't have permission to delete this task.")
+        return redirect('projectmanagement:pm_projects')
+    
+    task_title = task.title
+    project_name = task.project.name
+    task.delete()
+    
+    Logs.objects.create(
+        user=request.user,
+        system_name='projectmanagement',
+        action='DELETE',
+        target_model='Task',
+        target_id=task_id,
+        description=f"Deleted task '{task_title}' from project '{project_name}'",
+        hidden_description=f"User '{request.user.username}' deleted task '{task_title}' from project '{project_name}'",
+        user_agent=get_user_agent(request),
+    )
+    
+    messages.success(request, f"Task '{task_title}' deleted successfully.")
+    return redirect('projectmanagement:pm_projects')
+
+@login_required
+@require_http_methods(["POST"])
+def complete_task(request, task_id):
+    """Mark a task as completed"""
+    task = get_object_or_404(Task, id=task_id)
+    current_system = request.current_system
+    
+    # Check permissions
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+    
+    if not is_admin and task.assigned_to != request.user:
+        messages.error(request, "You don't have permission to complete this task.")
+        return redirect('projectmanagement:pm_projects')
+    
+    task.status = 'completed'
+    task.save()
+    
+    Logs.objects.create(
+        user=request.user,
+        system_name='projectmanagement',
+        action='UPDATE',
+        target_model='Task',
+        target_id=task.id,
+        description=f"Marked task '{task.title}' as completed in project '{task.project.name}'",
+        hidden_description=f"User '{request.user.username}' marked task '{task.title}' as completed in project '{task.project.name}'",
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+    
+    messages.success(request, f"Task '{task.title}' marked as completed.")
+    return redirect('projectmanagement:pm_projects')

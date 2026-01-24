@@ -4,19 +4,59 @@
 ========================= 
 */
 
-/* Profile Container */
-.profile-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1rem;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.profile-header {
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Top Bar */
+.settings-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 20px 32px;
   background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 2rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.settings-top-bar h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 4px 0;
+}
+
+.settings-top-bar p {
+  color: #718096;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Profile Container */
+.profile-container {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+  gap: 24px;
+  align-items: start;
+  margin-bottom: 0.5rem;
 }
 
 .profile-header h1 {
@@ -36,7 +76,8 @@
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 2rem;
+  margin-bottom: 0;
+  height: 100%;
 }
 
 .card-title {
@@ -48,24 +89,33 @@
   border-bottom: 2px solid #e2e8f0;
 }
 
+.card-subtitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 1.25rem 0 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
 /* Avatar Section */
 .profile-avatar {
   display: flex;
   align-items: center;
-  gap: 2rem;
-  margin-top: 1rem;
+  gap: 2.5rem;
+  margin-top: 1.25rem;
 }
 
 .avatar-circle {
-  width: 100px;
-  height: 100px;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea, #764ba2);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 2.5rem;
+  font-size: 2.75rem;
   font-weight: 600;
   background-size: cover;
   background-position: center;
@@ -89,8 +139,8 @@
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: 1.75rem;
+  margin-bottom: 1.75rem;
 }
 
 .form-group {
@@ -103,16 +153,17 @@
   font-weight: 500;
   margin-bottom: 0.5rem;
   color: #2d3748;
+  /* margin-top: 1.5rem; */
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 0.625rem 0.75rem;
+  padding: 0.75rem 0.9rem;
   border: 1px solid #cbd5e0;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: 8px;
+  font-size: 0.9375rem;
   transition: all 0.2s;
   font-family: inherit;
   background-color: white;
@@ -139,7 +190,7 @@
 
 .form-group textarea {
   min-height: 100px;
-  resize: vertical;
+  resize: none;
   line-height: 1.5;
 }
 
@@ -208,12 +259,28 @@
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
+  gap: 1.25rem;
   margin-top: 1.5rem;
-  padding-top: 1.5rem;
+  padding-top: 1.25rem;
   border-top: 1px solid #e2e8f0;
 }
 /* Address Block */
+.address-section{
+  margin-top: 3rem;
+}
+
+.address-section .form-group :nth-child(1){
+  margin-top: 2rem;
+}
+
+.address-section .form-group :nth-last-child{
+  margin-top: 5rem;
+}
+
+.address-section label{
+  margin-top: 2rem;
+}
+
 .address-block {
   margin-top: 1rem;
   padding: 1rem;
@@ -240,6 +307,12 @@
 
 .address-block + .address-block {
   margin-top: 1rem;
+}
+
+.change-password-card {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  height: auto;
 }
 
 /* Responsive Design */
@@ -295,6 +368,12 @@
 
   .address-block .form-actions .btn {
     width: 100%;
+  }
+}
+
+@media (min-width: 1100px) {
+  .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

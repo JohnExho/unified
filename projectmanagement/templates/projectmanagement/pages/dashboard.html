@@ -49,7 +49,15 @@
           <circle cx="11" cy="11" r="8"></circle>
           <path d="M21 21l-4.35-4.35"></path>
         </svg>
-        <input type="text" placeholder="Search tasks..." id="task-search">
+        <input type="text" placeholder="Search tasks..." id="task-search" value="{{ search_query }}">
+        {% if search_query %}
+        <button class="clear-search-btn" id="clear-search" title="Clear search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        {% endif %}
       </div>
       <button class="new-task-btn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -63,227 +71,22 @@
 
   <!-- Stats Cards -->
   <div class="stats-container">
-    <div class="stat-card">
-      <div class="stat-icon stat-icon-projects">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <div class="stat-label">Projects</div>
-        <div class="stat-value">{{ active_projects_count }}</div>
-      </div>
-    </div>
-    
-    <div class="stat-card">
-      <div class="stat-icon stat-icon-tasks">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 11l3 3L22 4"></path>
-          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <div class="stat-label">Tasks</div>
-        <div class="stat-value">{{ active_tasks_count }}</div>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon stat-icon-late-projects">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <polyline points="12 6 12 12 16 14"></polyline>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <div class="stat-label">Late Projects</div>
-        <div class="stat-value">{{ late_projects_count }}</div>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon stat-icon-late-tasks">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <polyline points="12 6 12 12 16 14"></polyline>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <div class="stat-label">Late Tasks</div>
-        <div class="stat-value">{{ late_tasks_count }}</div>
-      </div>
-    </div>
+    {% include 'projectmanagement/partials/_stats.html' %}
   </div>
   
   <!-- Kanban View -->
   <div class="kanban-container" id="kanban-view">
-    <div class="kanban-board">
-      <div class="kanban-column">
-        <div class="column-header">
-          <div class="column-title">
-            <span>To Do</span>
-            <span class="column-count">{{ todo_tasks|length }}</span>
-          </div>
-        </div>
-        <div class="cards-container">
-          {% for task in todo_tasks %}
-          <div class="task-card {% if task.id in overdue_task_ids %}late{% endif %}">
-            <div class="task-title">{{ task.title }}</div>
-            {% if task.id in overdue_task_ids %}<div class="late-badge">Late</div>{% endif %}
-            <div class="task-footer">
-              <div class="task-assignee">
-              {% if task.assigned_to.get_full_name %}
-                <span class="assignee-name">{{ task.assigned_to.get_full_name }}</span>
-              {% else %}
-                <span class="assignee-name">{{ task.assigned_to.username }}</span>
-              {% endif %}
-              </div>
-              <span class="priority-badge priority-{{ task.priority|lower }}">{{ task.priority }}</span>
-            </div>
-          </div>
-          {% empty %}
-          <div class="empty-state">No tasks</div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="kanban-column">
-        <div class="column-header">
-          <div class="column-title">
-            <span>In Progress</span>
-            <span class="column-count">{{ in_progress_tasks|length }}</span>
-          </div>
-        </div>
-        <div class="cards-container">
-          {% for task in in_progress_tasks %}
-          <div class="task-card {% if task.id in overdue_task_ids %}late{% endif %}">
-            <div class="task-title">{{ task.title }}</div>
-            {% if task.id in overdue_task_ids %}<div class="late-badge">Late</div>{% endif %}
-            <div class="task-footer">
-              <div class="task-assignee">
-              {% if task.assigned_to.get_full_name %}
-                <span class="assignee-name">{{ task.assigned_to.get_full_name }}</span>
-              {% else %}
-                <span class="assignee-name">{{ task.assigned_to.username }}</span>
-              {% endif %}
-              </div>
-              <span class="priority-badge priority-{{ task.priority|lower }}">{{ task.priority }}</span>
-            </div>
-          </div>
-          {% empty %}
-          <div class="empty-state">No tasks</div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="kanban-column">
-        <div class="column-header">
-          <div class="column-title">
-            <span>Completed</span>
-            <span class="column-count">{{ completed_tasks|length }}</span>
-          </div>
-        </div>
-        <div class="cards-container">
-          {% for task in completed_tasks %}
-          <div class="task-card {% if task.id in overdue_task_ids %}late{% endif %}">
-            <div class="task-title">{{ task.title }}</div>
-            {% if task.id in overdue_task_ids %}<div class="late-badge">Late</div>{% endif %}
-            <div class="task-footer">
-              <div class="task-assignee">
-             {% if task.assigned_to.get_full_name %}
-                <span class="assignee-name">{{ task.assigned_to.get_full_name }}</span>
-              {% else %}
-                <span class="assignee-name">{{ task.assigned_to.username }}</span>
-              {% endif %}
-              </div>
-              <span class="priority-badge priority-{{ task.priority|lower }}">{{ task.priority }}</span>
-            </div>
-          </div>
-          {% empty %}
-          <div class="empty-state">No tasks</div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
+    {% include 'projectmanagement/partials/_kanban_view.html' %}
   </div>
 
   <!-- Table View -->
   <div class="table-container" id="table-view" style="display: none;">
-    <h2>Projects</h2>
-    <table class="projects-table">
-      <thead>
-        <tr>
-          <th></th>
-          <th>Name</th>
-          <th>Status</th>
-          <th>Start</th>
-          <th>End</th>
-          <th>Tasks</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for project in projects %}
-        <tr class="project-row" data-project-id="{{ project.id }}">
-          <td class="expand-cell">
-            <button class="expand-btn">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </button>
-          </td>
-          <td class="project-name">{{ project.name }}</td>
-          <td><span class="status-badge status-{{ project.status|lower }}">{{ project.status }}</span></td>
-          <td>{{ project.start_date|date:"M d, Y" }}</td>
-          <td>{{ project.end_date|date:"M d, Y" }}</td>
-          <td><span class="task-count">{{ project.tasks.count }} task{{ project.tasks.count|pluralize }}</span></td>
-        </tr>
-        <tr class="tasks-row" id="tasks-{{ project.id }}" style="display: none;">
-          <td colspan="6" class="tasks-cell">
-            <div class="tasks-wrapper">
-              <table class="tasks-table">
-                <thead>
-                  <tr>
-                    <th>Task</th>
-                    <th>Status</th>
-                    <th>Assigned To</th>
-                    <th>Due Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for task in project.tasks.all %}
-                  <tr {% if task.id in overdue_task_ids %}class="late-row"{% endif %}>
-                    <td>{{ task.title }}</td>
-                    <td><span class="status-badge status-{{ task.status|lower }}">{{ task.status }}</span></td>
-                    <td>{% if task.assigned_to.get_full_name %}
-                       <span class="assignee-name">{{ task.assigned_to.get_full_name }}</span>
-                        {% else %}
-                        <span class="assignee-name">{{ task.assigned_to.username }}</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ task.due_date|date:"M d, Y" }}</td>
-                  </tr>
-                  {% empty %}
-                  <tr>
-                    <td colspan="4" class="empty-state">No tasks for this project.</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="6" class="empty-state">No projects found.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    {% include 'projectmanagement/partials/_table_view.html' %}
   </div>
 </main>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function() {
   // View Switching with localStorage caching and click dropdown
   const viewSelector = document.querySelector('.view-selector');
   const viewDropdown = document.querySelector('.view-dropdown');
@@ -331,32 +134,184 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Table Expand/Collapse
- const projectRows = document.querySelectorAll('.project-row');
+  // ===== AJAX SEARCH FUNCTIONALITY =====
+  const searchInput = document.getElementById('task-search');
+  const statsContainer = document.querySelector('.stats-container');
+  let searchTimeout;
 
-  projectRows.forEach(row => {
-    const expandBtn = row.querySelector('.expand-btn');
-    const projectId = row.dataset.projectId;
-    const tasksRow = document.getElementById(`tasks-${projectId}`);
-
-    if (!expandBtn || !tasksRow) return;
-
-    function toggleRow() {
-      const isExpanded = tasksRow.style.display === 'table-row';
-
-      tasksRow.style.display = isExpanded ? 'none' : 'table-row';
-      expandBtn.classList.toggle('expanded', !isExpanded);
+  function performSearch(query) {
+    // Update URL without reload
+    const url = new URL(window.location);
+    if (query) {
+      url.searchParams.set('search', query);
+    } else {
+      url.searchParams.delete('search');
     }
+    window.history.pushState({}, '', url);
 
-    // Click anywhere on the row
-    row.addEventListener('click', toggleRow);
+    // Show loading state (optional)
+    kanbanView.style.opacity = '0.5';
+    tableView.style.opacity = '0.5';
+    statsContainer.style.opacity = '0.5';
 
-    // Click arrow only (prevent double toggle)
-    expandBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      toggleRow();
+    // Perform AJAX request
+    fetch(url.pathname + url.search, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Update Kanban view
+      const kanbanBoard = kanbanView.querySelector('.kanban-board');
+      if (kanbanBoard) {
+        kanbanBoard.outerHTML = data.kanban_html;
+      }
+
+      // Update Table view
+      tableView.innerHTML = data.table_html;
+
+      // Update Stats
+      statsContainer.innerHTML = data.stats_html;
+
+      // Remove loading state
+      kanbanView.style.opacity = '1';
+      tableView.style.opacity = '1';
+      statsContainer.style.opacity = '1';
+
+      // Reattach table expand/collapse listeners
+      attachTableListeners();
+    })
+    .catch(error => {
+      console.error('Search error:', error);
+      kanbanView.style.opacity = '1';
+      tableView.style.opacity = '1';
+      statsContainer.style.opacity = '1';
     });
+  }
+
+  // Debounced search on input
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+    
+    // Debounce by 500ms
+    searchTimeout = setTimeout(() => {
+      performSearch(query);
+    }, 500);
   });
+
+  // Immediate search on Enter key
+  searchInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      clearTimeout(searchTimeout);
+      const query = this.value.trim();
+      performSearch(query);
+    }
+  });
+
+  // Clear search button handler
+  const clearSearchBtn = document.getElementById('clear-search');
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', function() {
+      searchInput.value = '';
+      performSearch('');
+    });
+  }
+
+  // Table Expand/Collapse Function
+  function attachTableListeners() {
+    const projectRows = document.querySelectorAll('.project-row');
+
+    projectRows.forEach(row => {
+      const expandBtn = row.querySelector('.expand-btn');
+      const projectId = row.dataset.projectId;
+      const tasksRow = document.getElementById(`tasks-${projectId}`);
+
+      if (!expandBtn || !tasksRow) return;
+
+      function toggleRow() {
+        const isExpanded = tasksRow.style.display === 'table-row';
+        tasksRow.style.display = isExpanded ? 'none' : 'table-row';
+        expandBtn.classList.toggle('expanded', !isExpanded);
+      }
+
+      // Click anywhere on the row
+      row.addEventListener('click', toggleRow);
+
+      // Click arrow only (prevent double toggle)
+      expandBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggleRow();
+      });
+    });
+  }
+
+  // Initial attachment
+  attachTableListeners();
+
+  // AJAX pagination for projects table
+  function attachProjectsPagination() {
+    const tableContainer = document.getElementById('table-view');
+    if (!tableContainer) return;
+    const paginations = tableContainer.querySelectorAll('.pagination-buttons a');
+    paginations.forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const href = this.getAttribute('href');
+        if (!href) return;
+
+        const url = new URL(href, window.location.href);
+        const current = new URL(window.location);
+        // Preserve existing search param if not present in link
+        if (!url.searchParams.get('search') && current.searchParams.get('search')) {
+          url.searchParams.set('search', current.searchParams.get('search'));
+        }
+        window.history.pushState({}, '', url);
+
+        kanbanView.style.opacity = '0.5';
+        tableView.style.opacity = '0.5';
+        statsContainer.style.opacity = '0.5';
+
+        fetch(url.pathname + url.search, {
+          method: 'GET',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+          },
+        })
+        .then(response => response.json())
+        .then(data => {
+          // Update Kanban
+          const kanbanBoard = kanbanView.querySelector('.kanban-board');
+          if (kanbanBoard) {
+            kanbanBoard.outerHTML = data.kanban_html;
+          }
+          // Update Table
+          tableView.innerHTML = data.table_html;
+          // Update Stats
+          statsContainer.innerHTML = data.stats_html;
+
+          kanbanView.style.opacity = '1';
+          tableView.style.opacity = '1';
+          statsContainer.style.opacity = '1';
+
+          attachTableListeners();
+          attachProjectsPagination();
+        })
+        .catch(error => {
+          console.error('Pagination error:', error);
+          kanbanView.style.opacity = '1';
+          tableView.style.opacity = '1';
+          statsContainer.style.opacity = '1';
+        });
+      });
+    });
+  }
+
+  attachProjectsPagination();
 });
 </script>
 {% endblock %}

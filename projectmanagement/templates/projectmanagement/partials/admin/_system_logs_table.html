@@ -1,0 +1,69 @@
+{% if logs %}
+<div class="logs-table-wrapper">
+    <table class="logs-table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Action</th>
+                <th>Target Model</th>
+                <th>IP Address</th>
+                <th>Description</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.user.username }}</td>
+                <td>
+                    <span class="action-{{ log.action|lower }}">
+                        {{ log.action }}
+                    </span>
+                </td>
+                <td>{{ log.target_model }}</td>
+                <td>{{ log.ip_address }}</td>
+                {% if user.is_superuser %}
+                <td>{{ log.hidden_description }}</td>
+                {% else %}
+                <td>{{ log.description }}</td>
+                {% endif %}
+                <td>{{ log.created_at|date:"M d, Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        {% if logs.has_previous %}
+            {% if search_query %}
+                <a class="pagination-btn" href="?search={{ search_query|urlencode }}&page={{ logs.previous_page_number }}">&laquo; Previous</a>
+            {% else %}
+                <a class="pagination-btn" href="?page={{ logs.previous_page_number }}">&laquo; Previous</a>
+            {% endif %}
+        {% endif %}
+
+        {% for num in logs.paginator.page_range %}
+            {% if logs.number == num %}
+                <a class="pagination-btn active">{{ num }}</a>
+            {% else %}
+                {% if search_query %}
+                    <a class="pagination-btn" href="?search={{ search_query|urlencode }}&page={{ num }}">{{ num }}</a>
+                {% else %}
+                    <a class="pagination-btn" href="?page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        {% if logs.has_next %}
+            {% if search_query %}
+                <a class="pagination-btn" href="?search={{ search_query|urlencode }}&page={{ logs.next_page_number }}">Next &raquo;</a>
+            {% else %}
+                <a class="pagination-btn" href="?page={{ logs.next_page_number }}">Next &raquo;</a>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% else %}
+    <p class="muted-text">No logs available for this system.</p>
+{% endif %}

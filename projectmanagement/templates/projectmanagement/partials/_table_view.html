@@ -1,0 +1,112 @@
+{% load assignee_utils %}
+<h2>Projects</h2>
+<table class="projects-table">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Name</th>
+      <th>Status</th>
+      <th>Start</th>
+      <th>End</th>
+      <th>Tasks</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for project in projects %}
+    <tr class="project-row" data-project-id="{{ project.id }}">
+      <td class="expand-cell">
+        <button class="expand-btn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </td>
+      <td class="project-name">{{ project.name }}</td>
+      <td><span class="status-badge status-{{ project.status|lower }}">{{ project.status }}</span></td>
+      <td>{{ project.start_date|date:"M d, Y" }}</td>
+      <td>{{ project.end_date|date:"M d, Y" }}</td>
+      <td><span class="task-count">{{ project.tasks.count }} task{{ project.tasks.count|pluralize }}</span></td>
+    </tr>
+    <tr class="tasks-row" id="tasks-{{ project.id }}" style="display: none;">
+      <td colspan="6" class="tasks-cell">
+        <div class="tasks-wrapper">
+          <table class="tasks-table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Status</th>
+                <th>Assigned To</th>
+                <th>Due Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for task in project.tasks.all %}
+              <tr {% if task.id in overdue_task_ids %}class="late-row"{% endif %}>
+                <td>{{ task.title }}</td>
+                <td><span class="status-badge status-{{ task.status|lower }}">{{ task.status }}</span></td>
+                <td>
+                  {% task_assignee_user_list task as users %}
+                  {% if users %}
+                    <span class="assignee-name">
+                      {% for u in users %}
+                        {{ u.username }}{% if not forloop.last %}, {% endif %}
+                      {% endfor %}
+                    </span>
+                  {% else %}
+                    <span class="assignee-name">Unassigned</span>
+                  {% endif %}
+                </td>
+                <td>{{ task.due_date|date:"M d, Y" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="empty-state">No tasks for this project.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="6" class="empty-state">No projects found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Pagination Controls -->
+{% if projects_paginator.num_pages > 1 %}
+<div class="pagination-controls">
+  <div class="pagination-info">
+    Page {{ projects.number }} of {{ projects_paginator.num_pages }}
+  </div>
+  
+  <div class="pagination-buttons">
+    {% if projects.has_previous %}
+    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-btn">First</a>
+    <a href="?page={{ projects.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-btn">Previous</a>
+    {% else %}
+    <button class="pagination-btn" disabled>First</button>
+    <button class="pagination-btn" disabled>Previous</button>
+    {% endif %}
+    
+    {% for page_num in projects_paginator.page_range %}
+      {% if page_num == projects.number %}
+      <button class="pagination-btn active">{{ page_num }}</button>
+      {% elif page_num >= projects.number|add:'-2' and page_num <= projects.number|add:'2' %}
+      <a href="?page={{ page_num }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-btn">{{ page_num }}</a>
+      {% endif %}
+    {% endfor %}
+    
+    {% if projects.has_next %}
+    <a href="?page={{ projects.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-btn">Next</a>
+    <a href="?page={{ projects_paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-btn">Last</a>
+    {% else %}
+    <button class="pagination-btn" disabled>Next</button>
+    <button class="pagination-btn" disabled>Last</button>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

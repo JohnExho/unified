@@ -1,9 +1,10 @@
 from django.urls import path
 from django.shortcuts import redirect
+from . import views
 from .views import (
     dashboard,settings,admin_dashboard,deactivate_user,activate_user,delete_user,
     manage_user_access,update_tos, system_logs,save_addresses, delete_address,
-    upload_avatar,remove_avatar,profile_update,change_password,
+    upload_avatar,remove_avatar,profile_update,change_password,projects,
 )
 
 app_name = "projectmanagement"
@@ -17,6 +18,12 @@ def root_redirect(request):
 urlpatterns = [
     path('',  root_redirect, name='pm_root'),
     path('dashboard/', dashboard, name='pm_dashboard'),
+    path('projects/', projects, name='pm_projects'),
+    path('projects/<uuid:project_id>/edit/', views.edit_project, name='edit_project'),
+    path('projects/<uuid:project_id>/delete/', views.delete_project, name='delete_project'),
+    path('tasks/<uuid:task_id>/edit/', views.edit_task, name='edit_task'),
+    path('tasks/<uuid:task_id>/delete/', views.delete_task, name='delete_task'),
+    path('tasks/<uuid:task_id>/complete/', views.complete_task, name='complete_task'),
     path('settings/', settings, name='pm_settings'),
 
     path('save-addresses/', save_addresses, name='save_addresses'),
@@ -28,7 +35,7 @@ urlpatterns = [
 
     # admin routes
     path('admin/dashboard/', admin_dashboard, name='pm_admin_dashboard'),
-    path('admin/<uuid:user_id>/deactivate/', deactivate_user, name='deactivate_user'),
+    path('admin/deactivate//<uuid:user_id>', deactivate_user, name='deactivate_user'),
     path('admin/<uuid:user_id>/activate/', activate_user, name='activate_user'),
     path('admin/<uuid:user_id>/delete/', delete_user, name='delete_user'),
     path('admin/<uuid:user_id>/manage_access/', manage_user_access, name='manage_user_access'),

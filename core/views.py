@@ -597,6 +597,7 @@ def create_system_admin(request):
             messages.info(request, f"Username '{username}' already exists.")
             return redirect('core:core_dashboard')
 
+        # Email uniqueness check (email stored as plaintext)
         if User.objects.filter(email=email).exists():
             messages.info(request, f"Email '{email}' is already registered.")
             return redirect('core:core_dashboard')

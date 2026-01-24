@@ -1,0 +1,218 @@
+{% load static %}
+
+{% if projects %}
+<div class="projects-table-wrapper">
+    <table class="projects-table">
+        <thead>
+            <tr>
+                <th style="width: 40px;"></th>
+                <th>Project Name</th>
+                <th>Status</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Tasks</th>
+                <th>Progress</th>
+                <th style="width: 200px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for project in projects %}
+            <tr class="project-row {% if project.end_date < now and project.status != 'completed' %}late-project{% endif %}" data-project-id="{{ project.id }}">
+                <td class="expand-cell">
+                    {% if project.tasks.count > 0 %}
+                    <button class="expand-btn">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="project-name-cell">
+                        <strong>{{ project.name }}</strong>
+                        {% if project.description %}
+                        <p class="project-description">{{ project.description|truncatewords:15 }}</p>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    <span class="status-badge status-{{ project.status|lower }}">
+                        {{ project.get_status_display }}
+                    </span>
+                </td>
+                <td>{{ project.start_date|date:"M d, Y" }}</td>
+                <td>
+                    {{ project.end_date|date:"M d, Y" }}
+                    {% if project.end_date < now and project.status != 'completed' %}
+                    <span class="overdue-badge">Overdue</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="task-count">
+                        {{ project.tasks.count }} task{{ project.tasks.count|pluralize }}
+                    </span>
+                </td>
+                <td>
+                    {% if project.tasks.count > 0 %}
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: {{ project.progress_percentage }}%"></div>
+                            <span class="progress-text">{{ project.progress_percentage }}%</span>
+                        </div>
+                    {% else %}
+                        <span class="muted-text">No tasks</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="action-buttons" onclick="event.stopPropagation();">
+                        <a href="{% url 'projectmanagement:edit_project' project.id %}" class="btn-action btn-edit" title="Edit Project">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </a>
+                        <form method="post" action="{% url 'projectmanagement:delete_project' project.id %}" style="display:inline" onclick="event.stopPropagation();">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-action btn-delete" title="Delete Project" onclick="return confirm('Delete this project and all its tasks?');">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr class="tasks-row" id="tasks-{{ project.id }}" style="display: none;">
+                <td colspan="7" class="tasks-cell">
+                    <div class="tasks-wrapper">
+                        <table class="tasks-table">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Status</th>
+                                    <th>Assigned To</th>
+                                    <th>Due Date</th>
+                                    <th style="width: 180px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in project.tasks.all %}
+                                <tr>
+                                    <td>{{ task.title }}</td>
+                                    <td><span class="status-badge status-{{ task.status|lower }}">{{ task.get_status_display }}</span></td>
+                                    <td>
+                                        {% if task.assigned_to %}
+                                            {% if task.assigned_to.get_full_name %}
+                                                <span class="assignee-name">{{ task.assigned_to.get_full_name }}</span>
+                                            {% else %}
+                                                <span class="assignee-name">{{ task.assigned_to.username }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="muted-text">Unassigned</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ task.due_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="{% url 'projectmanagement:edit_task' task.id %}" class="btn-action btn-edit" title="Edit Task">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                </svg>
+                                            </a>
+                                            {% if task.status != 'completed' %}
+                                            <form method="post" action="{% url 'projectmanagement:complete_task' task.id %}" style="display:inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-action btn-complete" title="Mark as Complete">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                            <form method="post" action="{% url 'projectmanagement:delete_task' task.id %}" style="display:inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-action btn-delete" title="Delete Task" onclick="return confirm('Delete this task?');">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="empty-state">No tasks for this project.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if projects_paginator.num_pages > 1 %}
+<div class="pagination-controls">
+  <div class="pagination-info">
+    Page {{ projects.number }} of {{ projects_paginator.num_pages }}
+  </div>
+  
+  <div class="pagination-buttons">
+    {% if projects.has_previous %}
+      {% if search_query %}
+        <a href="?search={{ search_query|urlencode }}&page=1" class="pagination-btn">First</a>
+        <a href="?search={{ search_query|urlencode }}&page={{ projects.previous_page_number }}" class="pagination-btn">Previous</a>
+      {% else %}
+        <a href="?page=1" class="pagination-btn">First</a>
+        <a href="?page={{ projects.previous_page_number }}" class="pagination-btn">Previous</a>
+      {% endif %}
+    {% else %}
+      <button class="pagination-btn" disabled>First</button>
+      <button class="pagination-btn" disabled>Previous</button>
+    {% endif %}
+    
+    {% for page_num in projects_paginator.page_range %}
+      {% if page_num == projects.number %}
+        <button class="pagination-btn active">{{ page_num }}</button>
+      {% elif page_num >= projects.number|add:'-2' and page_num <= projects.number|add:'2' %}
+        {% if search_query %}
+          <a href="?search={{ search_query|urlencode }}&page={{ page_num }}" class="pagination-btn">{{ page_num }}</a>
+        {% else %}
+          <a href="?page={{ page_num }}" class="pagination-btn">{{ page_num }}</a>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    
+    {% if projects.has_next %}
+      {% if search_query %}
+        <a href="?search={{ search_query|urlencode }}&page={{ projects.next_page_number }}" class="pagination-btn">Next</a>
+        <a href="?search={{ search_query|urlencode }}&page={{ projects_paginator.num_pages }}" class="pagination-btn">Last</a>
+      {% else %}
+        <a href="?page={{ projects.next_page_number }}" class="pagination-btn">Next</a>
+        <a href="?page={{ projects_paginator.num_pages }}" class="pagination-btn">Last</a>
+      {% endif %}
+    {% else %}
+      <button class="pagination-btn" disabled>Next</button>
+      <button class="pagination-btn" disabled>Last</button>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="9" y1="9" x2="15" y2="9"></line>
+        <line x1="9" y1="15" x2="15" y2="15"></line>
+    </svg>
+    <h3>No projects found</h3>
+    <p>{% if search_query %}Try adjusting your search criteria{% else %}You don't have any projects yet{% endif %}</p>
+</div>
+{% endif %}

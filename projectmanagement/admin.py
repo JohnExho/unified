@@ -28,9 +28,14 @@ class ProjectAdmin(admin.ModelAdmin):
 # ----------------------
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ('title', 'project', 'assigned_to', 'status', 'priority', 'due_date')
+    list_display = ('title', 'project', 'get_assignees', 'status', 'priority', 'due_date')
     list_filter = ('status', 'priority', 'due_date', 'project')
     search_fields = ('title', 'description', 'assigned_to__username')
+    filter_horizontal = ('assigned_to',)
+    
+    def get_assignees(self, obj):
+        return ", ".join([user.username for user in obj.assigned_to.all()[:3]]) or "Unassigned"
+    get_assignees.short_description = 'Assigned To'
 
 # ----------------------
 # CalendarEvent Admin

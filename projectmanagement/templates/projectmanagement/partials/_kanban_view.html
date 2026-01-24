@@ -1,0 +1,137 @@
+{% load assignee_utils %}
+<div class="kanban-board">
+  <div class="kanban-column">
+    <div class="column-header">
+      <div class="column-title">
+        <span>To Do</span>
+        <span class="column-count">{{ todo_tasks|length }}</span>
+      </div>
+    </div>
+    <div class="cards-container">
+      {% for task in todo_tasks %}
+      <div class="task-card {% if task.id in overdue_task_ids %}late{% endif %}">
+        <div class="task-title">{{ task.title }}</div>
+        {% if task.id in overdue_task_ids %}<div class="late-badge">Late</div>{% endif %}
+        <div class="task-footer">
+          <div class="task-assignee">
+            {% task_assignee_stack task as stack %}
+            {% if stack.total > 0 %}
+              {% for user in stack.users %}
+                <div class="task-avatar-circle{% if forloop.counter == 3 and stack.total > 3 %} has-more{% endif %}"
+                    {% if user.avatar %} style="background-image:url('{{ user.avatar.url }}'); color:transparent;" {% endif %}
+                    title="{% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}{% if forloop.counter == 3 and stack.total > 3 %} and {{ stack.total|add:'-3' }} more{% endif %}">
+                  {% if not user.avatar %}
+                    {% if user.first_name and user.last_name %}
+                      {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+                    {% else %}
+                      {{ user.username|slice:":1"|upper }}
+                    {% endif %}
+                  {% endif %}
+                  {% if forloop.counter == 3 and stack.total > 3 %}
+                    <span class="more-count">+{{ stack.total|add:"-3" }}</span>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% else %}
+              <span class="assignee-name text-muted">Unassigned</span>
+            {% endif %}
+          </div>
+          <span class="priority-badge priority-{{ task.priority|lower }}">{{ task.priority }}</span>
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty-state">No tasks</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="kanban-column">
+    <div class="column-header">
+      <div class="column-title">
+        <span>In Progress</span>
+        <span class="column-count">{{ in_progress_tasks|length }}</span>
+      </div>
+    </div>
+    <div class="cards-container">
+      {% for task in in_progress_tasks %}
+      <div class="task-card {% if task.id in overdue_task_ids %}late{% endif %}">
+        <div class="task-title">{{ task.title }}</div>
+        {% if task.id in overdue_task_ids %}<div class="late-badge">Late</div>{% endif %}
+        <div class="task-footer">
+          <div class="task-assignee">
+            {% task_assignee_stack task as stack %}
+            {% if stack.total > 0 %}
+              {% for user in stack.users %}
+                <div class="task-avatar-circle{% if forloop.counter == 3 and stack.total > 3 %} has-more{% endif %}"
+                    {% if user.avatar %} style="background-image:url('{{ user.avatar.url }}'); color:transparent;" {% endif %}
+                    title="{% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}{% if forloop.counter == 3 and stack.total > 3 %} and {{ stack.total|add:'-3' }} more{% endif %}">
+                  {% if not user.avatar %}
+                    {% if user.first_name and user.last_name %}
+                      {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+                    {% else %}
+                      {{ user.username|slice:":1"|upper }}
+                    {% endif %}
+                  {% endif %}
+                  {% if forloop.counter == 3 and stack.total > 3 %}
+                    <span class="more-count">+{{ stack.total|add:"-3" }}</span>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% else %}
+              <span class="assignee-name text-muted">Unassigned</span>
+            {% endif %}
+          </div>
+          <span class="priority-badge priority-{{ task.priority|lower }}">{{ task.priority }}</span>
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty-state">No tasks</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="kanban-column">
+    <div class="column-header">
+      <div class="column-title">
+        <span>Completed</span>
+        <span class="column-count">{{ completed_tasks|length }}</span>
+      </div>
+    </div>
+    <div class="cards-container">
+      {% for task in completed_tasks %}
+      <div class="task-card {% if task.id in overdue_task_ids %}late{% endif %}">
+        <div class="task-title">{{ task.title }}</div>
+        {% if task.id in overdue_task_ids %}<div class="late-badge">Late</div>{% endif %}
+        <div class="task-footer">
+          <div class="task-assignee">
+            {% task_assignee_stack task as stack %}
+            {% if stack.total > 0 %}
+              {% for user in stack.users %}
+                <div class="task-avatar-circle{% if forloop.counter == 3 and stack.total > 3 %} has-more{% endif %}"
+                    {% if user.avatar %} style="background-image:url('{{ user.avatar.url }}'); color:transparent;" {% endif %}
+                    title="{% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}{% if forloop.counter == 3 and stack.total > 3 %} and {{ stack.total|add:'-3' }} more{% endif %}">
+                  {% if not user.avatar %}
+                    {% if user.first_name and user.last_name %}
+                      {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+                    {% else %}
+                      {{ user.username|slice:":1"|upper }}
+                    {% endif %}
+                  {% endif %}
+                  {% if forloop.counter == 3 and stack.total > 3 %}
+                    <span class="more-count">+{{ stack.total|add:"-3" }}</span>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% else %}
+              <span class="assignee-name text-muted">Unassigned</span>
+            {% endif %}
+          </div>
+          <span class="priority-badge priority-{{ task.priority|lower }}">{{ task.priority }}</span>
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty-state">No tasks</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>

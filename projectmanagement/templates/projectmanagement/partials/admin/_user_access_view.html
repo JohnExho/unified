@@ -1,0 +1,140 @@
+
+{% load dict_extras %}
+                {% if users %}
+                    <table class="user-list-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td><strong>{{ user.username }}</strong></td>
+                                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                {% with role_tuple=system_roles|get_item:user.id %}
+                                    {% if role_tuple %}
+                                        <span class="role-badge role-{{ role_tuple.0 }}">
+                                            {{ role_tuple.1 }}
+                                        </span>
+                                    {% else %}
+                                        <span class="muted-text">Unknown</span>
+                                    {% endif %}
+                                {% endwith %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        {% if current_user_role == 'superadmin'%}
+                                        {% with role_tuple=system_roles|get_item:user.id %}
+                                            {% if role_tuple %}
+                                                <button class="btn-primary btn-sm manage-access-btn"
+                                                        data-user-id="{{ user.id }}"
+                                                        data-username="{{ user.username }}"
+                                                        data-role="{{ role_tuple.0 }}">
+                                                    Manage Access
+                                                </button>
+                                            {% else %}
+                                                <span class="muted-text">Unknown</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                        {% endif%}
+
+
+                                        {% if user.is_active %}
+                                            <form method="post"
+                                                  action="{% url 'projectmanagement:deactivate_user' user.id %}"
+                                                  style="display:inline">
+                                                {% csrf_token %}
+                                                <button type="submit"
+                                                        class="btn-danger btn-sm"
+                                                        onclick="return confirm('Deactivate this user?');">
+                                                    Deactivate
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <form method="post"
+                                                  action="{% url 'projectmanagement:activate_user' user.id %}"
+                                                  style="display:inline">
+                                                {% csrf_token %}
+                                                <button type="submit"
+                                                        class="btn-success btn-sm">
+                                                    Activate
+                                                </button>
+                                            </form>
+                                        {% endif %}
+
+                                        <form method="post"
+                                              action="{% url 'projectmanagement:delete_user' user.id %}"
+                                              style="display:inline">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                    class="btn-danger btn-sm"
+                                                    onclick="return confirm('Delete this user? This action cannot be undone.');">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    {% if users.has_other_pages %}
+                    <div class="pagination">
+                        <div class="pagination-info">
+                            Page {{ users.number }} of {{ users.paginator.num_pages }}
+                        </div>
+                        
+                        <div class="pagination-buttons">
+                            {% if users.has_previous %}
+                                {% if search_query %}
+                                    <a href="?search={{ search_query|urlencode }}&page=1" class="pagination-btn">First</a>
+                                    <a href="?search={{ search_query|urlencode }}&page={{ users.previous_page_number }}" class="pagination-btn">Previous</a>
+                                {% else %}
+                                    <a href="?page=1" class="pagination-btn">First</a>
+                                    <a href="?page={{ users.previous_page_number }}" class="pagination-btn">Previous</a>
+                                {% endif %}
+                            {% else %}
+                                <button class="pagination-btn" disabled>First</button>
+                                <button class="pagination-btn" disabled>Previous</button>
+                            {% endif %}
+                            
+                            {% for page_num in users.paginator.page_range %}
+                                {% if page_num == users.number %}
+                                    <button class="pagination-btn active">{{ page_num }}</button>
+                                {% elif page_num >= users.number|add:'-2' and page_num <= users.number|add:'2' %}
+                                    {% if search_query %}
+                                        <a href="?search={{ search_query|urlencode }}&page={{ page_num }}" class="pagination-btn">{{ page_num }}</a>
+                                    {% else %}
+                                        <a href="?page={{ page_num }}" class="pagination-btn">{{ page_num }}</a>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if users.has_next %}
+                                {% if search_query %}
+                                    <a href="?search={{ search_query|urlencode }}&page={{ users.next_page_number }}" class="pagination-btn">Next</a>
+                                    <a href="?search={{ search_query|urlencode }}&page={{ users.paginator.num_pages }}" class="pagination-btn">Last</a>
+                                {% else %}
+                                    <a href="?page={{ users.next_page_number }}" class="pagination-btn">Next</a>
+                                    <a href="?page={{ users.paginator.num_pages }}" class="pagination-btn">Last</a>
+                                {% endif %}
+                            {% else %}
+                                <button class="pagination-btn" disabled>Next</button>
+                                <button class="pagination-btn" disabled>Last</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <p class="muted-text">No users found for this system.</p>
+                {% endif %}
+                

@@ -21,10 +21,18 @@ class Team(models.Model):
 # Projects
 # ----------------------
 class Project(models.Model):
+    STATUS_CHOICES = [
+        ('planning', 'Planning'),
+        ('active', 'Active'),
+        ('on_hold', 'On Hold'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
-    status = models.CharField(max_length=50, default='active')
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='active')
     start_date = models.DateField()
     end_date = models.DateField()
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True)
@@ -52,7 +60,22 @@ class Task(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
-    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks')
+    
+    # Support multiple assignees
+    assigned_to = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, 
+        related_name='tasks', 
+        blank=True
+    )
+    # Optional: assign to entire team
+    assigned_team = models.ForeignKey(
+        Team, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='tasks'
+    )
+    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='todo')
     priority = models.PositiveSmallIntegerField(
         default=3,

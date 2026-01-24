@@ -1,0 +1,168 @@
+{% extends 'projectmanagement/base.html' %}
+{% load static %}
+
+{% block title %}My Projects - Project Management{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'projectmanagement/css/pages/projects.css' %}">
+{% endblock %}
+{% block content %}
+<main class="main-content">
+    <div class="projects-header">
+        <h1>My Projects</h1>
+        <p>Overview of your projects and tasks</p>
+        <div class="search-box" style="margin-top: 12px; max-width: 360px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="M21 21l-4.35-4.35"></path>
+            </svg>
+            <input type="text" placeholder="Search projects..." id="project-search" value="{{ search_query }}">
+            {% if search_query %}
+            <button class="clear-search-btn" id="clear-project-search" title="Clear search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="projects-list-content">
+        {% include 'projectmanagement/partials/_projects_table.html' %}
+    </div>
+</main>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('project-search');
+    const projectsContent = document.getElementById('projects-list-content');
+    let searchTimeout;
+
+    function performSearch(query) {
+        const url = new URL(window.location);
+        if (query) {
+            url.searchParams.set('search', query);
+        } else {
+            url.searchParams.delete('search');
+        }
+        window.history.pushState({}, '', url);
+
+        if (projectsContent) projectsContent.style.opacity = '0.5';
+
+        fetch(url.pathname + url.search, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.text())
+        .then(data => {
+            if (projectsContent) {
+                projectsContent.innerHTML = data;
+                projectsContent.style.opacity = '1';
+                attachProjectsPagination();
+                attachTableListeners();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching projects:', error);
+            if (projectsContent) projectsContent.style.opacity = '1';
+        });
+    }
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value;
+        searchTimeout = setTimeout(() => {
+            performSearch(query);
+        }, 300);
+    });
+
+    // Clear search button handler
+    const clearProjectSearchBtn = document.getElementById('clear-project-search');
+    if (clearProjectSearchBtn) {
+      clearProjectSearchBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        performSearch('');
+      });
+    }
+
+    // AJAX pagination for projects
+    function attachProjectsPagination() {
+        const paginationLinks = projectsContent.querySelectorAll('.pagination a');
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const href = this.getAttribute('href');
+                if (!href) return;
+
+                const url = new URL(href, window.location.href);
+                const current = new URL(window.location);
+                // Preserve search if not in link
+                if (!url.searchParams.get('search') && current.searchParams.get('search')) {
+                    url.searchParams.set('search', current.searchParams.get('search'));
+                }
+
+                window.history.pushState({}, '', url);
+                if (projectsContent) projectsContent.style.opacity = '0.5';
+
+                fetch(url.pathname + url.search, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.text())
+                .then(data => {
+                    if (projectsContent) {
+                        projectsContent.innerHTML = data;
+                        projectsContent.style.opacity = '1';
+                        attachProjectsPagination();
+                        attachTableListeners();
+                    }
+                })
+                .catch(error => {
+                    console.error('Pagination error:', error);
+                    if (projectsContent) projectsContent.style.opacity = '1';
+                });
+            });
+        });
+    }
+
+    attachProjectsPagination();
+    attachTableListeners();
+
+    // Table Expand/Collapse Function
+    function attachTableListeners() {
+        const projectRows = document.querySelectorAll('.project-row');
+
+        projectRows.forEach(row => {
+            const expandBtn = row.querySelector('.expand-btn');
+            const projectId = row.dataset.projectId;
+            const tasksRow = document.getElementById(`tasks-${projectId}`);
+
+            if (!expandBtn || !tasksRow) return;
+
+            function toggleRow() {
+                const isExpanded = tasksRow.style.display === 'table-row';
+                tasksRow.style.display = isExpanded ? 'none' : 'table-row';
+                expandBtn.classList.toggle('expanded', !isExpanded);
+            }
+
+            // Click anywhere on the row
+            row.addEventListener('click', toggleRow);
+
+            // Click arrow only (prevent double toggle)
+            expandBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleRow();
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

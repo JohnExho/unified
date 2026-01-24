@@ -7,69 +7,145 @@
 {% endblock %}
 
 {% block content %}
-<div class="main-content">
-    <div class="admin-header">
-        <h1>System Logs</h1>
-        <p>View and manage system logs for auditing and monitoring purposes.</p>
-    </div>
+<main class="main-content">
+        <div class="admin-header">
+                <h1>System Logs</h1>
+                <p>View and manage system logs for auditing and monitoring purposes.</p>
+                <div class="search-box" style="margin-top: 12px; max-width: 360px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="M21 21l-4.35-4.35"></path>
+                        </svg>
+                        <input type="text" placeholder="Search logs..." id="logs-search" value="{{ search_query }}">
+                        {% if search_query %}
+                        <button class="clear-search-btn" id="clear-logs-search" title="Clear search">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                        {% endif %}
+                </div>
+        </div>
 
     <!-- Logs Table -->
-    {% if logs %}
-    <div class="logs-table-wrapper">
-        <table class="logs-table">
-            <thead>
-                <tr>
-                    <th>User</th>
-                    <th>Action</th>
-                    <th>Target Model</th>
-                    <th>IP Address</th>
-                    <th>Description</th>
-                    <th>Timestamp</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in logs %}
-                <tr>
-                    <td>{{ log.user.username }}</td>
-                    <td>
-                        <span class="action-{{ log.action|lower }}">
-                            {{ log.action }}
-                        </span>
-                    </td>
-                    <td>{{ log.target_model }}</td>
-                    <td>{{ log.ip_address }}</td>
-                    {% if user.is_superuser %}
-                    <td>{{ log.hidden_description }}</td>
-                    {% else %}
-                    <td>{{ log.description }}</td>
-                    {% endif %}
-                    <td>{{ log.created_at|date:"M d, Y H:i" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <!-- Pagination -->
-        <div class="pagination">
-            {% if logs.has_previous %}
-                <a href="?page={{ logs.previous_page_number }}">&laquo; Previous</a>
-            {% endif %}
-
-            {% for num in logs.paginator.page_range %}
-                {% if logs.number == num %}
-                    <a class="active">{{ num }}</a>
-                {% else %}
-                    <a href="?page={{ num }}">{{ num }}</a>
-                {% endif %}
-            {% endfor %}
-
-            {% if logs.has_next %}
-                <a href="?page={{ logs.next_page_number }}">Next &raquo;</a>
-            {% endif %}
+        <div id="logs-list-content">
+                {% include 'projectmanagement/partials/admin/_system_logs_table.html' %}
         </div>
-    </div>
-    {% else %}
-        <p>No logs available for this system.</p>
-    {% endif %}
-</div>
+</main>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('logs-search');
+    const logsContent = document.getElementById('logs-list-content');
+    let searchTimeout;
+
+    function performSearch(query) {
+        const url = new URL(window.location);
+        if (query) {
+            url.searchParams.set('search', query);
+            // Honor current page; do not delete it
+        } else {
+            url.searchParams.delete('search');
+        }
+        window.history.pushState({}, '', url);
+
+        if (logsContent) logsContent.style.opacity = '0.5';
+
+        fetch(url.pathname + url.search, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (logsContent && data.logs_list_html) {
+                logsContent.innerHTML = data.logs_list_html;
+            }
+            if (logsContent) logsContent.style.opacity = '1';
+        })
+        .catch(error => {
+            console.error('Search error:', error);
+            if (logsContent) logsContent.style.opacity = '1';
+        });
+    }
+
+    if (searchInput) {
+        // Debounced search
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            searchTimeout = setTimeout(() => performSearch(query), 500);
+        });
+
+        // Immediate search on Enter
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                clearTimeout(searchTimeout);
+                performSearch(this.value.trim());
+            }
+        });
+    }
+
+    // Clear search button handler
+    const clearLogsSearchBtn = document.getElementById('clear-logs-search');
+    if (clearLogsSearchBtn) {
+        clearLogsSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            performSearch('');
+        });
+    }
+
+            // AJAX pagination for logs list
+            function attachLogsPagination() {
+                const container = document.getElementById('logs-list-content');
+                if (!container) return;
+                container.querySelectorAll('.pagination a').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const href = this.getAttribute('href');
+                        if (!href) return;
+
+                        const url = new URL(href, window.location.origin);
+                        // Preserve search from current URL if not present
+                        const current = new URL(window.location);
+                        if (!url.searchParams.get('search') && current.searchParams.get('search')) {
+                            url.searchParams.set('search', current.searchParams.get('search'));
+                        }
+
+                        window.history.pushState({}, '', url);
+                        if (logsContent) logsContent.style.opacity = '0.5';
+
+                        fetch(url.pathname + url.search, {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Content-Type': 'application/json',
+                            },
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (logsContent && data.logs_list_html) {
+                                logsContent.innerHTML = data.logs_list_html;
+                                attachLogsPagination();
+                            }
+                            if (searchInput && typeof data.search_query !== 'undefined') {
+                                searchInput.value = data.search_query;
+                            }
+                            if (logsContent) logsContent.style.opacity = '1';
+                        })
+                        .catch(error => {
+                            console.error('Pagination error:', error);
+                            if (logsContent) logsContent.style.opacity = '1';
+                        });
+                    });
+                });
+            }
+
+            attachLogsPagination();
+        });
+    }
+});
+</script>
 {% endblock %}

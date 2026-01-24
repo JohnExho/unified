@@ -4,21 +4,13 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: #f5f7fa;
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-}
-
-
 /* Main Content */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .top-bar {
@@ -123,12 +115,14 @@ body {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   min-width: 250px;
+  position: relative;
 }
 
 .search-box svg {
   width: 18px;
   height: 18px;
   color: #a0aec0;
+  flex-shrink: 0;
 }
 
 .search-box input {
@@ -137,6 +131,28 @@ body {
   outline: none;
   font-size: 14px;
   width: 100%;
+}
+
+.clear-search-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a0aec0;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.clear-search-btn:hover {
+  color: #e53e3e;
+}
+
+.clear-search-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 .filter-btn {
@@ -275,7 +291,64 @@ body {
 .task-assignee {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.task-avatar-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  border: 2px solid white;
+  margin-left: -8px;
+  position: relative;
+  transition: transform 0.2s, z-index 0.2s;
+}
+
+.task-avatar-circle:first-child {
+  margin-left: 0;
+}
+
+.task-avatar-circle:hover {
+  transform: translateY(-2px) scale(1.1);
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.task-avatar-circle.has-more {
+  position: relative;
+}
+
+.more-count {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+  background: #667eea;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  z-index: 2;
+  pointer-events: none;
 }
 
 .assignee-avatar {
@@ -424,14 +497,7 @@ body {
   color: #1a202c;
 }
 
-/* Main Content Scrollable */
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
+
 
 /* Table Container - No Card, Full Width */
 .table-container {
@@ -490,7 +556,7 @@ body {
 /* Expand Button */
 .expand-cell {
   width: 40px;
-  padding: 16px 8px !important;
+  padding: 16px 8px;
 }
 
 .expand-btn {
@@ -637,7 +703,7 @@ body {
 .empty-state {
   text-align: center;
   color: #a0aec0;
-  padding: 24px 16px !important;
+  padding: 24px 16px;
   font-size: 13px;
   font-style: italic;
 }
@@ -656,5 +722,91 @@ body {
   .projects-table {
     display: block;
     overflow-x: auto;
+  }
+}
+
+/* Pagination Controls */
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding: 16px 0;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #718096;
+  font-weight: 500;
+}
+
+.pagination-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagination-btn {
+  padding: 8px 14px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #4a5568;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+}
+
+.pagination-btn:hover:not(:disabled):not(.active) {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+  color: #2d3748;
+}
+
+.pagination-btn.active {
+  background: #2d3748;
+  color: white;
+  border-color: #2d3748;
+  font-weight: 600;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #a0aec0;
+}
+
+.pagination-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* Responsive Pagination */
+@media (max-width: 768px) {
+  .pagination-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .pagination-info {
+    text-align: center;
+  }
+  
+  .pagination-buttons {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .pagination-btn {
+    font-size: 12px;
+    padding: 6px 12px;
+    min-width: 32px;
   }
 }
