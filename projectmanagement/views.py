@@ -1455,11 +1455,6 @@ def create_task(request, project_id):
         messages.error(request, f'Error creating task: {str(e)}')
         return redirect('projectmanagement:pm_projects')
 
-
-# =====================================================
-# API ENDPOINTS FOR TASK ASSIGNMENT
-# =====================================================
-
 @login_required
 def api_users(request):
     """Get list of all active users for assignment."""
@@ -1673,3 +1668,14 @@ def assign_task(request, task_id):
             'message': f'Error assigning task: {str(e)}'
         }, status=500)
 
+def team(request):
+    return render(request, 'projectmanagement/pages/team.html')
+
+def calendar(request):
+    return render(request, 'projectmanagement/pages/calendar.html')
+
+def notifications(request):
+    return render(request, 'projectmanagement/pages/notifications.html')
+
+def reports(request):
+    return render(request, 'projectmanagement/pages/reports.html')

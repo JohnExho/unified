@@ -5,7 +5,8 @@ from .views import (
     dashboard,settings,admin_dashboard,deactivate_user,activate_user,delete_user,
     manage_user_access,update_tos, system_logs,save_addresses, delete_address,
     upload_avatar,remove_avatar,profile_update,change_password,projects,create_project,
-    create_task,
+    create_task, team, calendar, reports, notifications, complete_task, assign_task, edit_project,
+    edit_task, delete_task, delete_project
 )
 
 app_name = "projectmanagement"
@@ -22,12 +23,16 @@ urlpatterns = [
     path('projects/', projects, name='pm_projects'),
     path('projects/create/', create_project, name='create_project'),
     path('projects/<uuid:project_id>/tasks/create/', create_task, name='create_task'),
-    path('projects/<uuid:project_id>/edit/', views.edit_project, name='edit_project'),
-    path('projects/<uuid:project_id>/delete/', views.delete_project, name='delete_project'),
-    path('tasks/<uuid:task_id>/edit/', views.edit_task, name='edit_task'),
-    path('tasks/<uuid:task_id>/delete/', views.delete_task, name='delete_task'),
-    path('tasks/<uuid:task_id>/complete/', views.complete_task, name='complete_task'),
-    path('tasks/<uuid:task_id>/assign/', views.assign_task, name='assign_task'),
+    path('projects/<uuid:project_id>/edit/', edit_project, name='edit_project'),
+    path('projects/<uuid:project_id>/delete/', delete_project, name='delete_project'),
+    path('tasks/<uuid:task_id>/edit/', edit_task, name='edit_task'),
+    path('tasks/<uuid:task_id>/delete/', delete_task, name='delete_task'),
+    path('tasks/<uuid:task_id>/complete/', complete_task, name='complete_task'),
+    path('tasks/<uuid:task_id>/assign/', assign_task, name='assign_task'),
+    path('teams/', team, name='pm_teams'),
+    path('calendar/', calendar, name='pm_calendar'),
+    path('reports/', reports, name='pm_reports'),
+    path('notifications/', notifications, name='pm_notifications'),
     path('settings/', settings, name='pm_settings'),
 
     # API endpoints for task assignment
