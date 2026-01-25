@@ -4,7 +4,8 @@ from . import views
 from .views import (
     dashboard,settings,admin_dashboard,deactivate_user,activate_user,delete_user,
     manage_user_access,update_tos, system_logs,save_addresses, delete_address,
-    upload_avatar,remove_avatar,profile_update,change_password,projects,
+    upload_avatar,remove_avatar,profile_update,change_password,projects,create_project,
+    create_task,
 )
 
 app_name = "projectmanagement"
@@ -19,12 +20,20 @@ urlpatterns = [
     path('',  root_redirect, name='pm_root'),
     path('dashboard/', dashboard, name='pm_dashboard'),
     path('projects/', projects, name='pm_projects'),
+    path('projects/create/', create_project, name='create_project'),
+    path('projects/<uuid:project_id>/tasks/create/', create_task, name='create_task'),
     path('projects/<uuid:project_id>/edit/', views.edit_project, name='edit_project'),
     path('projects/<uuid:project_id>/delete/', views.delete_project, name='delete_project'),
     path('tasks/<uuid:task_id>/edit/', views.edit_task, name='edit_task'),
     path('tasks/<uuid:task_id>/delete/', views.delete_task, name='delete_task'),
     path('tasks/<uuid:task_id>/complete/', views.complete_task, name='complete_task'),
+    path('tasks/<uuid:task_id>/assign/', views.assign_task, name='assign_task'),
     path('settings/', settings, name='pm_settings'),
+
+    # API endpoints for task assignment
+    path('api/users/', views.api_users, name='api_users'),
+    path('api/teams/', views.api_teams, name='api_teams'),
+    path('api/tasks/<uuid:task_id>/assignees/', views.api_task_assignees, name='api_task_assignees'),
 
     path('save-addresses/', save_addresses, name='save_addresses'),
     path('address/delete/<uuid:address_id>/', delete_address, name='delete_address'),

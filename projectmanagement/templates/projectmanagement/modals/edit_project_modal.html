@@ -312,9 +312,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-Requested-With': 'XMLHttpRequest',
             },
         })
-        .then(response => response.json())
+        .then(async response => {
+            const clone = response.clone();
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (err) {
+                const text = await clone.text();
+                throw new Error(text || `Request failed with status ${response.status}`);
+            }
+
+            if (!response.ok) {
+                const message = (data && data.error) ? data.error : `Request failed with status ${response.status}`;
+                throw new Error(message);
+            }
+            return data;
+        })
         .then(data => {
-            if (data.success) {
+            if (data && data.success && data.project) {
                 const project = data.project;
                 document.getElementById('project-name').value = project.name;
                 document.getElementById('project-description').value = project.description || '';
@@ -324,12 +339,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 editProjectModal.classList.add('show');
             } else {
-                alert('Error: ' + (data.error || 'Failed to load project'));
+                const message = (data && data.error) ? data.error : 'Failed to load project';
+                Swal.fire({
+                    icon: 'error',
+                    title: message,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2500,
+                    timerProgressBar: true
+                });
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while loading the project.');
+            console.error('Error loading project:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Unable to load project',
+                text: error && error.message ? error.message : 'Please try again or refresh.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
         });
     };
 });

@@ -1,8 +1,8 @@
-<!-- Edit Task Modal -->
-<div id="edit-task-modal" class="modal" style="display: none;">
+<!-- Add Task Modal -->
+<div id="add-task-modal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>Edit Task</h2>
+            <h2>Create New Task</h2>
             <button type="button" class="modal-close" aria-label="Close">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -10,24 +10,24 @@
                 </svg>
             </button>
         </div>
-        <form id="edit-task-form" method="post" enctype="application/x-www-form-urlencoded">
+        <form id="add-task-form" method="post" enctype="application/x-www-form-urlencoded">
             {% csrf_token %}
             
             <div class="form-group">
-                <label for="edit-task-project">Project</label>
+                <label for="task-project">Project</label>
                 <input 
                     type="text" 
-                    id="edit-task-project" 
+                    id="task-project" 
                     disabled
                     placeholder="Project name"
                 >
             </div>
 
             <div class="form-group">
-                <label for="edit-task-title">Task Title</label>
+                <label for="task-title">Task Title *</label>
                 <input 
                     type="text" 
-                    id="edit-task-title" 
+                    id="task-title" 
                     name="title" 
                     required
                     placeholder="Enter task title"
@@ -35,9 +35,9 @@
             </div>
 
             <div class="form-group">
-                <label for="edit-task-description">Description</label>
+                <label for="task-description">Description</label>
                 <textarea 
-                    id="edit-task-description" 
+                    id="task-description" 
                     name="description" 
                     rows="4"
                     placeholder="Enter task description"
@@ -46,8 +46,8 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="edit-task-status">Status</label>
-                    <select id="edit-task-status" name="status" required>
+                    <label for="task-status">Status</label>
+                    <select id="task-status" name="status" required>
                         <option value="todo">To Do</option>
                         <option value="in_progress">In Progress</option>
                         <option value="completed">Completed</option>
@@ -55,8 +55,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="edit-task-priority">Priority</label>
-                    <select id="edit-task-priority" name="priority" required>
+                    <label for="task-priority">Priority</label>
+                    <select id="task-priority" name="priority" required>
                         <option value="1">1 - Critical</option>
                         <option value="2">2 - High</option>
                         <option value="3">3 - Medium</option>
@@ -67,17 +67,17 @@
             </div>
 
             <div class="form-group">
-                <label for="edit-task-due-date">Due Date</label>
+                <label for="task-due-date">Due Date</label>
                 <input 
                     type="date" 
-                    id="edit-task-due-date" 
+                    id="task-due-date" 
                     name="due_date"
                 >
             </div>
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary modal-close">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="submit" class="btn btn-primary">Create Task</button>
             </div>
         </form>
     </div>
@@ -141,7 +141,7 @@
     color: #1f2937;
 }
 
-#edit-task-form {
+#add-task-form {
     padding: 20px;
 }
 
@@ -234,56 +234,108 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const editTaskModal = document.getElementById('edit-task-modal');
-    const editTaskForm = document.getElementById('edit-task-form');
-    const closeButtons = editTaskModal.querySelectorAll('.modal-close');
-    const projectInput = document.getElementById('edit-task-project');
-    const titleInput = document.getElementById('edit-task-title');
-    const descriptionInput = document.getElementById('edit-task-description');
-    const statusSelect = document.getElementById('edit-task-status');
-    const prioritySelect = document.getElementById('edit-task-priority');
-    const dueDateInput = document.getElementById('edit-task-due-date');
-
-    function setSelectValue(selectEl, value, fallbackLabel) {
-        if (!selectEl) return;
-        const targetValue = String(value);
-        const hasOption = Array.from(selectEl.options).some(opt => opt.value === targetValue);
-
-        if (!hasOption && fallbackLabel) {
-            const opt = document.createElement('option');
-            opt.value = targetValue;
-            opt.textContent = fallbackLabel;
-            selectEl.appendChild(opt);
-        }
-
-        selectEl.value = targetValue;
-    }
+    const addTaskModal = document.getElementById('add-task-modal');
+    const addTaskForm = document.getElementById('add-task-form');
+    const closeButtons = addTaskModal.querySelectorAll('.modal-close');
 
     // Close modal
     closeButtons.forEach(btn => {
         btn.addEventListener('click', function() {
-            editTaskModal.classList.remove('show');
+            addTaskModal.classList.remove('show');
+            addTaskForm.reset();
         });
     });
 
     // Close on outside click
-    editTaskModal.addEventListener('click', function(e) {
-        if (e.target === editTaskModal) {
-            editTaskModal.classList.remove('show');
+    addTaskModal.addEventListener('click', function(e) {
+        if (e.target === addTaskModal) {
+            addTaskModal.classList.remove('show');
+            addTaskForm.reset();
         }
     });
 
     // Form submission
-    editTaskForm.addEventListener('submit', function(e) {
+    addTaskForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        const formData = new FormData(editTaskForm);
-        const taskId = editTaskForm.dataset.taskId;
+        const title = document.getElementById('task-title').value.trim();
+        const dueDate = document.getElementById('task-due-date').value;
+        const projectId = addTaskForm.dataset.projectId;
 
-        fetch(`/projectmanagement/tasks/${taskId}/edit/`, {
+        // Client-side validation
+        if (!title) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Task title is required',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
+            return;
+        }
+
+        // Validate due date is within project range if provided
+        if (dueDate) {
+            // Find the project's start and end dates from the modal context
+            // We need to fetch these from the view or pass them to the modal
+            const projectRow = document.querySelector(`[data-project-id="${projectId}"]`);
+            if (projectRow) {
+                const startDateText = projectRow.querySelector('td:nth-child(4)')?.textContent?.trim();
+                const endDateText = projectRow.querySelector('td:nth-child(5)')?.textContent?.trim();
+                
+                if (startDateText && endDateText) {
+                    // Parse dates - format is "M d, Y"
+                    const dueDateObj = new Date(dueDate);
+                    
+                    // Try to parse the displayed dates
+                    try {
+                        const startDate = new Date(startDateText);
+                        const endDate = new Date(endDateText);
+                        
+                        if (dueDateObj < startDate) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Invalid Due Date',
+                                text: 'Task due date cannot be before project start date',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 2000,
+                                timerProgressBar: true
+                            });
+                            return;
+                        }
+                        
+                        if (dueDateObj > endDate) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Invalid Due Date',
+                                text: 'Task due date cannot exceed project end date',
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 2000,
+                                timerProgressBar: true
+                            });
+                            return;
+                        }
+                    } catch (err) {
+                        // If date parsing fails, let the server validation handle it
+                        console.log('Could not parse dates for client-side validation');
+                    }
+                }
+            }
+        }
+
+        const formData = new FormData(addTaskForm);
+
+        fetch(`/projectmanagement/projects/${projectId}/tasks/create/`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
             },
             body: formData,
         })
@@ -294,11 +346,11 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(result => {
             if (result.ok && result.data.success) {
-                editTaskModal.classList.remove('show');
-                // Show success toast using SweetAlert2
+                addTaskModal.classList.remove('show');
+                addTaskForm.reset();
                 Swal.fire({
                     icon: 'success',
-                    title: result.data.message || 'Task updated successfully',
+                    title: result.data.message || 'Task created successfully',
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
@@ -308,10 +360,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     location.reload();
                 });
             } else {
-                // Show error message
                 Swal.fire({
                     icon: 'error',
-                    title: result.data.error || 'Failed to update task',
+                    title: result.data.error || 'Failed to create task',
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,
@@ -324,7 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error:', error);
             Swal.fire({
                 icon: 'error',
-                title: 'An error occurred while updating the task',
+                title: 'An error occurred while creating the task',
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
@@ -335,70 +386,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Expose function to open modal
-    window.openEditTaskModal = function(taskId) {
-        editTaskForm.dataset.taskId = taskId;
-
-        // Fetch task data
-        fetch(`/projectmanagement/tasks/${taskId}/edit/`, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        })
-        .then(async response => {
-            const clone = response.clone();
-            let data = null;
-            try {
-                data = await response.json();
-            } catch (err) {
-                const text = await clone.text();
-                throw new Error(text || `Request failed with status ${response.status}`);
-            }
-
-            if (!response.ok) {
-                const message = (data && data.error) ? data.error : `Request failed with status ${response.status}`;
-                throw new Error(message);
-            }
-            return data;
-        })
-        .then(data => {
-            if (data && data.success && data.task) {
-                const task = data.task;
-                console.debug('Loaded task for edit:', task);
-                projectInput.value = task.project_name || '';
-                titleInput.value = task.title || '';
-                descriptionInput.value = task.description || '';
-                setSelectValue(statusSelect, task.status, task.status);
-                setSelectValue(prioritySelect, task.priority, `Priority ${task.priority}`);
-                dueDateInput.value = task.due_date ? task.due_date.substring(0, 10) : '';
-
-                editTaskModal.classList.add('show');
-            } else {
-                const message = (data && data.error) ? data.error : 'Failed to load task';
-                Swal.fire({
-                    icon: 'error',
-                    title: message,
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2500,
-                    timerProgressBar: true
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Error loading task:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Unable to load task',
-                text: error && error.message ? error.message : 'Please try again or refresh.',
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
-        });
+    window.openAddTaskModal = function(projectId, projectName = '') {
+        addTaskForm.dataset.projectId = projectId;
+        document.getElementById('task-project').value = projectName || 'Project ' + projectId;
+        addTaskForm.reset();
+        document.getElementById('task-project').value = projectName || 'Project ' + projectId;
+        addTaskModal.classList.add('show');
     };
 });
 </script>

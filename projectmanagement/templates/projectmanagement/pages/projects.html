@@ -9,9 +9,12 @@
 {% block content %}
 <main class="main-content">
     <div class="projects-header">
-        <h1>My Projects</h1>
-        <p>Overview of your projects and tasks</p>
-        <div class="search-box" style="margin-top: 12px; max-width: 360px;">
+        <div class="page-header">
+            <h1>My Projects</h1>
+            <p>Overview of your projects and tasks</p>
+        </div>
+        <div class="header-actions">
+            <div class="search-box">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="M21 21l-4.35-4.35"></path>
@@ -25,6 +28,16 @@
               </svg>
             </button>
             {% endif %}
+            </div>
+            {% if request.user.is_superuser or current_user_role == 'admin' or current_user_role == 'superadmin' %}
+            <a href="#" class="btn btn-primary add-project-button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Project
+            </a>
+            {% endif %}
         </div>
     </div>
 
@@ -32,6 +45,14 @@
         {% include 'projectmanagement/partials/_projects_table.html' %}
     </div>
 </main>
+
+<!-- Include the modals -->
+{% include 'projectmanagement/modals/add_project_modal.html' %}
+{% include 'projectmanagement/modals/add_task_modal.html' %}
+{% include 'projectmanagement/modals/delete_project_modal.html' %}
+{% include 'projectmanagement/modals/delete_task_modal.html' %}
+{% include 'projectmanagement/modals/assign_task_modal.html' %}
+
 {% endblock %}
 {% block extra_scripts %}
 <script>

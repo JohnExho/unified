@@ -1,0 +1,275 @@
+<!-- Add Project Modal -->
+<div id="add-project-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create New Project</h2>
+            <button type="button" class="modal-close" aria-label="Close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <form id="add-project-form" method="post" action="{% url 'projectmanagement:create_project' %}" enctype="application/x-www-form-urlencoded">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="new-project-name">Project Name *</label>
+                <input 
+                    type="text" 
+                    id="new-project-name" 
+                    name="name" 
+                    required
+                    placeholder="Enter project name"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="new-project-description">Description</label>
+                <textarea 
+                    id="new-project-description" 
+                    name="description" 
+                    rows="4"
+                    placeholder="Enter project description"
+                ></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="new-project-status">Status</label>
+                    <select id="new-project-status" name="status" required>
+                        <option value="planning">Planning</option>
+                        <option value="active">Active</option>
+                        <option value="on_hold">On Hold</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="new-project-start-date">Start Date *</label>
+                    <input 
+                        type="date" 
+                        id="new-project-start-date" 
+                        name="start_date" 
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="new-project-end-date">End Date *</label>
+                    <input 
+                        type="date" 
+                        id="new-project-end-date" 
+                        name="end_date" 
+                        required
+                    >
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Project</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal.show {
+    display: flex !important;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #1f2937;
+}
+
+#add-project-form {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+}
+
+.btn-secondary {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('add-project-modal');
+    const addProjectBtn = document.querySelector('.add-project-button');
+    const closeButtons = modal.querySelectorAll('.modal-close');
+    const form = document.getElementById('add-project-form');
+
+    if (addProjectBtn) {
+        addProjectBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+        });
+    }
+
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+            form.reset();
+        });
+    });
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+            form.reset();
+        }
+    });
+
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate dates
+        const startDate = new Date(document.getElementById('new-project-start-date').value);
+        const endDate = new Date(document.getElementById('new-project-end-date').value);
+        
+        if (startDate > endDate) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Date Range',
+                text: 'Start date must be before end date',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+            return;
+        }
+        
+        form.submit();
+    });
+});
+</script>

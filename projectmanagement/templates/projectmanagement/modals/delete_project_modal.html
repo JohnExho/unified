@@ -1,0 +1,139 @@
+<!-- Delete Project Confirmation Modal -->
+<div id="delete-project-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Delete Project</h2>
+            <button type="button" class="modal-close" aria-label="Close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <form id="delete-project-form" method="post" enctype="application/x-www-form-urlencoded">
+            {% csrf_token %}
+            
+            <div class="modal-body">
+                <div style="padding: 20px; text-align: center;">
+                    <div style="width: 60px; height: 60px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: #dc2626;">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </div>
+                    <h3 style="margin: 0 0 8px; font-size: 18px; color: #1a202c; font-weight: 600;">
+                        Delete <span id="delete-project-name"></span>?
+                    </h3>
+                    <p style="margin: 0; font-size: 14px; color: #718096; line-height: 1.5;">
+                        This action cannot be undone. The project and all associated tasks will be permanently deleted.
+                    </p>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                <button type="submit" class="btn btn-danger">Delete Project</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.btn-danger {
+    background-color: #dc2626;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #b91c1c;
+}
+
+.modal-body {
+    padding: 0;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteProjectModal = document.getElementById('delete-project-modal');
+    const deleteProjectForm = document.getElementById('delete-project-form');
+    const closeButtons = deleteProjectModal.querySelectorAll('.modal-close');
+
+    // Close modal
+    closeButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            deleteProjectModal.classList.remove('show');
+        });
+    });
+
+    // Close on outside click
+    deleteProjectModal.addEventListener('click', function(e) {
+        if (e.target === deleteProjectModal) {
+            deleteProjectModal.classList.remove('show');
+        }
+    });
+
+    // Form submission
+    deleteProjectForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const projectId = deleteProjectForm.dataset.projectId;
+
+        fetch(`/projectmanagement/projects/${projectId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                deleteProjectModal.classList.remove('show');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Project Deleted',
+                    text: 'The project has been successfully deleted.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    timerProgressBar: true
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to delete the project.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'An error occurred while deleting the project.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
+        });
+    });
+
+    // Expose function to open modal
+    window.openDeleteProjectModal = function(projectId, projectName) {
+        deleteProjectForm.dataset.projectId = projectId;
+        document.getElementById('delete-project-name').textContent = `"${projectName}"`;
+        deleteProjectModal.classList.add('show');
+    };
+});
+</script>

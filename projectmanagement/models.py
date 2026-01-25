@@ -106,6 +106,12 @@ class Task(models.Model):
 
     def clean(self):
         # Only validate if both dates are set
+        if self.due_date and self.project.start_date:
+            if self.due_date < self.project.start_date:
+                raise ValidationError({
+                    'due_date': f"Task due date ({self.due_date}) cannot be before project start date ({self.project.start_date})."
+                })
+        
         if self.due_date and self.project.end_date:
             if self.due_date > self.project.end_date:
                 raise ValidationError({

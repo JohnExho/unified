@@ -1,0 +1,723 @@
+<!-- Assign Task Modal -->
+<div id="assign-task-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2>Assign Task</h2>
+            <button type="button" class="modal-close" aria-label="Close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <form id="assign-task-form" method="post" enctype="application/x-www-form-urlencoded">
+            {% csrf_token %}
+            <input type="hidden" id="assign-task-id" name="task_id" value="">
+
+            <div class="form-group">
+                <label for="assignment-type">Assignment Type *</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="assignment_type" value="user" checked>
+                        <span>Assign to User</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="assignment_type" value="team">
+                        <span>Assign to Team</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- User Assignment Section -->
+            <div id="user-assignment-section" class="form-group">
+                <label for="assign-users">Select Users *</label>
+                <input 
+                    type="text" 
+                    id="user-search" 
+                    placeholder="Search users by name..." 
+                    class="search-input"
+                >
+                <div id="users-list" class="multi-select-container">
+                    <!-- Users will be populated dynamically -->
+                </div>
+                <small class="form-text">Select one or more users to assign this task</small>
+            </div>
+
+            <!-- Team Assignment Section -->
+            <div id="team-assignment-section" class="form-group" style="display: none;">
+                <label for="assign-team">Select Team *</label>
+                <select id="assign-team" name="team_id">
+                    <option value="">-- Select a Team --</option>
+                    <!-- Teams will be populated dynamically -->
+                </select>
+                <small class="form-text">Select a team to assign this task to all team members</small>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                <button type="submit" class="btn btn-primary">Assign Task</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal.show {
+    display: flex !important;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(to right, #f9fafb, #ffffff);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    transition: all 0.2s;
+    border-radius: 6px;
+}
+
+.modal-close:hover {
+    color: #374151;
+    background-color: #f3f4f6;
+}
+
+#assign-task-form {
+    padding: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s;
+    background-color: #f9fafb;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background-color: white;
+}
+
+.form-group input:disabled {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+.search-input {
+    width: 100% !important;
+    padding: 10px 12px !important;
+    border: 1.5px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    margin-bottom: 12px !important;
+    background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='M21 21l-4.35-4.35'%3E%3C/path%3E%3C/svg%3E") no-repeat right 10px center !important;
+    padding-right: 36px !important;
+}
+
+.search-input:focus {
+    border-color: #3b82f6 !important;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 24px;
+    border-top: 1px solid #e5e7eb;
+    background-color: #f9fafb;
+}
+
+.btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+}
+
+.btn-secondary {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.radio-group {
+    display: flex;
+    gap: 24px;
+    margin-top: 10px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    color: #374151;
+    transition: color 0.2s;
+}
+
+.radio-label:hover {
+    color: #1f2937;
+}
+
+.radio-label input[type="radio"] {
+    cursor: pointer;
+    accent-color: #3b82f6;
+    width: 18px;
+    height: 18px;
+}
+
+.multi-select-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 350px;
+    overflow-y: auto;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    background-color: #f9fafb;
+}
+
+.multi-select-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.multi-select-container::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.multi-select-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.multi-select-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 6px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.checkbox-item:hover {
+    background-color: #e5e7eb;
+}
+
+.checkbox-item input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: #3b82f6;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.checkbox-item input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.checkbox-item.team-member {
+    background-color: #f0f9ff;
+    border-left: 3px solid #0ea5e9;
+    padding-left: 9px;
+}
+
+.team-member-note {
+    font-size: 11px;
+    color: #0ea5e9;
+    font-weight: 600;
+    margin-left: auto;
+    padding: 2px 8px;
+    background-color: #e0f2fe;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.checkbox-item label {
+    cursor: pointer;
+    margin: 0;
+    flex: 1;
+    font-size: 13px;
+    color: #374151;
+    font-weight: 500;
+}
+
+#assign-team {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    background-color: #f9fafb;
+    transition: all 0.2s;
+}
+
+#assign-team:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background-color: white;
+}
+
+.form-text {
+    display: block;
+    margin-top: 8px;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 500;
+}
+</style>
+
+<script>
+let allUsers = [];
+let allTeams = [];
+let currentAssignedUsers = [];
+let currentAssignedTeam = null;
+let teamMemberIds = [];
+
+function openAssigneesModal(taskId) {
+    // Load users and teams if not already loaded
+    if (allUsers.length === 0) {
+        loadAvailableUsers();
+    }
+    if (allTeams.length === 0) {
+        loadAvailableTeams();
+    }
+
+    // Load current assignments for this task
+    loadTaskAssignees(taskId);
+
+    // Set task ID
+    document.getElementById('assign-task-id').value = taskId;
+
+    // Reset form
+    document.getElementById('assign-task-form').reset();
+    document.querySelector('input[name="assignment_type"][value="user"]').checked = true;
+    document.getElementById('user-assignment-section').style.display = 'block';
+    document.getElementById('team-assignment-section').style.display = 'none';
+
+    // Show modal
+    document.getElementById('assign-task-modal').classList.add('show');
+}
+
+function loadAvailableUsers() {
+    // Fetch users from server
+    fetch('/projectmanagement/api/users/', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        allUsers = data.users || [];
+        populateUsersUI();
+    })
+    .catch(error => console.error('Error loading users:', error));
+}
+
+function loadAvailableTeams() {
+    // Fetch teams from server
+    fetch('/projectmanagement/api/teams/', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        allTeams = data.teams || [];
+        populateTeamsUI();
+    })
+    .catch(error => console.error('Error loading teams:', error));
+}
+
+function loadTaskAssignees(taskId) {
+    // Fetch current assignments for this task
+    fetch(`/projectmanagement/api/tasks/${taskId}/assignees/`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            currentAssignedUsers = data.assigned_user_ids || [];
+            currentAssignedTeam = data.assigned_team_id || null;
+            teamMemberIds = data.team_member_ids || [];
+            populateUsersUI();
+            populateTeamsUI();
+        }
+    })
+    .catch(error => console.error('Error loading task assignees:', error));
+}
+
+function populateUsersUI() {
+    const container = document.getElementById('users-list');
+    container.innerHTML = '';
+    
+    allUsers.forEach(user => {
+        const isTeamMember = teamMemberIds.includes(user.id);
+        const isAssigned = currentAssignedUsers.includes(user.id);
+        const isChecked = (isTeamMember || isAssigned) ? 'checked' : '';
+        const isDisabled = isTeamMember ? 'disabled' : '';
+        
+        const div = document.createElement('div');
+        div.className = 'checkbox-item' + (isTeamMember ? ' team-member' : '');
+        div.innerHTML = `
+            <input type="checkbox" id="user-${user.id}" value="${user.id}" name="user_ids" ${isChecked} ${isDisabled}>
+            <label for="user-${user.id}">${user.username} ${user.first_name ? '(' + user.first_name + ')' : ''}</label>
+            ${isTeamMember ? '<span class="team-member-note">added via team</span>' : ''}
+        `;
+        container.appendChild(div);
+    });
+}
+
+function populateTeamsUI() {
+    const select = document.getElementById('assign-team');
+    select.innerHTML = '<option value="">-- Select a Team --</option><option value="unassign">-- Unassign Team --</option>';
+    
+    allTeams.forEach(team => {
+        const option = document.createElement('option');
+        option.value = team.id;
+        option.textContent = team.name;
+        if (currentAssignedTeam && currentAssignedTeam === team.id.toString()) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+}
+
+// Handle assignment type change
+document.addEventListener('DOMContentLoaded', function() {
+    const assignmentTypeRadios = document.querySelectorAll('input[name="assignment_type"]');
+    
+    assignmentTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'user') {
+                document.getElementById('user-assignment-section').style.display = 'block';
+                document.getElementById('team-assignment-section').style.display = 'none';
+            } else {
+                document.getElementById('user-assignment-section').style.display = 'none';
+                document.getElementById('team-assignment-section').style.display = 'block';
+            }
+        });
+    });
+
+    // Handle form submission
+    document.getElementById('assign-task-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const taskId = document.getElementById('assign-task-id').value;
+        const assignmentType = document.querySelector('input[name="assignment_type"]:checked').value;
+        
+        if (assignmentType === 'user') {
+            const selectedUsers = Array.from(document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            
+            if (selectedUsers.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Selection',
+                    text: 'Please select at least one user',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                });
+                return;
+            }
+            
+            submitUserAssignment(taskId, selectedUsers);
+        } else {
+            const teamId = document.getElementById('assign-team').value;
+            
+            if (teamId === '') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Selection',
+                    text: 'Please select a team',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                });
+                return;
+            }
+            
+            submitTeamAssignment(taskId, teamId);
+        }
+    });
+
+    // Close modal handlers
+    document.querySelectorAll('.modal-close').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.classList.remove('show');
+            }
+        });
+    });
+
+    // Close modal when clicking outside (backdrop)
+    const modal = document.getElementById('assign-task-modal');
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.classList.remove('show');
+        }
+    });
+
+    // User search functionality
+    const userSearchInput = document.getElementById('user-search');
+    if (userSearchInput) {
+        userSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const usersList = document.getElementById('users-list');
+            const checkboxItems = usersList.querySelectorAll('.checkbox-item');
+
+            checkboxItems.forEach(item => {
+                const label = item.querySelector('label');
+                const text = label.textContent.toLowerCase();
+                
+                if (text.includes(searchTerm)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+});
+
+function submitUserAssignment(taskId, userIds) {
+    fetch(`/projectmanagement/tasks/${taskId}/assign/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            assignment_type: 'user',
+            user_ids: userIds,
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Task Assigned',
+                text: 'Task has been assigned to selected users',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+            });
+            document.getElementById('assign-task-modal').classList.remove('show');
+            // Reload table
+            location.reload();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Failed to assign task',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while assigning the task',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+        });
+    });
+}
+
+function submitTeamAssignment(taskId, teamId) {
+    fetch(`/projectmanagement/tasks/${taskId}/assign/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            assignment_type: 'team',
+            team_id: teamId,
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Task Assigned',
+                text: 'Task has been assigned to the team',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+            });
+            document.getElementById('assign-task-modal').classList.remove('show');
+            // Reload table
+            location.reload();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Failed to assign task',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while assigning the task',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+        });
+    });
+}
+</script>

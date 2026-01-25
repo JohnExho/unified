@@ -17,33 +17,35 @@
 /* Projects Header */
 .projects-header {
   background: white;
-  padding: 32px;
+  padding: 20px 32px;
   border-bottom: 1px solid #e2e8f0;
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 16px;
-  align-items: start;
 }
 
 .projects-header h1 {
-  font-size: 28px;
+  font-size: 24px;
   color: #1a202c;
   margin-bottom: 4px;
-  grid-column: 1;
 }
 
 .projects-header p {
   font-size: 14px;
   color: #718096;
-  grid-column: 1;
 }
 
-.projects-header .search-box {
-  grid-column: 2;
-  grid-row: 1 / span 3;
-  justify-self: end;
-  margin-top: 0;
-  position: relative;
+.page-header {
+  flex: 0 0 auto;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 /* Search Box */
@@ -56,6 +58,33 @@
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   min-width: 300px;
+  max-width: 360px;
+}
+
+.add-project-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.add-project-button:hover {
+  background: #2563eb;
+}
+
+.add-project-button svg {
+  width: 16px;
+  height: 16px;
 }
 
 .search-box svg {
@@ -269,7 +298,7 @@
 }
 
 .status-badge.status-in_progress,
-.status-badge.status-in-progress {
+.status-badge.status-active {
   background: #bee3f8;
   color: #2c5282;
 }
@@ -487,15 +516,16 @@
 /* Responsive Design */
 @media (max-width: 1024px) {
   .projects-header {
-    grid-template-columns: 1fr;
+    padding: 16px;
   }
 
-  .projects-header .search-box {
-    grid-column: 1;
-    grid-row: auto;
-    justify-self: start;
+  .header-actions {
     width: 100%;
-    max-width: none;
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 200px;
   }
 
   #projects-list-content {

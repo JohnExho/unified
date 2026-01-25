@@ -13,7 +13,9 @@
                 <th>End Date</th>
                 <th>Tasks</th>
                 <th>Progress</th>
+                {% if user.is_superuser or current_user_role == 'admin' or current_user_role == 'superadmin' %}
                 <th style="width: 200px;">Actions</th>
+                {% endif %}
             </tr>
         </thead>
         <tbody>
@@ -63,25 +65,34 @@
                         <span class="muted-text">No tasks</span>
                     {% endif %}
                 </td>
+                {% if user.is_superuser or current_user_role == 'admin' or current_user_role == 'superadmin' or project.created_by_id == user.id %}
                 <td>
                     <div class="action-buttons" onclick="event.stopPropagation();">
+                        {% if user.is_superuser or current_user_role == 'admin' or current_user_role == 'superadmin' or project.created_by_id == user.id %}
+                        <button type="button" class="btn-action btn-add-task" title="Add Task" onclick="openAddTaskModal('{{ project.id }}', '{{ project.name }}')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                        {% endif %}
+                        {% if user.is_superuser or current_user_role == 'admin' or current_user_role == 'superadmin' or project.created_by_id == user.id %}
                         <button type="button" class="btn-action btn-edit" title="Edit Project" onclick="openEditProjectModal('{{ project.id }}')">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                             </svg>
                         </button>
-                        <form method="post" action="{% url 'projectmanagement:delete_project' project.id %}" style="display:inline" onclick="event.stopPropagation();">
-                            {% csrf_token %}
-                            <button type="submit" class="btn-action btn-delete" title="Delete Project" onclick="return confirm('Delete this project and all its tasks?');">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                            </button>
-                        </form>
+                        <button type="button" class="btn-action btn-delete" title="Delete Project" onclick="openDeleteProjectModal('{{ project.id }}', '{{ project.name }}'); event.stopPropagation();">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                        {% endif %}
                     </div>
                 </td>
+                {% endif %}
             </tr>
             <tr class="tasks-row" id="tasks-{{ project.id }}" style="display: none;">
                 <td colspan="12" class="tasks-cell">
@@ -99,7 +110,7 @@
                             </thead>
                             <tbody>
                                 {% for task in project.tasks.all %}
-                                <tr>
+                                <tr data-task-id="{{ task.id }}">
                                     <td>{{ task.title }}</td>
                                     <td><span class="status-badge status-{{ task.status|lower }}">{{ task.get_status_display }}</span></td>
                                     <td>
@@ -122,6 +133,7 @@
                                     <td>{{ task.due_date|date:"M d, Y" }}</td>
                                     <td>
                                         <div class="action-buttons">
+                                            {% if user.is_superuser or current_user_role == 'admin' or current_user_role == 'superadmin' or project.created_by_id == user.id %}
                                             <button type="button" class="btn-action btn-view-assignees" title="View Assignees" onclick="openAssigneesModal('{{ task.id }}')"> 
                                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -136,7 +148,10 @@
                                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                                 </svg>
                                             </button>
+                                            {% endif %}
                                             {% if task.status != 'completed' %}
+                                                {% task_assignee_user_list task as task_users %}
+                                                {% if request.user in task_users or user.is_superuser or current_user_role == 'admin' or current_user_role == 'superadmin' or project.created_by_id == user.id %}
                                             <form method="post" action="{% url 'projectmanagement:complete_task' task.id %}" style="display:inline">
                                                 {% csrf_token %}
                                                 <button type="submit" class="btn-action btn-complete" title="Mark as Complete">
@@ -145,16 +160,16 @@
                                                     </svg>
                                                 </button>
                                             </form>
+                                                {% endif %}
                                             {% endif %}
-                                            <form method="post" action="{% url 'projectmanagement:delete_task' task.id %}" style="display:inline">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn-action btn-delete" title="Delete Task" onclick="return confirm('Delete this task?');">
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                    </svg>
-                                                </button>
-                                            </form>
+                                            {% if user.is_superuser or current_user_role == 'admin' or current_user_role == 'superadmin' or project.created_by_id == user.id %}
+                                            <button type="button" class="btn-action btn-delete" title="Delete Task" onclick="openDeleteTaskModal('{{ task.id }}', '{{ task.title }}'); event.stopPropagation();">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                </svg>
+                                            </button>
+                                            {% endif %}
                                         </div>
                                     </td>
                                 </tr>

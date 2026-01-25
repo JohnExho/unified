@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect,  get_object_or_404
 from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
 from django.contrib.auth import update_session_auth_hash
-from .models import Project, Task
+from .models import Project, Task, Team
 from core.models import Logs, SystemMembership, Systems, Address
 from core.utils import get_client_ip, get_user_agent, decrypt, encrypt
 import uuid
@@ -13,6 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.http import JsonResponse
+import json
 
 now = timezone.now()
 User = get_user_model()
@@ -47,6 +48,20 @@ def dashboard(request):
         .prefetch_related("assigned_to", "assigned_team__members")
     )
     
+    # ---- Create separate querysets for stats (show all for admin/superuser) ----
+    if is_admin_or_superadmin:
+        # Admins and superusers see all projects and tasks in stats
+        stats_projects = Project.objects.prefetch_related("tasks")
+        stats_tasks = (
+            Task.objects
+            .select_related("project")
+            .prefetch_related("assigned_to", "assigned_team__members")
+        )
+    else:
+        # Regular users only see their assigned tasks in stats
+        stats_projects = projects.filter(tasks__assigned_to=request.user).distinct()
+        stats_tasks = all_tasks.filter(assigned_to=request.user)
+    
     # ---- Apply visibility scope based on user role ----
     if not is_admin_or_superadmin:
         # Regular users only see tasks assigned to them
@@ -66,26 +81,26 @@ def dashboard(request):
             Q(tasks__title__icontains=search_query)
         ).distinct()
 
-    # ---- Time-aware project states ----
-    active_projects = projects.filter(
+    # ---- Time-aware project states (using stats querysets for admin/superuser) ----
+    active_projects = stats_projects.filter(
         start_date__lte=now,
         end_date__gte=now
     )
 
-    past_projects = projects.filter(
+    past_projects = stats_projects.filter(
         end_date__lt=now
     )
 
     active_projects_count = active_projects.count()
 
-    # ---- Time-aware task states ----
-    active_tasks = all_tasks.exclude(
+    # ---- Time-aware task states (using stats querysets for admin/superuser) ----
+    active_tasks = stats_tasks.exclude(
         status='completed'
     ).filter(
         due_date__gte=now
     )
 
-    overdue_tasks = all_tasks.exclude(
+    overdue_tasks = stats_tasks.exclude(
         status='completed'
     ).filter(
         due_date__lt=now
@@ -93,7 +108,11 @@ def dashboard(request):
 
     active_tasks_count = active_tasks.count()
 
-    # ---- Assignment stats ----
+    # ---- Total stats (for all projects/tasks visible to user) ----
+    total_projects_count = stats_projects.count()
+    total_tasks_count = stats_tasks.count()
+
+    # ---- Assignment stats (for paginated display) ----
     assigned_projects_count = projects.count()
     assigned_tasks_count = all_tasks.count()
 
@@ -118,13 +137,17 @@ def dashboard(request):
         'projects_page_number': page_number,
         'current_system': current_system,
         'now': now,
-        # Stats
+        # Stats - Total counts
+        'total_projects_count': total_projects_count,
+        'total_tasks_count': total_tasks_count,
+        # Stats - Active/Late counts
         'active_projects_count': active_projects_count,
         'active_tasks_count': active_tasks_count,
-        'assigned_projects_count': assigned_projects_count,
-        'assigned_tasks_count': assigned_tasks_count,
         'late_projects_count': late_projects_count,
         'late_tasks_count': late_tasks_count,
+        # Assignment counts (for display)
+        'assigned_projects_count': assigned_projects_count,
+        'assigned_tasks_count': assigned_tasks_count,
         # Kanban
         'todo_tasks': todo_tasks,
         'in_progress_tasks': in_progress_tasks,
@@ -943,6 +966,70 @@ def projects(request):
 
 @login_required
 @require_http_methods(["GET", "POST"])
+def create_project(request):
+    """Create a new project via modal"""
+    current_system = request.current_system
+    
+    # Access control - only allow system members
+    if not request.user.is_superuser and not SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).exists():
+        return render(request, '404.html', status=404)
+    
+    if request.method == 'POST':
+        try:
+            name = request.POST.get('name', '').strip()
+            description = request.POST.get('description', '').strip()
+            status = request.POST.get('status', 'planning')
+            start_date = request.POST.get('start_date')
+            end_date = request.POST.get('end_date')
+
+            # Validate required fields
+            if not name:
+                messages.error(request, "Project name is required.")
+                return render(request, 'projectmanagement/modals/add_project_modal.html', {})
+            
+            if not start_date or not end_date:
+                messages.error(request, "Start date and end date are required.")
+                return render(request, 'projectmanagement/modals/add_project_modal.html', {})
+
+            project = Project.objects.create(
+                name=name,
+                description=description,
+                status=status,
+                start_date=start_date,
+                end_date=end_date,
+                created_by=request.user
+            )
+
+            Logs.objects.create(
+                user=request.user,
+                system_name='projectmanagement',
+                action='CREATE',
+                target_model='Project',
+                target_id=project.id,
+                description=f"Created project '{project.name}'",
+                hidden_description=f"User '{request.user.username}' created project '{project.name}'",
+                ip_address=get_client_ip(request),
+                user_agent=get_user_agent(request),
+            )
+
+            messages.success(request, f"Project '{project.name}' created successfully.")
+            return redirect('projectmanagement:pm_projects')
+        
+        except ValidationError as e:
+            messages.error(request, f"Invalid project data: {str(e)}")
+            return render(request, 'projectmanagement/modals/add_project_modal.html', {})
+        except Exception as e:
+            messages.error(request, f"Error creating project: {str(e)}")
+            return render(request, 'projectmanagement/modals/add_project_modal.html', {})
+    
+    if request.method == 'GET':
+        return render(request, 'projectmanagement/modals/add_project_modal.html', {})
+
+@login_required
+@require_http_methods(["GET", "POST"])
 def edit_project(request, project_id):
     """Edit a project via modal or AJAX"""
     project = get_object_or_404(Project, id=project_id)
@@ -1044,11 +1131,6 @@ def edit_project(request, project_id):
                 'end_date': project.end_date.isoformat(),
             }
         })
-    
-    return render(request, 'projectmanagement/pages/edit_project.html', {
-        'project': project,
-        'current_system': current_system,
-    })
 
 @login_required
 @require_http_methods(["POST"])
@@ -1270,3 +1352,324 @@ def complete_task(request, task_id):
     
     messages.success(request, f"Task '{task.title}' marked as completed.")
     return redirect('projectmanagement:pm_projects')
+
+@login_required
+@require_http_methods(["POST"])
+def create_task(request, project_id):
+    """Create a new task in a project"""
+    project = get_object_or_404(Project, id=project_id)
+    current_system = request.current_system
+    
+    # Check permissions - must be able to access the project
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+    
+    # Users can only create tasks in projects they're assigned to or if they're admin
+    if not is_admin:
+        if not project.tasks.filter(assigned_to=request.user).exists():
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': "You don't have permission to add tasks to this project."}, status=403)
+            return redirect('projectmanagement:pm_projects')
+    
+    try:
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+        status = request.POST.get('status', 'todo')
+        priority = request.POST.get('priority', 3)
+        due_date = request.POST.get('due_date', None)
+        
+        # Validation
+        if not title:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Task title is required'})
+            messages.error(request, 'Task title is required')
+            return redirect('projectmanagement:pm_projects')
+        
+        # Validate due date is within project date range
+        if due_date:
+            from datetime import date
+            if isinstance(due_date, str):
+                due_date_obj = date.fromisoformat(due_date)
+            else:
+                due_date_obj = due_date
+            
+            if due_date_obj < project.start_date:
+                error_msg = f"Task due date cannot be before project start date ({project.start_date})"
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'error': error_msg})
+                messages.error(request, error_msg)
+                return redirect('projectmanagement:pm_projects')
+            
+            if due_date_obj > project.end_date:
+                error_msg = f"Task due date cannot exceed project end date ({project.end_date})"
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'error': error_msg})
+                messages.error(request, error_msg)
+                return redirect('projectmanagement:pm_projects')
+        
+        # Create task
+        task = Task.objects.create(
+            project=project,
+            title=title,
+            description=description,
+            status=status,
+            priority=int(priority),
+            due_date=due_date if due_date else None
+        )
+        
+        # Create audit log
+        Logs.objects.create(
+            user=request.user,
+            system_name='projectmanagement',
+            action='CREATE',
+            target_model='Task',
+            target_id=task.id,
+            description=f"Created task '{task.title}' in project '{project.name}'",
+            hidden_description=f"User '{request.user.username}' created task '{task.title}' in project '{project.name}'",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': f"Task '{task.title}' created successfully",
+                'task_id': str(task.id)
+            })
+        
+        messages.success(request, f"Task '{task.title}' created successfully")
+        return redirect('projectmanagement:pm_projects')
+        
+    except ValueError as e:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': f'Invalid input: {str(e)}'})
+        messages.error(request, f'Invalid input: {str(e)}')
+        return redirect('projectmanagement:pm_projects')
+    except Exception as e:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': f'Error creating task: {str(e)}'})
+        messages.error(request, f'Error creating task: {str(e)}')
+        return redirect('projectmanagement:pm_projects')
+
+
+# =====================================================
+# API ENDPOINTS FOR TASK ASSIGNMENT
+# =====================================================
+
+@login_required
+def api_users(request):
+    """Get list of all active users for assignment."""
+    try:
+        current_system = request.current_system
+        
+        # Get users from current system
+        system_members = SystemMembership.objects.filter(
+            system_name=current_system
+        ).select_related('user')
+        
+        users = [
+            {
+                'id': member.user.id,
+                'username': member.user.username,
+                'first_name': member.user.first_name,
+                'last_name': member.user.last_name,
+            }
+            for member in system_members if member.user.is_active
+        ]
+        
+        return JsonResponse({
+            'success': True,
+            'users': users
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+
+@login_required
+def api_teams(request):
+    """Get list of all teams for assignment."""
+    try:
+        teams = Team.objects.all().values('id', 'name')
+        return JsonResponse({
+            'success': True,
+            'teams': list(teams)
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+
+@login_required
+def api_task_assignees(request, task_id):
+    """Get currently assigned users and team for a task."""
+    try:
+        task = get_object_or_404(Task, id=task_id)
+        
+        # Get assigned users
+        assigned_users = task.assigned_to.values_list('id', flat=True)
+        assigned_team = task.assigned_team
+        
+        # Get team member IDs if a team is assigned
+        team_member_ids = []
+        if assigned_team:
+            team_member_ids = list(assigned_team.members.values_list('id', flat=True))
+        
+        return JsonResponse({
+            'success': True,
+            'assigned_user_ids': list(assigned_users),
+            'assigned_team_id': str(assigned_team.id) if assigned_team else None,
+            'team_member_ids': team_member_ids,
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+
+@login_required
+@require_http_methods(["POST"])
+def assign_task(request, task_id):
+    """Assign task to users or team."""
+    try:
+        task = get_object_or_404(Task, id=task_id)
+        project = task.project
+        current_system = request.current_system
+        
+        # Check permissions
+        user_membership = SystemMembership.objects.filter(
+            user=request.user,
+            system_name=current_system
+        ).first()
+        user_role = user_membership.system_role if user_membership else None
+        is_authorized = (
+            request.user.is_superuser or 
+            user_role in ['admin', 'superadmin'] or 
+            project.created_by_id == request.user.id
+        )
+        
+        if not is_authorized:
+            return JsonResponse({
+                'success': False,
+                'message': 'You do not have permission to assign this task'
+            }, status=403)
+        
+        # Parse request data
+        data = json.loads(request.body)
+        assignment_type = data.get('assignment_type')
+        
+        if assignment_type == 'user':
+            # Assign to individual users
+            user_ids = data.get('user_ids', [])
+            if not user_ids:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No users selected'
+                }, status=400)
+            
+            # Get users
+            users = User.objects.filter(id__in=user_ids, is_active=True)
+            if not users.exists():
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No valid users found'
+                }, status=400)
+            
+            # Clear existing assignments and add new ones
+            task.assigned_to.clear()
+            task.assigned_team = None
+            task.assigned_to.set(users)
+            task.save()
+            
+            # Create audit log
+            user_names = ', '.join([u.username for u in users])
+            Logs.objects.create(
+                user=request.user,
+                system_name='projectmanagement',
+                action='UPDATE',
+                target_model='Task',
+                target_id=task.id,
+                description=f"Assigned task '{task.title}' to users: {user_names}",
+                hidden_description=f"User '{request.user.username}' assigned task '{task.title}' to users: {user_names}",
+                ip_address=get_client_ip(request),
+                user_agent=get_user_agent(request),
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Task assigned to {len(users)} user(s)'
+            })
+        
+        elif assignment_type == 'team':
+            # Assign to team or clear team assignment
+            team_id = data.get('team_id')
+
+            # Handle explicit team unassignment
+            if team_id in [None, '', 'unassign', 'none', 'null']:
+                task.assigned_to.clear()
+                task.assigned_team = None
+                task.save()
+
+                Logs.objects.create(
+                    user=request.user,
+                    system_name='projectmanagement',
+                    action='UPDATE',
+                    target_model='Task',
+                    target_id=task.id,
+                    description=f"Unassigned team from task '{task.title}'",
+                    hidden_description=f"User '{request.user.username}' unassigned any team from task '{task.title}'",
+                    ip_address=get_client_ip(request),
+                    user_agent=get_user_agent(request),
+                )
+
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Team unassigned from task'
+                })
+
+            team = get_object_or_404(Team, id=team_id)
+            
+            # Clear existing assignments and assign team
+            task.assigned_to.clear()
+            task.assigned_team = team
+            task.save()
+            
+            # Create audit log
+            Logs.objects.create(
+                user=request.user,
+                system_name='projectmanagement',
+                action='UPDATE',
+                target_model='Task',
+                target_id=task.id,
+                description=f"Assigned task '{task.title}' to team '{team.name}'",
+                hidden_description=f"User '{request.user.username}' assigned task '{task.title}' to team '{team.name}'",
+                ip_address=get_client_ip(request),
+                user_agent=get_user_agent(request),
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Task assigned to team {team.name}'
+            })
+        
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid assignment type'
+            }, status=400)
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error assigning task: {str(e)}'
+        }, status=500)
+
