@@ -1,0 +1,76 @@
+{% load dict_extras %}
+<div class="members-table-wrapper">
+  {% if selected_team %}
+    <div class="members-panel-subheader">
+      <div>
+        <h3>{{ selected_team.name }}</h3>
+        <p class="muted">{{ members|length }} member{{ members|pluralize }}</p>
+      </div>
+      {% if is_admin_or_superadmin %}
+      <div class="members-actions">
+        <button class="primary-ghost-btn" data-bs-toggle="modal" data-bs-target="#addTeamUserModal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add user
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if members %}
+  <table class="members-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Team</th>
+        {% if is_admin_or_superadmin %}<th>Actions</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for member in members %}
+      <tr>
+        <td>
+          <div class="member-info-cell">
+            {% if member.avatar %}
+            <img src="{{ member.avatar.url }}" alt="{{ member.username }}" class="member-avatar-img">
+            {% else %}
+            <div class="member-avatar">{{ member.username|first|upper }}</div>
+            {% endif %}
+            <div class="member-details">
+              <strong>{{ member.username }}</strong>
+            </div>
+          </div>
+        </td>
+        <td>{{ member.email }}</td>
+        <td>
+          <span class="team-pill">
+            {% if selected_team %}{{ selected_team.name }}{% else %}—{% endif %}
+          </span>
+        </td>
+        {% if is_admin_or_superadmin %}
+        <td>
+          <form method="post" action="{% url 'projectmanagement:remove_team_user' selected_team.id member.id %}">
+            {% csrf_token %}
+            <button type="submit" class="ghost-btn" style="padding:6px 10px; font-size:12px;">Remove</button>
+          </form>
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty-state">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M9 10h.01M15 10h.01M9.5 15c.667 .667 1.5 1 2.5 1s1.833 -.333 2.5 -1"></path>
+      </svg>
+      <h3>No members in this team</h3>
+      <p>Invite or add users to this team.</p>
+    </div>
+  {% endif %}
+</div>

@@ -1,0 +1,51 @@
+{% load dict_extras %}
+<div class="members-table-wrapper">
+  {% if members %}
+  <table class="members-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Teams</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for member in members %}
+      <tr>
+        <td>
+          <div class="member-info-cell">
+            {% if member.avatar %}
+            <img src="{{ member.avatar.url }}" alt="{{ member.username }}" class="member-avatar-img">
+            {% else %}
+            <div class="member-avatar">{{ member.username|first|upper }}</div>
+            {% endif %}
+            <div class="member-details">
+              <strong>{{ member.username }}</strong>
+            </div>
+          </div>
+        </td>
+        <td>{{ member.email }}</td>
+        <td>
+          <div class="member-teams">
+            {% for t in member.teams.all %}
+              <span class="team-pill">{{ t.name }}</span>
+            {% empty %}
+              <span class="muted">No teams</span>
+            {% endfor %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty-state">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M9 10h.01M15 10h.01M9.5 15c.667 .667 1.5 1 2.5 1s1.833 -.333 2.5 -1"></path>
+      </svg>
+      <h3>No users found</h3>
+      <p>Try adjusting your search.</p>
+    </div>
+  {% endif %}
+</div>

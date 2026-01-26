@@ -1,0 +1,235 @@
+{% extends 'projectmanagement/base.html' %}
+{% load static %}
+
+{% block title %}Teams - Project Management{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'projectmanagement/css/pages/teams.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+  <header class="team-header">
+    <div class="page-header">
+      <h1>Teams</h1>
+      <p>Manage teams and members</p>
+    </div>
+  </header>
+
+  <section class="teams-layout">
+    <aside class="teams-sidebar">
+      {% if is_admin_or_superadmin %}
+      <div class="sidebar-actions">
+        <button class="sidebar-btn" data-bs-toggle="modal" data-bs-target="#addTeamModal">+ New team</button>
+      </div>
+      {% endif %}
+      <div class="sidebar-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="M21 21l-4.35-4.35"></path>
+        </svg>
+        <input type="text" placeholder="Search teams..." id="team-search-sidebar" value="{{ search_query }}">
+      </div>
+      <div id="team-list-content">
+        {% include 'projectmanagement/partials/_teams_table.html' %}
+      </div>
+    </aside>
+
+    <section class="members-panel">
+      <div class="members-header">
+        <div>
+          <h2>{% if selected_team %}Team members{% else %}All users{% endif %}</h2>
+          <p class="muted">Search by name or email</p>
+        </div>
+      </div>
+
+      <div class="members-search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="M21 21l-4.35-4.35"></path>
+        </svg>
+        <input type="text" placeholder="Search by name or email" id="member-search" value="{{ member_search_query|default:'' }}">
+      </div>
+
+      <div id="members-list">
+        {% if selected_team %}
+          {% include 'projectmanagement/partials/_team_members_table.html' %}
+        {% else %}
+          {% include 'projectmanagement/partials/_teams_all_users_table.html' %}
+        {% endif %}
+      </div>
+    </section>
+  </section>
+</main>
+{% endblock %}
+
+{% include 'projectmanagement/modals/admin/add_team_modal.html' %}
+{% include 'projectmanagement/modals/admin/add_team_user_modal.html' %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('team-search');
+  const sidebarSearch = document.getElementById('team-search-sidebar');
+  const memberSearch = document.getElementById('member-search');
+  const teamContent = document.getElementById('team-list-content');
+  const membersList = document.getElementById('members-list');
+  let searchTimeout;
+  let memberSearchTimeout;
+
+  function performTeamSearch(query) {
+    const url = new URL(window.location);
+    if (query) {
+      url.searchParams.set('search', query);
+    } else {
+      url.searchParams.delete('search');
+    }
+    // Clear member search and search_type when doing team search
+    url.searchParams.delete('member_search');
+    url.searchParams.delete('search_type');
+    
+    window.history.pushState({}, '', url);
+
+    if (teamContent) teamContent.style.opacity = '0.5';
+
+    fetch(url.pathname + url.search, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => response.text())
+    .then(data => {
+      if (teamContent) {
+        teamContent.innerHTML = data;
+        teamContent.style.opacity = '1';
+        attachTeamsPagination();
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching team:', error);
+      if (teamContent) teamContent.style.opacity = '1';
+    });
+  }
+
+  function performMemberSearch(query) {
+    const url = new URL(window.location);
+    const teamParam = url.searchParams.get('team');
+    
+    // Set member_search param
+    if (query) {
+      url.searchParams.set('member_search', query);
+    } else {
+      url.searchParams.delete('member_search');
+    }
+    
+    // Preserve team param
+    if (teamParam) {
+      url.searchParams.set('team', teamParam);
+    }
+    
+    // Tell view to return members list only
+    url.searchParams.set('search_type', 'members');
+    
+    window.history.pushState({}, '', url);
+
+    if (membersList) membersList.style.opacity = '0.5';
+
+    fetch(url.pathname + url.search, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => response.text())
+    .then(data => {
+      if (membersList) {
+        membersList.innerHTML = data;
+        membersList.style.opacity = '1';
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching members:', error);
+      if (membersList) membersList.style.opacity = '1';
+    });
+  }
+
+  function bindTeamSearch(el) {
+    if (!el) return;
+    el.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      const query = this.value;
+      searchTimeout = setTimeout(() => performTeamSearch(query), 300);
+      if (searchInput && el === sidebarSearch) searchInput.value = this.value;
+      if (sidebarSearch && el === searchInput) sidebarSearch.value = this.value;
+    });
+  }
+
+  function bindMemberSearch(el) {
+    if (!el) return;
+    el.addEventListener('input', function() {
+      clearTimeout(memberSearchTimeout);
+      const query = this.value;
+      memberSearchTimeout = setTimeout(() => performMemberSearch(query), 300);
+    });
+  }
+
+  bindTeamSearch(searchInput);
+  bindTeamSearch(sidebarSearch);
+  bindMemberSearch(memberSearch);
+
+  const clearTeamSearchBtn = document.getElementById('clear-team-search');
+  if (clearTeamSearchBtn) {
+    clearTeamSearchBtn.addEventListener('click', function() {
+      if (searchInput) searchInput.value = '';
+      if (sidebarSearch) sidebarSearch.value = '';
+      performTeamSearch('');
+    });
+  }
+
+  function attachTeamsPagination() {
+    const paginationLinks = teamContent ? teamContent.querySelectorAll('.pagination a') : [];
+    paginationLinks.forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const href = this.getAttribute('href');
+        if (!href) return;
+
+        const url = new URL(href, window.location.href);
+        const current = new URL(window.location);
+        if (!url.searchParams.get('search') && current.searchParams.get('search')) {
+          url.searchParams.set('search', current.searchParams.get('search'));
+        }
+
+        window.history.pushState({}, '', url);
+        if (teamContent) teamContent.style.opacity = '0.5';
+
+        fetch(url.pathname + url.search, {
+          method: 'GET',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+          },
+        })
+        .then(response => response.text())
+        .then(data => {
+          if (teamContent) {
+            teamContent.innerHTML = data;
+            teamContent.style.opacity = '1';
+            attachTeamsPagination();
+          }
+        })
+        .catch(error => {
+          console.error('Pagination error:', error);
+          if (teamContent) teamContent.style.opacity = '1';
+        });
+      });
+    });
+  }
+
+  attachTeamsPagination();
+});
+</script>
+{% endblock %}

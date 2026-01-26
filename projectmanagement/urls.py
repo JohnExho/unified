@@ -5,7 +5,9 @@ from .views import (
     dashboard,settings,admin_dashboard,deactivate_user,activate_user,delete_user,
     manage_user_access,update_tos, system_logs,save_addresses, delete_address,
     upload_avatar,remove_avatar,profile_update,change_password,projects,create_project,
-    create_task, team, calendar, reports, notifications, complete_task, assign_task, edit_project,
+    create_task, teams, add_team, add_team_user, remove_team_user,
+    # calendar, reports, notifications,
+    complete_task, assign_task, edit_project,
     edit_task, delete_task, delete_project
 )
 
@@ -29,10 +31,13 @@ urlpatterns = [
     path('tasks/<uuid:task_id>/delete/', delete_task, name='delete_task'),
     path('tasks/<uuid:task_id>/complete/', complete_task, name='complete_task'),
     path('tasks/<uuid:task_id>/assign/', assign_task, name='assign_task'),
-    path('teams/', team, name='pm_teams'),
-    path('calendar/', calendar, name='pm_calendar'),
-    path('reports/', reports, name='pm_reports'),
-    path('notifications/', notifications, name='pm_notifications'),
+    path('teams/', teams, name='pm_teams'),
+    path('teams/add/', add_team, name='add_team'),
+    path('teams/<uuid:team_id>/add-user/', add_team_user, name='add_team_user'),
+    path('teams/<uuid:team_id>/remove-user/<uuid:user_id>/', remove_team_user, name='remove_team_user'),
+    # path('calendar/', calendar, name='pm_calendar'),
+    # path('reports/', reports, name='pm_reports'),
+    # path('notifications/', notifications, name='pm_notifications'),
     path('settings/', settings, name='pm_settings'),
 
     # API endpoints for task assignment

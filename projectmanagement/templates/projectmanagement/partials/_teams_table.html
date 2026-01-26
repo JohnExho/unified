@@ -1,0 +1,23 @@
+<div class="team-list">
+  {% if teams %}
+    {% for team in teams %}
+    {% if selected_team and selected_team.id == team.id %}
+    <a href="?{% if request.GET.search %}search={{ request.GET.search }}{% endif %}{% if request.GET.page %}{% if request.GET.search %}&{% endif %}page={{ request.GET.page }}{% endif %}"
+       class="team-list-item active">
+      <span class="team-name">{{ team.name }}</span>
+      <span class="team-count-badge">{{ team.member_count|default:team.members.count }}</span>
+    </a>
+    {% else %}
+    <a href="?team={{ team.id }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.page %}&page={{ request.GET.page }}{% endif %}"
+       class="team-list-item">
+      <span class="team-name">{{ team.name }}</span>
+      <span class="team-count-badge">{{ team.member_count|default:team.members.count }}</span>
+    </a>
+    {% endif %}
+    {% endfor %}
+  {% else %}
+    <div class="empty-state small">
+      <p>No teams yet.</p>
+    </div>
+  {% endif %}
+</div>

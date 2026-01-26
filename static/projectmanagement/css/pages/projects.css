@@ -66,7 +66,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #3b82f6;
+  background: #2d3748;
   color: white;
   border: none;
   border-radius: 8px;
@@ -79,7 +79,7 @@
 }
 
 .add-project-button:hover {
-  background: #2563eb;
+  background: #1a202c;
 }
 
 .add-project-button svg {

@@ -97,7 +97,7 @@ class Task(models.Model):
             MaxValueValidator(10),
         ],
     )
-    due_date = models.DateField(null=True, blank=True)
+    due_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -10,9 +10,11 @@ from django.contrib import messages
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Q, Count
+from django.db import IntegrityError
 from django.template.loader import render_to_string
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.urls import reverse
 import json
 
 now = timezone.now()
@@ -954,7 +956,6 @@ def projects(request):
             request=request
         )
         # Return HTML directly, not JSON for this simple case
-        from django.http import HttpResponse
         return HttpResponse(projects_table_html)
 
     # ---- Regular page load ----
@@ -1668,14 +1669,205 @@ def assign_task(request, task_id):
             'message': f'Error assigning task: {str(e)}'
         }, status=500)
 
-def team(request):
-    return render(request, 'projectmanagement/pages/team.html')
+def teams(request):
+    current_system = request.current_system
 
-def calendar(request):
-    return render(request, 'projectmanagement/pages/calendar.html')
+    # Access control: must be system member or superuser
+    if not request.user.is_superuser and not SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).exists():
+        return render(request, '404.html', status=404)
 
-def notifications(request):
-    return render(request, 'projectmanagement/pages/notifications.html')
+    # Get current user's role
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin_or_superadmin = request.user.is_superuser or user_role in ['admin', 'superadmin']
 
-def reports(request):
-    return render(request, 'projectmanagement/pages/reports.html')
+    # Queries
+    search_query = request.GET.get('search', '').strip()            # team search
+    member_search_query = request.GET.get('member_search', '').strip()  # member search
+    page_number = request.GET.get('page') or 1
+    selected_team_id = request.GET.get('team')
+
+    # Teams list with member count
+    teams_qs = (
+        Team.objects
+        .annotate(member_count=Count('members'))
+        .order_by('name')
+    )
+    
+    # Filter teams for non-admin users (only show teams they're assigned to)
+    if not is_admin_or_superadmin:
+        teams_qs = teams_qs.filter(members=request.user)
+    
+    if search_query:
+        teams_qs = teams_qs.filter(name__icontains=search_query)
+
+    paginator = Paginator(teams_qs, 25)
+    teams_page = paginator.get_page(page_number)
+
+    # Determine selected team (for non-admins default to their first team)
+    selected_team = None
+    if selected_team_id:
+        selected_team = teams_qs.filter(id=selected_team_id).first()
+    elif not is_admin_or_superadmin:
+        selected_team = teams_qs.first()
+
+    # Members list (team members if a team is selected, otherwise all users in system)
+    if selected_team:
+        members_qs = selected_team.members.all()
+    else:
+        if is_admin_or_superadmin:
+            members_qs = User.objects.filter(
+                systemmembership__system_name=current_system
+            ).distinct()
+        else:
+            members_qs = User.objects.none()
+
+    if member_search_query:
+        members_qs = members_qs.filter(
+            Q(username__icontains=member_search_query) |
+            Q(email__icontains=member_search_query)
+        )
+
+    # Optimize query: order by username and email
+    members = members_qs.order_by('username', 'email')
+
+    # Fetch system roles for members
+    member_roles = {
+        m.user_id: m.system_role
+        for m in SystemMembership.objects.filter(
+            system_name=current_system,
+            user__in=members
+        )
+    }
+
+    # Users available to add to selected team (admins only)
+    available_users = []
+    if is_admin_or_superadmin and selected_team:
+        available_users = User.objects.filter(
+            systemmembership__system_name=current_system
+        ).exclude(id__in=members.values_list('id', flat=True)).order_by('username')
+
+    context = {
+        'teams': teams_page,
+        'teams_paginator': paginator,
+        'selected_team': selected_team,
+        'search_query': search_query,
+        'member_search_query': member_search_query,
+        'members': members,
+        'member_roles': member_roles,
+        'current_system': current_system,
+        'current_user_role': user_role,
+        'is_admin_or_superadmin': is_admin_or_superadmin,
+        'available_users': available_users,
+    }
+
+    # AJAX: return only the relevant partial
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # If member_search param is present, return members list only
+        if member_search_query or request.GET.get('search_type') == 'members':
+            members_html = render_to_string(
+                'projectmanagement/partials/_team_members_table.html' if selected_team else 'projectmanagement/partials/_teams_all_users_table.html',
+                context,
+                request=request
+            )
+            return HttpResponse(members_html)
+        # Otherwise return teams list
+        teams_html = render_to_string(
+            'projectmanagement/partials/_teams_table.html',
+            context,
+            request=request
+        )
+        return HttpResponse(teams_html)
+
+    return render(
+        request,
+        'projectmanagement/pages/teams.html',
+        context
+    )
+
+
+@login_required
+@require_http_methods(["POST"])
+def add_team(request):
+    current_system = request.current_system
+
+    # Only admins/superadmins or superuser
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin_or_superadmin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+    if not is_admin_or_superadmin:
+        return render(request, '404.html', status=404)
+
+    name = request.POST.get('name', '').strip()
+    description = request.POST.get('description', '').strip()
+
+    if not name:
+        messages.error(request, "Team name is required.")
+        return redirect('projectmanagement:pm_teams')
+
+    try:
+        Team.objects.create(name=name, description=description)
+        messages.success(request, f"Team '{name}' created successfully.")
+    except IntegrityError:
+        messages.error(request, f"Team '{name}' already exists.")
+
+    return redirect('projectmanagement:pm_teams')
+
+
+@login_required
+@require_http_methods(["POST"])
+def add_team_user(request, team_id):
+    current_system = request.current_system
+
+    # Only admins/superadmins or superuser
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin_or_superadmin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+    if not is_admin_or_superadmin:
+        return render(request, '404.html', status=404)
+
+    team = get_object_or_404(Team, id=team_id)
+    user_id = request.POST.get('user_id')
+    if not user_id:
+        messages.error(request, "Select a user to add.")
+        return redirect(f"{reverse('projectmanagement:pm_teams')}?team={team.id}")
+
+    user = get_object_or_404(User, id=user_id)
+    team.members.add(user)
+    messages.success(request, f"Added '{user.username}' to '{team.name}'.")
+    return redirect(f"{reverse('projectmanagement:pm_teams')}?team={team.id}")
+
+
+@login_required
+@require_http_methods(["POST"])
+def remove_team_user(request, team_id, user_id):
+    current_system = request.current_system
+
+    # Only admins/superadmins or superuser
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin_or_superadmin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+    if not is_admin_or_superadmin:
+        return render(request, '404.html', status=404)
+
+    team = get_object_or_404(Team, id=team_id)
+    user = get_object_or_404(User, id=user_id)
+
+    team.members.remove(user)
+    messages.success(request, f"Removed '{user.username}' from '{team.name}'.")
+    return redirect(f"{reverse('projectmanagement:pm_teams')}?team={team.id}")
