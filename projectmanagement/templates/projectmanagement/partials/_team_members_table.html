@@ -59,10 +59,7 @@
         </td>
         {% if is_admin_or_superadmin %}
         <td>
-          <form method="post" action="{% url 'projectmanagement:remove_team_user' selected_team.id member.id %}">
-            {% csrf_token %}
-            <button type="submit" class="ghost-btn" style="padding:6px 10px; font-size:12px;">Remove</button>
-          </form>
+          <button class="ghost-btn" data-bs-toggle="modal" data-bs-target="#removeUserTeamModal" data-team-id="{{ selected_team.id }}" data-team-name="{{ selected_team.name }}" data-user-id="{{ member.id }}" data-user-name="{{ member.username }}" style="padding:6px 10px; font-size:12px;">Remove</button>
         </td>
         {% endif %}
       </tr>

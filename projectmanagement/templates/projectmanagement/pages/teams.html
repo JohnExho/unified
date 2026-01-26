@@ -65,6 +65,7 @@
 {% include 'projectmanagement/modals/admin/add_team_modal.html' %}
 {% include 'projectmanagement/modals/admin/add_team_user_modal.html' %}
 {% include 'projectmanagement/modals/admin/delete_team_modal.html' %}
+{% include 'projectmanagement/modals/admin/remove_user_team_modal.html' %}
 {% endblock %}
 
 {% block extra_scripts %}
@@ -303,6 +304,46 @@ document.addEventListener('DOMContentLoaded', function() {
       const teamName = deleteTeamBtn.dataset.teamName || deleteTeamBtn.getAttribute('data-team-name');
       if (teamId && teamName) {
         window.openDeleteTeamModal(teamId, teamName);
+      }
+    }
+  });
+
+  // Remove User from Team Modal
+  const removeUserTeamModal = document.getElementById('removeUserTeamModal');
+  setupModalClose(removeUserTeamModal);
+
+  window.openRemoveUserTeamModal = function(teamId, userId, userName, teamName) {
+    if (removeUserTeamModal) {
+      const form = document.getElementById('remove-user-team-form');
+      const userNameEl = document.getElementById('remove-user-name');
+      const teamNameEl = document.getElementById('remove-team-name');
+      
+      if (form) {
+        form.action = `/projectmanagement/teams/${teamId}/remove-user/${userId}/`;
+      }
+      if (userNameEl) {
+        userNameEl.textContent = userName;
+      }
+      if (teamNameEl) {
+        teamNameEl.textContent = teamName;
+      }
+      
+      removeUserTeamModal.classList.add('show');
+      removeUserTeamModal.style.display = 'flex';
+    }
+  };
+
+  // Listen for Remove User buttons
+  document.addEventListener('click', function(e) {
+    const removeUserBtn = e.target.closest('[data-bs-target="#removeUserTeamModal"]');
+    if (removeUserBtn && removeUserTeamModal) {
+      e.preventDefault();
+      const teamId = removeUserBtn.dataset.teamId || removeUserBtn.getAttribute('data-team-id');
+      const userId = removeUserBtn.dataset.userId || removeUserBtn.getAttribute('data-user-id');
+      const userName = removeUserBtn.dataset.userName || removeUserBtn.getAttribute('data-user-name');
+      const teamName = removeUserBtn.dataset.teamName || removeUserBtn.getAttribute('data-team-name');
+      if (teamId && userId && userName && teamName) {
+        window.openRemoveUserTeamModal(teamId, userId, userName, teamName);
       }
     }
   });
