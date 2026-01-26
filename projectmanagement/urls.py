@@ -5,7 +5,7 @@ from .views import (
     dashboard,settings,admin_dashboard,deactivate_user,activate_user,delete_user,
     manage_user_access,update_tos, system_logs,save_addresses, delete_address,
     upload_avatar,remove_avatar,profile_update,change_password,projects,create_project,
-    create_task, teams, add_team, add_team_user, remove_team_user,
+    create_task, teams, add_team, delete_team, add_team_user, remove_team_user,
     # calendar, reports, notifications,
     complete_task, assign_task, edit_project,
     edit_task, delete_task, delete_project
@@ -33,6 +33,7 @@ urlpatterns = [
     path('tasks/<uuid:task_id>/assign/', assign_task, name='assign_task'),
     path('teams/', teams, name='pm_teams'),
     path('teams/add/', add_team, name='add_team'),
+    path('teams/<uuid:team_id>/delete/', delete_team, name='delete_team'),
     path('teams/<uuid:team_id>/add-user/', add_team_user, name='add_team_user'),
     path('teams/<uuid:team_id>/remove-user/<uuid:user_id>/', remove_team_user, name='remove_team_user'),
     # path('calendar/', calendar, name='pm_calendar'),

@@ -38,7 +38,7 @@
     <section class="members-panel">
       <div class="members-header">
         <div>
-          <h2>{% if selected_team %}Team members{% else %}All users{% endif %}</h2>
+          <h2>{% if selected_team %} {{ selected_team.name }} - team members{% else %}All users{% endif %}</h2>
           <p class="muted">Search by name or email</p>
         </div>
       </div>
@@ -61,10 +61,11 @@
     </section>
   </section>
 </main>
-{% endblock %}
 
 {% include 'projectmanagement/modals/admin/add_team_modal.html' %}
 {% include 'projectmanagement/modals/admin/add_team_user_modal.html' %}
+{% include 'projectmanagement/modals/admin/delete_team_modal.html' %}
+{% endblock %}
 
 {% block extra_scripts %}
 <script>
@@ -230,6 +231,110 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   attachTeamsPagination();
+
+  // Modal handlers
+  const addTeamModal = document.getElementById('addTeamModal');
+  const addTeamBtn = document.querySelector('[data-bs-target="#addTeamModal"]');
+  const addUserModal = document.getElementById('addTeamUserModal');
+  
+  // Open Add Team Modal
+  if (addTeamBtn && addTeamModal) {
+    addTeamBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      addTeamModal.classList.add('show');
+      addTeamModal.style.display = 'flex';
+    });
+  }
+
+  // Close modals
+  function setupModalClose(modal) {
+    if (!modal) return;
+    
+    const closeButtons = modal.querySelectorAll('.modal-close');
+    closeButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+        const form = modal.querySelector('form');
+        if (form) form.reset();
+      });
+    });
+
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+        const form = modal.querySelector('form');
+        if (form) form.reset();
+      }
+    });
+  }
+
+  setupModalClose(addTeamModal);
+  setupModalClose(addUserModal);
+
+  // Delete Team Modal
+  const deleteTeamModal = document.getElementById('deleteTeamModal');
+  setupModalClose(deleteTeamModal);
+
+  window.openDeleteTeamModal = function(teamId, teamName) {
+    if (deleteTeamModal) {
+      const form = document.getElementById('delete-team-form');
+      const teamNameEl = document.getElementById('delete-team-name');
+      
+      if (form) {
+        form.action = `/projectmanagement/teams/${teamId}/delete/`;
+      }
+      if (teamNameEl) {
+        teamNameEl.textContent = teamName;
+      }
+      
+      deleteTeamModal.classList.add('show');
+      deleteTeamModal.style.display = 'flex';
+    }
+  };
+
+  // Listen for Delete Team buttons
+  document.addEventListener('click', function(e) {
+    const deleteTeamBtn = e.target.closest('[data-bs-target="#deleteTeamModal"]');
+    if (deleteTeamBtn && deleteTeamModal) {
+      e.preventDefault();
+      const teamId = deleteTeamBtn.dataset.teamId || deleteTeamBtn.getAttribute('data-team-id');
+      const teamName = deleteTeamBtn.dataset.teamName || deleteTeamBtn.getAttribute('data-team-name');
+      if (teamId && teamName) {
+        window.openDeleteTeamModal(teamId, teamName);
+      }
+    }
+  });
+
+  // Open Add User Modal
+  window.openAddTeamUserModal = function(teamId) {
+    if (addUserModal) {
+      const teamIdInput = document.getElementById('team-id-input');
+      if (teamIdInput) teamIdInput.value = teamId;
+      
+      // Set form action with team ID
+      const form = document.getElementById('add-team-user-form');
+      if (form) {
+        form.action = `/projectmanagement/teams/${teamId}/add-user/`;
+      }
+      
+      addUserModal.classList.add('show');
+      addUserModal.style.display = 'flex';
+    }
+  };
+
+  // Listen for Add User buttons
+  document.addEventListener('click', function(e) {
+    const addUserBtn = e.target.closest('[data-bs-target="#addTeamUserModal"]');
+    if (addUserBtn && addUserModal) {
+      e.preventDefault();
+      const teamId = addUserBtn.dataset.teamId || addUserBtn.getAttribute('data-team-id');
+      if (teamId) {
+        window.openAddTeamUserModal(teamId);
+      }
+    }
+  });
 });
 </script>
 {% endblock %}

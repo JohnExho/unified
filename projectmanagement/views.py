@@ -1697,7 +1697,7 @@ def teams(request):
     teams_qs = (
         Team.objects
         .annotate(member_count=Count('members'))
-        .order_by('name')
+        .order_by('-created_at')
     )
     
     # Filter teams for non-admin users (only show teams they're assigned to)
@@ -1808,6 +1808,83 @@ def add_team(request):
         return render(request, '404.html', status=404)
 
     name = request.POST.get('name', '').strip()
+    if not name:
+        messages.error(request, "Team name is required.")
+        return redirect('projectmanagement:pm_teams')
+
+    try:
+        team = Team.objects.create(name=name)
+        
+        Logs.objects.create(
+            user=request.user,
+            system_name='projectmanagement',
+            action='CREATE',
+            target_model='Team',
+            target_id=team.id,
+            description=f"Created team '{team.name}'",
+            hidden_description=f"User '{request.user.username}' created team '{team.name}'",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+        
+        messages.success(request, f"Team '{name}' created successfully.")
+    except IntegrityError:
+        messages.error(request, f"Team '{name}' already exists.")
+
+    return redirect('projectmanagement:pm_teams')
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_team(request, team_id):
+    current_system = request.current_system
+
+    # Only admins/superadmins or superuser
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin_or_superadmin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+    if not is_admin_or_superadmin:
+        return render(request, '404.html', status=404)
+
+    team = get_object_or_404(Team, id=team_id)
+    team_name = team.name
+    team.delete()
+    
+    Logs.objects.create(
+        user=request.user,
+        system_name='projectmanagement',
+        action='DELETE',
+        target_model='Team',
+        target_id=team_id,
+        description=f"Deleted team '{team_name}'",
+        hidden_description=f"User '{request.user.username}' deleted team '{team_name}'",
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+    
+    messages.success(request, f"Team '{team_name}' deleted successfully.")
+    return redirect('projectmanagement:pm_teams')
+
+
+@login_required
+@require_http_methods(["POST"])
+def add_team_user_placeholder(request, team_id):
+    current_system = request.current_system
+
+    # Only admins/superadmins or superuser
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin_or_superadmin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+    if not is_admin_or_superadmin:
+        return render(request, '404.html', status=404)
+
+    name = request.POST.get('name', '').strip()
     description = request.POST.get('description', '').strip()
 
     if not name:
@@ -1846,6 +1923,19 @@ def add_team_user(request, team_id):
 
     user = get_object_or_404(User, id=user_id)
     team.members.add(user)
+    
+    Logs.objects.create(
+        user=request.user,
+        system_name='projectmanagement',
+        action='UPDATE',
+        target_model='Team',
+        target_id=team.id,
+        description=f"Added user '{user.username}' to team '{team.name}'",
+        hidden_description=f"User '{request.user.username}' added user '{user.username}' to team '{team.name}'",
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+    
     messages.success(request, f"Added '{user.username}' to '{team.name}'.")
     return redirect(f"{reverse('projectmanagement:pm_teams')}?team={team.id}")
 
@@ -1869,5 +1959,18 @@ def remove_team_user(request, team_id, user_id):
     user = get_object_or_404(User, id=user_id)
 
     team.members.remove(user)
+    
+    Logs.objects.create(
+        user=request.user,
+        system_name='projectmanagement',
+        action='UPDATE',
+        target_model='Team',
+        target_id=team.id,
+        description=f"Removed user '{user.username}' from team '{team.name}'",
+        hidden_description=f"User '{request.user.username}' removed user '{user.username}' from team '{team.name}'",
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+    
     messages.success(request, f"Removed '{user.username}' from '{team.name}'.")
     return redirect(f"{reverse('projectmanagement:pm_teams')}?team={team.id}")

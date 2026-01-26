@@ -3,17 +3,23 @@
   {% if selected_team %}
     <div class="members-panel-subheader">
       <div>
-        <h3>{{ selected_team.name }}</h3>
-        <p class="muted">{{ members|length }} member{{ members|pluralize }}</p>
+        <h3 class="muted">{{ members|length }} member{{ members|pluralize }}</h3>
       </div>
       {% if is_admin_or_superadmin %}
-      <div class="members-actions">
-        <button class="primary-ghost-btn" data-bs-toggle="modal" data-bs-target="#addTeamUserModal">
+      <div class="members-actions" style="display: flex; gap: 8px;">
+        <button class="primary-ghost-btn" data-bs-toggle="modal" data-bs-target="#addTeamUserModal" data-team-id="{{ selected_team.id }}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
           Add user
+        </button>
+        <button class="delete-team-btn" data-bs-toggle="modal" data-bs-target="#deleteTeamModal" data-team-id="{{ selected_team.id }}" data-team-name="{{ selected_team.name }}" title="Delete team">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Delete team
         </button>
       </div>
       {% endif %}

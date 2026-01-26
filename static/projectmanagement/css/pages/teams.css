@@ -43,7 +43,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  height: fit-content;
+  min-height: 650px;
   position: sticky;
   top: 32px;
 }
@@ -111,7 +111,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: calc(100vh - 400px);
+  max-height: calc(100vh - 200px);
   overflow-y: auto;
 }
 
@@ -239,6 +239,32 @@
 .primary-ghost-btn:hover {
   background: #edf2f7;
   border-color: #667eea;
+}
+
+.delete-team-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid #dc2626;
+  color: #dc2626;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-team-btn:hover {
+  background: #fef2f2;
+  border-color: #b91c1c;
+  color: #b91c1c;
+}
+
+.delete-team-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .members-search-box {
@@ -393,6 +419,32 @@
 }
 
 /* Empty states */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-state svg {
+  color: #cbd5e0;
+}
+
+.empty-state h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: #718096;
+  margin: 0;
+}
+
 .empty-state.small {
   padding: 24px 12px;
 }

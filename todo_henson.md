@@ -1,10 +1,4 @@
 # Project Management – Todo
-## Teams
-- [ ] Create Team
-- [ ] Add existing user to team
-- [ ] Remove user from team
-- [ ] View team member list
-- [ ] Delete Team 
 
 ## Calendar
 - [ ] Calendar views (day / week / month)

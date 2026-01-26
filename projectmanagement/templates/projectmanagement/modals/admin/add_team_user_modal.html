@@ -1,1 +1,276 @@
-{% comment %} {% endcomment %}
+<!-- Add Team User Modal -->
+<div id="addTeamUserModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add User to Team</h2>
+            <button type="button" class="modal-close" aria-label="Close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <form id="add-team-user-form" method="post" action="" enctype="application/x-www-form-urlencoded">
+            {% csrf_token %}
+            
+            <input type="hidden" id="team-id-input" name="team_id" value="">
+            
+            <div class="form-group">
+                <label for="team-user-search">Search User *</label>
+                <input 
+                    type="text" 
+                    id="team-user-search" 
+                    placeholder="Type to search users..."
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="team-user-select">Select User *</label>
+                <select 
+                    id="team-user-select" 
+                    name="user_id" 
+                    required
+                    size="8"
+                    style="height: 200px;"
+                >
+                    <option value="">Choose a user...</option>
+                    {% for user in available_users %}
+                    <option value="{{ user.id }}" data-name="{{ user.get_full_name|lower }}" data-email="{{ user.email|lower }}">{{ user.get_full_name }} ({{ user.email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal.show {
+    display: flex !important;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #1f2937;
+}
+
+#add-team-user-form {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+}
+
+.btn-secondary {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db;
+}
+
+#team-user-select {
+    cursor: pointer;
+}
+
+#team-user-select option {
+    padding: 8px;
+    cursor: pointer;
+}
+
+#team-user-select option:hover {
+    background-color: #f3f4f6;
+}
+
+.no-results-message {
+    padding: 12px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+    background-color: #f9fafb;
+    border-radius: 4px;
+    margin-top: 8px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('team-user-search');
+    const userSelect = document.getElementById('team-user-select');
+    
+    if (searchInput && userSelect) {
+        // Store original options
+        const allOptions = Array.from(userSelect.options);
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            // Clear current options except the first (placeholder)
+            while (userSelect.options.length > 1) {
+                userSelect.remove(1);
+            }
+            
+            if (!searchTerm) {
+                // Restore all options if search is empty
+                allOptions.slice(1).forEach(option => {
+                    userSelect.add(option.cloneNode(true));
+                });
+                return;
+            }
+            
+            // Filter and add matching options
+            let hasResults = false;
+            allOptions.slice(1).forEach(option => {
+                const name = option.getAttribute('data-name') || '';
+                const email = option.getAttribute('data-email') || '';
+                
+                if (name.includes(searchTerm) || email.includes(searchTerm)) {
+                    userSelect.add(option.cloneNode(true));
+                    hasResults = true;
+                }
+            });
+            
+            // Show "no results" if nothing matches
+            if (!hasResults) {
+                const noResultOption = document.createElement('option');
+                noResultOption.disabled = true;
+                noResultOption.textContent = 'No users found';
+                noResultOption.style.color = '#9ca3af';
+                userSelect.add(noResultOption);
+            }
+        });
+        
+        // Clear search when modal opens
+        const modal = document.getElementById('addTeamUserModal');
+        if (modal) {
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'style' && modal.style.display === 'flex') {
+                        searchInput.value = '';
+                        // Restore all options
+                        while (userSelect.options.length > 1) {
+                            userSelect.remove(1);
+                        }
+                        allOptions.slice(1).forEach(option => {
+                            userSelect.add(option.cloneNode(true));
+                        });
+                        // Focus search input
+                        setTimeout(() => searchInput.focus(), 100);
+                    }
+                });
+            });
+            observer.observe(modal, { attributes: true });
+        }
+    }
+});
+</script>
