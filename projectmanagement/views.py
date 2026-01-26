@@ -112,7 +112,7 @@ def dashboard(request):
 
     # ---- Total stats (for all projects/tasks visible to user) ----
     total_projects_count = stats_projects.count()
-    total_tasks_count = stats_tasks.count()
+    total_tasks_count = stats_tasks.exclude(status='completed').count()
 
     # ---- Assignment stats (for paginated display) ----
     assigned_projects_count = projects.count()
@@ -1974,3 +1974,274 @@ def remove_team_user(request, team_id, user_id):
     
     messages.success(request, f"Removed '{user.username}' from '{team.name}'.")
     return redirect(f"{reverse('projectmanagement:pm_teams')}?team={team.id}")
+
+
+@login_required
+@login_required
+def calendar(request):
+    """
+    Display a calendar view with active and late projects and tasks.
+    Supports week, month, and year views.
+    """
+    import calendar as cal_module
+    from datetime import timedelta
+    
+    current_system = request.current_system
+    
+    # ---- Access control ----
+    if not request.user.is_superuser and not SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).exists():
+        return redirect("projectmanagement:pm_dashboard")
+    
+    # ---- Get current user's role ----
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin_or_superadmin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+    
+    # ---- Base querysets ----
+    projects = Project.objects.prefetch_related("tasks")
+    all_tasks = (
+        Task.objects
+        .select_related("project")
+        .prefetch_related("assigned_to", "assigned_team__members")
+    )
+    
+    # ---- Apply visibility scope based on user role ----
+    if not is_admin_or_superadmin:
+        # Non-admins only see projects they created or are in the team
+        projects = projects.filter(
+            Q(created_by=request.user) | Q(team__members=request.user)
+        ).distinct()
+        # Non-admins only see tasks they are assigned to
+        all_tasks = all_tasks.filter(
+            Q(assigned_to=request.user) | Q(assigned_team__members=request.user)
+        ).distinct()
+    
+    # ---- Get current date ----
+    now = timezone.now()
+    today = now.date()
+    
+    # ---- Get view mode ----
+    view = request.GET.get('view', 'month')  # week, month, or year
+    
+    # ---- Get calendar month/year from query params ----
+    year = int(request.GET.get('year', today.year))
+    month = int(request.GET.get('month', today.month))
+    
+    # ---- Calculate date ranges based on view mode ----
+    if view == 'week':
+        # Get week start date (Monday)
+        week_start_str = request.GET.get('week_start')
+        if week_start_str:
+            week_start = timezone.datetime.strptime(week_start_str, '%Y-%m-%d').date()
+        else:
+            # Always use the current week (most recent)
+            week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+        first_day = week_start
+        last_day = week_end
+        
+        # Generate week days for template
+        week_days = []
+        day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        for i in range(7):
+            current_day = week_start + timedelta(days=i)
+            week_days.append((current_day, day_names[i]))
+        
+        # Calculate previous/next week
+        prev_week_start = week_start - timedelta(days=7)
+        next_week_start = week_start + timedelta(days=7)
+        prev_year, prev_month = prev_week_start.year, prev_week_start.month
+        next_year, next_month = next_week_start.year, next_week_start.month
+        
+    elif view == 'year':
+        # Year view
+        first_day = timezone.datetime(year, 1, 1).date()
+        last_day = timezone.datetime(year, 12, 31).date()
+        
+        # Generate year calendars for each month
+        year_calendars = []
+        month_names = {i: cal_module.month_name[i] for i in range(1, 13)}
+        for m in range(1, 13):
+            raw_calendar_grid = cal_module.monthcalendar(year, m)
+            month_cal = []
+            for week in raw_calendar_grid:
+                week_with_dates = []
+                for day in week:
+                    if day != 0:
+                        date_obj = timezone.datetime(year, m, day).date()
+                        week_with_dates.append({'day': day, 'date': date_obj})
+                    else:
+                        week_with_dates.append({'day': 0, 'date': None})
+                month_cal.append(week_with_dates)
+            year_calendars.append((m, month_cal))
+        
+        # Calculate previous/next year
+        prev_year = year - 1
+        next_year = year + 1
+        prev_month = 12
+        next_month = 1
+        
+    else:  # month (default)
+        view = 'month'
+        first_day = timezone.datetime(year, month, 1).date()
+        last_day = timezone.datetime(year, month, cal_module.monthrange(year, month)[1]).date()
+        
+        # Get calendar grid for the month - enhanced with date objects
+        raw_calendar_grid = cal_module.monthcalendar(year, month)
+        calendar_grid = []
+        for week in raw_calendar_grid:
+            week_with_dates = []
+            for day in week:
+                if day != 0:
+                    date_obj = timezone.datetime(year, month, day).date()
+                    week_with_dates.append({'day': day, 'date': date_obj})
+                else:
+                    week_with_dates.append({'day': 0, 'date': None})
+            calendar_grid.append(week_with_dates)
+        
+        # Calculate previous/next month
+        if month == 1:
+            prev_month = 12
+            prev_year = year - 1
+        else:
+            prev_month = month - 1
+            prev_year = year
+        
+        if month == 12:
+            next_month = 1
+            next_year = year + 1
+        else:
+            next_month = month + 1
+            next_year = year
+        
+        month_name = cal_module.month_name[month]
+    
+    # ---- Get active projects (within date range) ----
+    active_projects = projects.filter(
+        start_date__lte=now.date(),
+        end_date__gte=now.date()
+    ).exclude(status='completed').exclude(status='cancelled')
+    
+    # ---- Get late projects (ended before today) ----
+    late_projects = projects.filter(
+        end_date__lt=now.date()
+    ).exclude(status='completed').exclude(status='cancelled')
+    
+    # ---- Get active tasks (not completed, due date >= today) ----
+    active_tasks = all_tasks.exclude(status='completed').filter(
+        due_date__gte=now.date()
+    )
+    
+    # ---- Get late/overdue tasks ----
+    overdue_tasks = all_tasks.exclude(status='completed').filter(
+        due_date__lt=now.date()
+    )
+    
+    # ---- Calculate total counts (combining active and late) ----
+    total_projects = active_projects.count() + late_projects.count()
+    total_tasks = active_tasks.count() + overdue_tasks.count()
+    
+    # ---- Build calendar events dictionary ----
+    calendar_events = {}
+    
+    # Add active projects
+    for project in active_projects:
+        for date in (project.start_date + timedelta(days=i) 
+                    for i in range((project.end_date - project.start_date).days + 1)):
+            if first_day <= date <= last_day:
+                if date not in calendar_events:
+                    calendar_events[date] = {'projects': [], 'tasks': []}
+                calendar_events[date]['projects'].append({
+                    'id': project.id,
+                    'name': project.name,
+                    'status': 'active',
+                    'type': 'project'
+                })
+    
+    # Add late projects
+    for project in late_projects:
+        if project.end_date >= first_day:
+            date = min(project.end_date, last_day)
+            if first_day <= date <= last_day:
+                if date not in calendar_events:
+                    calendar_events[date] = {'projects': [], 'tasks': []}
+                # Check if already added as active
+                if not any(p['id'] == project.id for p in calendar_events[date]['projects']):
+                    calendar_events[date]['projects'].append({
+                        'id': project.id,
+                        'name': project.name,
+                        'status': 'late',
+                        'type': 'project'
+                    })
+    
+    # Add active tasks
+    for task in active_tasks:
+        if first_day <= task.due_date <= last_day:
+            if task.due_date not in calendar_events:
+                calendar_events[task.due_date] = {'projects': [], 'tasks': []}
+            calendar_events[task.due_date]['tasks'].append({
+                'id': task.id,
+                'title': task.title,
+                'project': task.project.name,
+                'status': 'active',
+                'priority': task.priority,
+                'type': 'task'
+            })
+    
+    # Add overdue tasks
+    for task in overdue_tasks:
+        if first_day <= task.due_date <= last_day:
+            if task.due_date not in calendar_events:
+                calendar_events[task.due_date] = {'projects': [], 'tasks': []}
+            calendar_events[task.due_date]['tasks'].append({
+                'id': task.id,
+                'title': task.title,
+                'project': task.project.name,
+                'status': 'overdue',
+                'priority': task.priority,
+                'type': 'task'
+            })
+    
+    # ---- Build context ----
+    context = {
+        'calendar_events': calendar_events,
+        'year': year,
+        'month': month,
+        'today': today,
+        'view': view,
+        'active_projects': active_projects,
+        'late_projects': late_projects,
+        'active_tasks': active_tasks,
+        'overdue_tasks': overdue_tasks,
+        'total_projects': total_projects,
+        'total_tasks': total_tasks,
+        'total_late_projects': late_projects.count(),
+        'total_overdue_tasks': overdue_tasks.count(),
+        'current_system': current_system,
+        'prev_year': prev_year,
+        'prev_month': prev_month,
+        'next_year': next_year,
+        'next_month': next_month,
+    }
+    
+    # Add view-specific context
+    if view == 'month':
+        context['calendar_grid'] = calendar_grid
+        context['month_name'] = month_name
+    elif view == 'week':
+        context['week_days'] = week_days
+        context['week_start'] = week_start
+        context['week_end'] = week_end
+        context['prev_week_start'] = prev_week_start.strftime('%Y-%m-%d')
+        context['next_week_start'] = next_week_start.strftime('%Y-%m-%d')
+    elif view == 'year':
+        context['year_calendars'] = year_calendars
+        context['month_names'] = {i: cal_module.month_name[i] for i in range(1, 13)}
+    
+    return render(request, 'projectmanagement/pages/calendar.html', context)

@@ -1,0 +1,48 @@
+{% load calendar_extras %}
+
+<!-- Calendar Week View -->
+<div class="calendar-week-view">
+    <table class="week-table">
+        <thead>
+            <tr>
+                {% for day_date, day_name in week_days %}
+                    <th class="{% if day_date == today %}is-today{% endif %}">
+                        <div class="week-day-name">{{ day_name }}</div>
+                        <div class="week-day-date">{{ day_date|date:"m/d" }}</div>
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="week-events-row">
+                {% for day_date, day_name in week_days %}
+                    <td class="week-cell {% if day_date == today %}is-today{% endif %}">
+                        {% with events=calendar_events|get_item:day_date %}
+                            {% if events %}
+                                <div class="week-cell-content">
+                                    <!-- Projects -->
+                                    {% for project in events.projects %}
+                                        <div class="event-item project-event {% if project.status == 'late' %}late{% else %}active{% endif %}" title="{{ project.name }}">
+                                            <span class="event-badge">📁</span>
+                                            <span class="event-type">PRJ</span>
+                                            <span class="event-text">{{ project.name|truncatewords:2 }}</span>
+                                        </div>
+                                    {% endfor %}
+                                    
+                                    <!-- Tasks -->
+                                    {% for task in events.tasks %}
+                                        <div class="event-item task-event {% if task.status == 'overdue' %}overdue{% else %}active{% endif %}" title="{{ task.title }}">
+                                            <span class="event-badge">✓</span>
+                                            <span class="event-type">TSK</span>
+                                            <span class="event-text">{{ task.title|truncatewords:2 }}</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+</div>

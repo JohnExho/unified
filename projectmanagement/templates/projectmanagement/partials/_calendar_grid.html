@@ -1,0 +1,49 @@
+{% load calendar_extras %}
+
+<!-- Calendar Grid -->
+<div class="calendar-grid">
+    <!-- Day Headers -->
+    <div class="day-header">Sun</div>
+    <div class="day-header">Mon</div>
+    <div class="day-header">Tue</div>
+    <div class="day-header">Wed</div>
+    <div class="day-header">Thu</div>
+    <div class="day-header">Fri</div>
+    <div class="day-header">Sat</div>
+
+    <!-- Calendar Cells -->
+    {% for week in calendar_grid %}
+        {% for cell in week %}
+            {% if cell.day != 0 %}
+                <div class="calendar-cell {% if cell.date == today %}is-today{% endif %}">
+                    <div class="cell-date">{{ cell.day }}</div>
+                    {% with events=calendar_events|get_item:cell.date %}
+                        {% if events %}
+                            <div class="cell-content">
+                                <!-- Projects -->
+                                {% for project in events.projects %}
+                                    <div class="event-item project-event {% if project.status == 'late' %}late{% else %}active{% endif %}" title="{{ project.name }}">
+                                        <span class="event-badge">📁</span>
+                                        <span class="event-type">PRJ</span>
+                                        <span class="event-text">{{ project.name|truncatewords:2 }}</span>
+                                    </div>
+                                {% endfor %}
+                                
+                                <!-- Tasks -->
+                                {% for task in events.tasks %}
+                                    <div class="event-item task-event {% if task.status == 'overdue' %}overdue{% else %}active{% endif %}" title="{{ task.title }}">
+                                        <span class="event-badge">✓</span>
+                                        <span class="event-type">TSK</span>
+                                        <span class="event-text">{{ task.title|truncatewords:2 }}</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            {% else %}
+                <div class="calendar-cell empty"></div>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+</div>

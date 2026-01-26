@@ -1,0 +1,47 @@
+{% load calendar_extras %}
+
+<!-- Calendar Year View -->
+<div class="calendar-year-view">
+    <div class="year-grid">
+        {% for month_num, month_cal in year_calendars %}
+            <a href="?view=month&year={{ year }}&month={{ month_num }}" class="mini-month">
+                <h3 class="mini-month-name">{{ month_names|get_item:month_num }}</h3>
+                <div class="mini-calendar">
+                    <!-- Day Headers -->
+                    <div class="mini-day-header">Sun</div>
+                    <div class="mini-day-header">Mon</div>
+                    <div class="mini-day-header">Tue</div>
+                    <div class="mini-day-header">Wed</div>
+                    <div class="mini-day-header">Thu</div>
+                    <div class="mini-day-header">Fri</div>
+                    <div class="mini-day-header">Sat</div>
+
+                    <!-- Calendar Cells -->
+                    {% for week in month_cal %}
+                        {% for cell in week %}
+                            {% if cell.day != 0 %}
+                                <div class="mini-calendar-cell {% if cell.date == today %}is-today{% endif %}">
+                                    <div class="mini-cell-date">{{ cell.day }}</div>
+                                    {% with events=calendar_events|get_item:cell.date %}
+                                        {% if events %}
+                                            <div class="mini-cell-indicators">
+                                                {% if events.projects %}
+                                                    <span class="indicator-dot project-dot" title="Projects">📁</span>
+                                                {% endif %}
+                                                {% if events.tasks %}
+                                                    <span class="indicator-dot task-dot" title="Tasks">✓</span>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            {% else %}
+                                <div class="mini-calendar-cell empty"></div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+</div>
