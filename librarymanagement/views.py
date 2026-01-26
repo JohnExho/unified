@@ -1,16 +1,92 @@
-from django.http import Http404
-from django.views.defaults import page_not_found
+# views.py
 from django.shortcuts import render
-from .models import Library
-from core.models import SystemMembership
+from django.http import HttpResponse
+from .models import (
+    Library,
+    Book,
+    BorrowingTransaction,
+    Reservation,
+    UserActivity,
+    BookRecommendation,
+    TrendingBook,
+)
+
 
 def dashboard(request):
-    system_name = 'librarymanagement'  # current system
-    
-    if not request.user.is_superuser and not SystemMembership.objects.filter(user=request.user, system_name=system_name).exists():
-        return render(request, '404.html', status=404)
-
-     # Superuser bypass
-    systems = request.session.get('accessible_systems', [])
+    """Library dashboard"""
+    system_name = "librarymanagement"
     libraries = Library.objects.all()
-    return render(request, 'librarymanagement/dashboard.html', {'libraries': libraries, 'systems': systems, 'system_name': system_name})
+    systems = request.session.get("accessible_systems", [])
+    return render(
+        request,
+        "librarymanagement/dashboard.html",
+        {
+            "libraries": libraries,
+            "systems": systems,
+            "system_name": system_name,
+            "user": request.user,
+        },
+    )
+
+
+# Main Modules
+def books_list(request):
+    """List all books"""
+    books = Book.objects.all()
+    return render(request, "librarymanagement/pages/books_list.html", {"books": books})
+
+
+def transactions_list(request):
+    """List borrowing transactions"""
+    transactions = BorrowingTransaction.objects.all()
+    return render(
+        request,
+        "librarymanagement/transactions_list.html",
+        {"transactions": transactions},
+    )
+
+
+def reservations_list(request):
+    """List reservations"""
+    reservations = Reservation.objects.all()
+    return render(
+        request,
+        "librarymanagement/reservations_list.html",
+        {"reservations": reservations},
+    )
+
+
+def user_activities(request):
+    """Track user activity"""
+    activities = UserActivity.objects.all()
+    return render(
+        request, "librarymanagement/user_activities.html", {"activities": activities}
+    )
+
+
+def recommendations_dashboard(request):
+    """Book recommendations"""
+    recommendations = BookRecommendation.objects.all()
+    return render(
+        request,
+        "librarymanagement/recommendations_dashboard.html",
+        {"recommendations": recommendations},
+    )
+
+
+def trending_books(request):
+    """Trending / popular books"""
+    trending = TrendingBook.objects.all()
+    return render(
+        request, "librarymanagement/trending_books.html", {"trending": trending}
+    )
+
+
+def reports_dashboard(request):
+    """Reports dashboard"""
+    return HttpResponse("Reports dashboard coming soon.")
+
+
+def library_settings(request):
+    """Library system settings"""
+    return HttpResponse("Settings page coming soon.")

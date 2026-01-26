@@ -1,23 +1,11 @@
 /* =========================
-  Sidebar Variables (inherits :root from base)
+   Sidebar Variables (inherits :root from base)
 ========================= */
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: #f5f7fa;
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
-  padding-left: 250px;
-  box-sizing: border-box;
-}
-
 .sidebar {
-  width: 250px;
-  background: #1e293b;
-  color: #ffffff;
+  width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
   position: fixed;
   left: 0;
   top: 0;
@@ -42,7 +30,7 @@ body {
 
 .sidebar-header p {
   font-size: 0.85rem;
-  color: #cbd5e1;
+  color: var(--sidebar-text);
   margin-top: 4px;
 }
 
@@ -73,7 +61,7 @@ body {
   display: flex;
   align-items: center;
   padding: 12px 20px;
-  color: #cbd5e1;
+  color: var(--sidebar-text);
   text-decoration: none;
   transition: all 0.2s ease;
   position: relative;
@@ -87,7 +75,7 @@ body {
 .sidebar-nav a.active {
   background: rgba(59, 130, 246, 0.1);
   color: #ffffff;
-  border-right: 3px solid #3b82f6;
+  border-right: 3px solid var(--sidebar-active);
 }
 
 .sidebar-nav a.disabled {
@@ -97,7 +85,7 @@ body {
 
 .sidebar-nav a.disabled:hover {
   background: transparent;
-  color: #cbd5e1;
+  color: var(--sidebar-text);
 }
 
 .nav-icon {
@@ -244,7 +232,7 @@ body {
   top: 18px;
   left: 20px;
   z-index: 1001;
-  background: #1e293b;
+  background: var(--sidebar-bg);
   color: white;
   border: none;
   width: 40px;
@@ -262,24 +250,20 @@ body {
 
 @media (max-width: 768px) {
   .sidebar {
-   transform: translateX(-100%);
+    transform: translateX(-100%);
   }
 
   .sidebar.active {
-   transform: translateX(0);
+    transform: translateX(0);
   }
 
   .sidebar-overlay.active {
-   display: block;
+    display: block;
   }
 
   .sidebar-toggle {
-   display: flex;
-   align-items: center;
-   justify-content: center;
-  }
-  
-  body {
-    padding-left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }

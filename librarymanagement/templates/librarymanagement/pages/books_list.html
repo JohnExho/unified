@@ -11,6 +11,10 @@
       href="{% static 'librarymanagement/css/base.css' %}"
     />
     <link
+    rel="stylesheet"
+    href="{% static 'librarymanagement/css/book_page.css' %}"
+  />
+    <link
       rel="stylesheet"
       href="{% static 'projectmanagement/css/base.css' %}"
     />
@@ -31,7 +35,8 @@
   <body>
     {% block content %}
     {% include 'librarymanagement/components/sidebar.html' %}
-    {% include 'librarymanagement/components/dashboard/main.html'%}
+    {% include 'librarymanagement/components/books/main.html' %}
+
     {% endblock%}
 
     <script>

@@ -1,16 +1,27 @@
-from django.urls import path
+# urls.py
 from django.shortcuts import redirect
+from django.urls import path
 from . import views
 
 app_name = "librarymanagement"
 
-def root_redirect(request):
-    return redirect('librarymanagement:library-dashboard')
-
 urlpatterns = [
-    path('',  root_redirect, name='library-root'),
-    path('dashboard/', views.dashboard, name='library-dashboard'),
+    path(
+        "",
+        lambda request: redirect("librarymanagement:library_dashboard"),
+        name="library_root",
+    ),
+    path("dashboard/", views.dashboard, name="library_dashboard"),
+    path("books/", views.books_list, name="books_list"),
+    path("transactions/", views.transactions_list, name="transactions_list"),
+    path("reservations/", views.reservations_list, name="reservations_list"),
+    path("user-activity/", views.user_activities, name="user_activities"),
+    path(
+        "recommendations/",
+        views.recommendations_dashboard,
+        name="recommendations_dashboard",
+    ),
+    path("trending/", views.trending_books, name="trending_books"),
+    path("reports/", views.reports_dashboard, name="reports_dashboard"),
+    path("settings/", views.library_settings, name="library_settings"),
 ]
-
-
-#naming convention use snake library_dashboard

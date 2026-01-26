@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Library Dashboard</title>
+  </head>
+
+  {% comment %}
+  <link rel="stylesheet" href="{% static 'librarymanagement/css/base.css' %}" />
+  {% endcomment %}
+  <body>
+    <div class="dashboard-container">
+      <!-- Main Content -->
+      <main class="main-content">
+        <div class="content-wrapper">
+          {% block main-content %}
+          {% include 'librarymanagement/components/dashboard/header.html' %}
+          {% include 'librarymanagement/components/dashboard/stats-grid.html' %}
+          {% include 'librarymanagement/components/dashboard/grid-cards.html' %}
+          {% include 'librarymanagement/components/dashboard/trends-section.html' %}
+          {% include 'librarymanagement/components/dashboard/library-activities.html' %}
+
+
+
+
+        </div>
+        {% endblock %}
+      </main>
+    </div>
+  </body>
+</html>
