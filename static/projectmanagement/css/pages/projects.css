@@ -297,15 +297,19 @@
   color: #4a5568;
 }
 
-.status-badge.status-in_progress,
+.status-badge.status-in_progress {
+  background: #fef5e7;
+  color: #d69e2e;
+}
+
 .status-badge.status-active {
-  background: #bee3f8;
-  color: #2c5282;
+  background: #c6f6d5;
+  color: #2f855a;
 }
 
 .status-badge.status-completed {
-  background: #c6f6d5;
-  color: #22543d;
+  background: #bee3f8;
+  color: #2c5282;
 }
 
 .status-badge.status-on_hold,

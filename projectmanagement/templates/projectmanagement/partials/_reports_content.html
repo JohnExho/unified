@@ -1,0 +1,160 @@
+	<section class="summary-grid">
+		<div class="summary-card">
+			<p>Projects</p>
+			<h2>{{ total_projects }}</h2>
+			<p class="muted">Total visible projects</p>
+		</div>
+		<div class="summary-card">
+			<p>Tasks</p>
+			<h2>{{ total_tasks }}</h2>
+			<p class="muted">Across filtered scope</p>
+		</div>
+		<div class="summary-card">
+			<p>Completed tasks</p>
+			<h2>{{ completed_tasks }}</h2>
+			<p class="muted">All done items</p>
+		</div>
+		<div class="summary-card">
+			<p>Overdue tasks</p>
+			<h2>{{ overdue_count }}</h2>
+			<p class="muted">Due before today</p>
+		</div>
+	</section>
+
+	<section class="section">
+		<div class="section-header">
+			<h3>Progress trend</h3>
+			<span class="muted">Progress percentage by project</span>
+		</div>
+		<div class="chart-wrap">
+			<canvas id="progressChart" height="160"></canvas>
+		</div>
+	</section>
+
+	<section class="section">
+		<div class="section-header">
+			<h3>Project progress</h3>
+			<span class="muted">Completed vs total tasks</span>
+		</div>
+		<div class="table-wrap">
+			<table>
+				<thead>
+					<tr>
+						<th>Project</th>
+						<th>Status</th>
+						<th>Progress</th>
+						<th>Tasks</th>
+						<th>Overdue</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% if project_progress %}
+						{% for item in project_progress %}
+							<tr>
+								<td>{{ item.project.name }}</td>
+								<td><span class="pill {{ item.project.status }}">{{ item.project.get_status_display|default:item.project.status|title }}</span></td>
+								<td style="min-width: 180px;">
+									<div style="display:flex; align-items:center; gap:10px;">
+										<div class="progress-bar" aria-label="Progress">
+											<div class="progress-fill" style="width: {{ item.progress }}%;"></div>
+										</div>
+										<span class="muted">{{ item.progress }}%</span>
+									</div>
+								</td>
+								<td>{{ item.completed_tasks }} / {{ item.total_tasks }}</td>
+								<td>{% if item.overdue_tasks %}{{ item.overdue_tasks }}{% else %}0{% endif %}</td>
+							</tr>
+						{% endfor %}
+					{% else %}
+						<tr><td colspan="5">No projects match the current filters.</td></tr>
+					{% endif %}
+				</tbody>
+			</table>
+		</div>
+	</section>
+
+	<section class="section">
+		<div class="section-header">
+			<h3>Task completion</h3>
+			<span class="muted">Status distribution</span>
+		</div>
+		<div class="small-grid">
+			<div class="mini-card"><p class="muted">To do</p><h3>{{ status_counts.todo|default:0 }}</h3></div>
+			<div class="mini-card"><p class="muted">In progress</p><h3>{{ status_counts.in_progress|default:0 }}</h3></div>
+			<div class="mini-card"><p class="muted">Completed</p><h3>{{ status_counts.completed|default:0 }}</h3></div>
+		</div>
+	</section>
+
+	<section class="section">
+		<div class="section-header">
+			<h3>Team workload</h3>
+			<span class="muted">Tasks by team and member</span>
+		</div>
+		<div class="table-wrap" style="margin-bottom:12px;">
+			<table>
+				<thead>
+					<tr><th>Team</th><th>Open tasks</th></tr>
+				</thead>
+				<tbody>
+					{% if team_workload %}
+						{% for item in team_workload %}
+							<tr><td>{{ item.team.name }}</td><td>{{ item.count }}</td></tr>
+						{% endfor %}
+					{% else %}
+						<tr><td colspan="2">No team workload to display.</td></tr>
+					{% endif %}
+				</tbody>
+			</table>
+		</div>
+		<div class="table-wrap">
+			<table>
+				<thead>
+					<tr><th>Member</th><th>Tasks assigned</th></tr>
+				</thead>
+				<tbody>
+					{% if member_workload %}
+						{% for item in member_workload %}
+							<tr><td>{{ item.user.username }}</td><td>{{ item.count }}</td></tr>
+						{% endfor %}
+					{% else %}
+						<tr><td colspan="2">No member workload to display.</td></tr>
+					{% endif %}
+				</tbody>
+			</table>
+		</div>
+	</section>
+
+	<section class="section">
+		<div class="section-header">
+			<h3>Overdue tasks</h3>
+			<span class="muted">Due before today and not completed</span>
+		</div>
+		<div class="table-wrap">
+			<table>
+				<thead>
+					<tr><th>Task</th><th>Project</th><th>Due</th><th>Status</th></tr>
+				</thead>
+				<tbody>
+					{% if overdue_tasks_list %}
+						{% for task in overdue_tasks_list %}
+							<tr>
+								<td>{{ task.title }}</td>
+								<td>{{ task.project.name }}</td>
+								<td>{{ task.due_date }}</td>
+								<td><span class="pill {{ task.status }}">{{ task.get_status_display|default:task.status|title }}</span></td>
+							</tr>
+						{% endfor %}
+					{% else %}
+						<tr><td colspan="4">No overdue tasks - great work!</td></tr>
+					{% endif %}
+				</tbody>
+			</table>
+		</div>
+	</section>
+
+	<script type="application/json" id="chart-data">
+		{
+			"labels": [{% for item in project_progress %}"{{ item.project.name|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+			"dataPoints": [{% for item in project_progress %}{{ item.progress }}{% if not forloop.last %}, {% endif %}{% endfor %}]
+		}
+	</script>

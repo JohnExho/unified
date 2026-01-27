@@ -1,0 +1,293 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Main Content */
+.main-content {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	overflow-y: auto;
+	overflow-x: hidden;
+	background: #f9fafb;
+}
+
+/* Top Bar */
+.top-bar {
+	background: white;
+	padding: 20px 32px;
+	border-bottom: 1px solid #e2e8f0;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.page-header h1 {
+	font-size: 24px;
+	color: #1a202c;
+	margin-bottom: 4px;
+}
+
+.page-header p {
+	font-size: 14px;
+	color: #718096;
+}
+
+/* Top Actions */
+.top-actions {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.search-box {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 16px;
+	background: #f7fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	min-width: 250px;
+	position: relative;
+}
+
+.search-box input {
+	border: none;
+	background: transparent;
+	outline: none;
+	flex: 1;
+	font-size: 14px;
+}
+
+.clear-search-btn {
+	background: none;
+	border: none;
+	padding: 4px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #a0aec0;
+	transition: color 0.2s;
+	flex-shrink: 0;
+}
+
+.clear-search-btn:hover {
+	color: #e53e3e;
+}
+
+/* Buttons */
+.btn {
+	padding: 8px 16px;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s;
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+	border: none;
+}
+
+.btn-primary {
+	background: #2d3748;
+	color: white;
+}
+
+.btn-primary:hover {
+	background: #1a202c;
+}
+
+.btn-secondary {
+	background: white;
+	color: #2d3748;
+	border: 1px solid #e2e8f0;
+}
+
+.btn-secondary:hover {
+	background: #f7fafc;
+	border-color: #cbd5e0;
+}
+
+/* Content Area */
+.content-area {
+	padding: 24px 32px;
+}
+
+/* Summary Grid */
+.summary-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 12px;
+	margin-bottom: 20px;
+}
+
+.summary-card {
+	background: #fff;
+	border: 1px solid #ebebeb;
+	border-radius: 8px;
+	padding: 14px;
+	box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.summary-card h2 {
+	margin: 4px 0;
+	font-size: 24px;
+}
+
+.summary-card p {
+	margin: 0;
+	color: #666;
+}
+
+/* Sections */
+.section {
+	background: #fff;
+	border: 1px solid #ebebeb;
+	border-radius: 10px;
+	padding: 16px;
+	margin-bottom: 18px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.section-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 12px;
+}
+
+.section-header h3 {
+	margin: 0;
+	font-size: 18px;
+}
+
+/* Tables */
+.table-wrap {
+	overflow-x: auto;
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+th, td {
+	padding: 10px 8px;
+	text-align: left;
+	border-bottom: 1px solid #f0f0f0;
+	font-size: 14px;
+}
+
+th {
+	background: #fafafa;
+	font-weight: 600;
+}
+
+/* Progress Bar */
+.progress-bar {
+	height: 10px;
+	background: #f1f1f1;
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.progress-fill {
+	height: 100%;
+	background: linear-gradient(90deg, #0f7bff, #4cc3ff);
+}
+
+/* Pills/Badges */
+.pill {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: 12px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: capitalize;
+}
+
+.pill.todo {
+	background: #e2e8f0;
+	color: #4a5568;
+}
+
+.pill.in_progress {
+	background: #fef5e7;
+	color: #d69e2e;
+}
+
+.pill.completed {
+	background: #bee3f8;
+	color: #2c5282;
+}
+
+.pill.active {
+	background: #c6f6d5;
+	color: #2f855a;
+}
+
+.pill.on_hold,
+.pill.on-hold {
+	background: #feebc8;
+	color: #c05621;
+}
+
+.pill.cancelled {
+	background: #fed7d7;
+	color: #742a2a;
+}
+
+.pill.planning {
+	background: #e2e8f0;
+	color: #4a5568;
+}
+
+/* Small Grid */
+.small-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: 10px;
+}
+
+.mini-card {
+	padding: 12px;
+	border: 1px solid #ececec;
+	border-radius: 8px;
+	background: #fafafa;
+}
+
+/* Utilities */
+.muted {
+	color: #666;
+	font-size: 13px;
+}
+
+.chart-wrap {
+	width: 100%;
+	overflow-x: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+	.top-bar {
+		align-items: flex-start;
+		flex-wrap: wrap;
+	}
+	
+	.top-actions {
+		width: 100%;
+		justify-content: flex-start;
+		flex-wrap: wrap;
+	}
+}

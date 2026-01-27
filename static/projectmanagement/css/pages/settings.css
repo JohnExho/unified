@@ -196,58 +196,57 @@
 
 /* Button Styles */
 .btn {
-  padding: 0.625rem 1.25rem;
+  padding: 8px 16px;
   border-radius: 8px;
   border: none;
-  font-size: 0.875rem;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .btn-primary {
-  background: #667eea;
+  background: #2d3748;
   color: white;
 }
 
 .btn-primary:hover {
-  background: #5568d3;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+  background: #1a202c;
 }
 
 .btn-secondary {
-  background: #e2e8f0;
-  color: #4a5568;
+  background: white;
+  color: #2d3748;
+  border: 1px solid #e2e8f0;
 }
 
 .btn-secondary:hover {
-  background: #cbd5e0;
+  background: #f7fafc;
+  border-color: #cbd5e0;
 }
 
 .btn-danger {
-  background: #f56565;
+  background: #e53e3e;
   color: white;
 }
 
 .btn-danger:hover {
-  background: #e53e3e;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(245, 101, 101, 0.3);
+  background: #c53030;
 }
 
 .btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.8125rem;
+  padding: 6px 12px;
+  font-size: 13px;
 }
 
 .btn:active {
-  transform: translateY(0);
+  transform: none;
 }
 
 .btn:disabled {

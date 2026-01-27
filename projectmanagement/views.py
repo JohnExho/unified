@@ -16,6 +16,7 @@ from django.template.loader import render_to_string
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 import json
+import csv
 
 now = timezone.now()
 User = get_user_model()
@@ -189,6 +190,197 @@ def dashboard(request):
     return render(
         request,
         'projectmanagement/pages/dashboard.html',
+        context
+    )
+
+
+@login_required
+def reports(request):
+    current_system = request.current_system
+
+    # Access control
+    if not request.user.is_superuser and not SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).exists():
+        return render(request, '404.html', status=404)
+
+    user_membership = SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system
+    ).first()
+    user_role = user_membership.system_role if user_membership else None
+    is_admin_or_superadmin = request.user.is_superuser or user_role in ['admin', 'superadmin']
+
+    search_query = request.GET.get('search', '').strip()
+    today = timezone.localdate()
+
+    projects_qs = (
+        Project.objects
+        .select_related('team')
+        .prefetch_related(
+            'tasks__assigned_to',
+            'tasks__assigned_team__members',
+            'team__members',
+        )
+    )
+
+    tasks_qs = (
+        Task.objects
+        .select_related('project', 'assigned_team', 'project__team')
+        .prefetch_related('assigned_to', 'assigned_team__members')
+    )
+
+    if search_query:
+        projects_qs = projects_qs.filter(
+            Q(name__icontains=search_query) |
+            Q(tasks__title__icontains=search_query)
+        ).distinct()
+
+        tasks_qs = tasks_qs.filter(
+            Q(title__icontains=search_query) |
+            Q(project__name__icontains=search_query)
+        ).distinct()
+
+    if not is_admin_or_superadmin:
+        tasks_qs = tasks_qs.filter(
+            Q(assigned_to=request.user) |
+            Q(assigned_team__members=request.user)
+        ).distinct()
+
+        projects_qs = projects_qs.filter(
+            Q(tasks__assigned_to=request.user) |
+            Q(team__members=request.user)
+        ).distinct()
+
+    tasks = list(tasks_qs)
+    projects = list(projects_qs)
+
+    status_counts = {'todo': 0, 'in_progress': 0, 'completed': 0}
+    tasks_by_project = {}
+    team_workload = {}
+    member_workload = {}
+    overdue_tasks = []
+
+    for task in tasks:
+        status_counts[task.status] = status_counts.get(task.status, 0) + 1
+        tasks_by_project.setdefault(task.project_id, []).append(task)
+
+        team_ref = task.assigned_team or getattr(task.project, 'team', None)
+        if team_ref and task.status != 'completed':
+            workload = team_workload.setdefault(team_ref.id, {'team': team_ref, 'count': 0})
+            workload['count'] += 1
+
+        if task.status != 'completed':
+            for user in task.assigned_to.all():
+                member_data = member_workload.setdefault(user.id, {'user': user, 'count': 0})
+                member_data['count'] += 1
+
+        if task.status != 'completed' and task.due_date and task.due_date < today:
+            overdue_tasks.append(task)
+
+    project_progress = []
+    for project in projects:
+        project_tasks = tasks_by_project.get(project.id, [])
+        total_tasks = len(project_tasks)
+        completed_tasks = sum(1 for t in project_tasks if t.status == 'completed')
+        overdue_count = sum(1 for t in project_tasks if t.status != 'completed' and t.due_date and t.due_date < today)
+        progress = (completed_tasks / total_tasks * 100) if total_tasks else 0
+
+        project_progress.append({
+            'project': project,
+            'total_tasks': total_tasks,
+            'completed_tasks': completed_tasks,
+            'overdue_tasks': overdue_count,
+            'progress': round(progress, 1),
+        })
+
+    project_progress = sorted(project_progress, key=lambda p: p['progress'], reverse=True)
+    overdue_tasks = sorted(overdue_tasks, key=lambda t: t.due_date)
+
+    team_workload_list = sorted(team_workload.values(), key=lambda x: x['count'], reverse=True)
+    member_workload_list = sorted(member_workload.values(), key=lambda x: x['count'], reverse=True)
+
+    logs_qs = Logs.objects.filter(system_name=current_system).select_related('user')
+    if not request.user.is_superuser:
+        logs_qs = logs_qs.exclude(user__is_superuser=True)
+    recent_logs = list(logs_qs.order_by('-created_at')[:10])
+
+    export_type = request.GET.get('export')
+    if export_type:
+        filename = f"{export_type}_report.csv"
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        writer = csv.writer(response)
+
+        if export_type == 'projects':
+            writer.writerow(['Project', 'Status', 'Start', 'End', 'Tasks', 'Completed', 'Overdue', 'Progress %'])
+            for item in project_progress:
+                project = item['project']
+                writer.writerow([
+                    project.name,
+                    project.status,
+                    project.start_date,
+                    project.end_date,
+                    item['total_tasks'],
+                    item['completed_tasks'],
+                    item['overdue_tasks'],
+                    item['progress'],
+                ])
+        elif export_type == 'tasks':
+            writer.writerow(['Task', 'Project', 'Status', 'Due Date', 'Team', 'Assignees'])
+            for task in tasks:
+                assignees = ', '.join([u.username for u in task.assigned_to.all()])
+                team_name = (task.assigned_team or getattr(task.project, 'team', None))
+                writer.writerow([
+                    task.title,
+                    task.project.name if task.project else '',
+                    task.status,
+                    task.due_date,
+                    team_name.name if team_name else '',
+                    assignees,
+                ])
+        elif export_type == 'overdue':
+            writer.writerow(['Task', 'Project', 'Due Date', 'Status'])
+            for task in overdue_tasks:
+                writer.writerow([
+                    task.title,
+                    task.project.name if task.project else '',
+                    task.due_date,
+                    task.status,
+                ])
+        else:
+            writer.writerow(['Unsupported export type'])
+
+        return response
+
+    context = {
+        'current_system': current_system,
+        'search_query': search_query,
+        'total_projects': len(projects),
+        'total_tasks': len(tasks),
+        'overdue_count': len(overdue_tasks),
+        'completed_tasks': status_counts.get('completed', 0),
+        'project_progress': project_progress,
+        'status_counts': status_counts,
+        'team_workload': team_workload_list,
+        'member_workload': member_workload_list,
+        'overdue_tasks_list': overdue_tasks,
+        'recent_logs': recent_logs,
+    }
+
+    # Handle AJAX requests - return only the content partial
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        content_html = render_to_string(
+            'projectmanagement/partials/_reports_content.html',
+            context,
+            request=request
+        )
+        return HttpResponse(content_html)
+
+    return render(
+        request,
+        'projectmanagement/pages/reports.html',
         context
     )
 
