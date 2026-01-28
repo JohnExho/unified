@@ -1,0 +1,155 @@
+<!-- View Toggle and Results -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Book Collection</h3>
+    <div class="view-toggle">
+      <button class="active" onclick="switchView('grid')">📱 Grid</button>
+      <button onclick="switchView('list')">📋 List</button>
+    </div>
+  </div>
+
+  <!-- Grid View -->
+  <div id="grid-view" class="books-grid">
+    <!-- Book Card 1 -->
+    <div class="book-card" onclick="viewBookDetails('1')">
+      <div class="book-cover">
+        <div class="book-status-badge">
+          <span class="badge badge-success">Available</span>
+        </div>
+        📚
+      </div>
+      <div class="book-info">
+        <h4 class="book-title">The Great Gatsby</h4>
+        <p class="book-author">by F. Scott Fitzgerald</p>
+        <div class="book-meta">
+          <span>ISBN: 978-0743273565</span>
+          <span>2023</span>
+        </div>
+        <div class="book-meta">
+          <span>📍 Shelf A-12</span>
+          <span>Available: 3/5</span>
+        </div>
+        <div class="book-actions">
+          <button class="btn btn-sm btn-primary">Borrow</button>
+          <button class="btn btn-sm btn-outline">Details</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Book Card 2 -->
+    <div class="book-card">
+      <div
+        class="book-cover"
+        style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+      >
+        <div class="book-status-badge">
+          <span class="badge badge-warning">Borrowed</span>
+        </div>
+        📖
+      </div>
+      <div class="book-info">
+        <h4 class="book-title">To Kill a Mockingbird</h4>
+        <p class="book-author">by Harper Lee</p>
+        <div class="book-meta">
+          <span>ISBN: 978-0061120084</span>
+          <span>1960</span>
+        </div>
+        <div class="book-meta">
+          <span>📍 Shelf B-08</span>
+          <span>Available: 0/4</span>
+        </div>
+        <div class="book-actions">
+          <button class="btn btn-sm btn-warning">Reserve</button>
+          <button class="btn btn-sm btn-outline">Details</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Book Card 3 -->
+    <div class="book-card">
+      <div
+        class="book-cover"
+        style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
+      >
+        <div class="book-status-badge">
+          <span class="badge badge-success">Available</span>
+        </div>
+        📕
+      </div>
+      <div class="book-info">
+        <h4 class="book-title">1984</h4>
+        <p class="book-author">by George Orwell</p>
+        <div class="book-meta">
+          <span>ISBN: 978-0451524935</span>
+          <span>1949</span>
+        </div>
+        <div class="book-meta">
+          <span>📍 Shelf C-15</span>
+          <span>Available: 5/6</span>
+        </div>
+        <div class="book-actions">
+          <button class="btn btn-sm btn-primary">Borrow</button>
+          <button class="btn btn-sm btn-outline">Details</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Book Card 4 -->
+    <div class="book-card">
+      <div
+        class="book-cover"
+        style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
+      >
+        <div class="book-status-badge">
+          <span class="badge badge-info">Reserved</span>
+        </div>
+        📗
+      </div>
+      <div class="book-info">
+        <h4 class="book-title">Pride and Prejudice</h4>
+        <p class="book-author">by Jane Austen</p>
+        <div class="book-meta">
+          <span>ISBN: 978-0141439518</span>
+          <span>1813</span>
+        </div>
+        <div class="book-meta">
+          <span>📍 Shelf D-22</span>
+          <span>Available: 2/3</span>
+        </div>
+        <div class="book-actions">
+          <button class="btn btn-sm btn-primary">Borrow</button>
+          <button class="btn btn-sm btn-outline">Details</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- List View (Hidden by default) -->
+  <div id="list-view" style="display: none">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Book Details</th>
+            <th>ISBN</th>
+            <th>Category</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Availability</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>
+              <div class="book-details-cell">
+                <div class="book-thumbnail">📚</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

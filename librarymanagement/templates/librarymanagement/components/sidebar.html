@@ -1,0 +1,213 @@
+{% load static %}
+<!-- Sidebar Navigation -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h2>Dashboard</h2>
+    <p>System Management</p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Main Modules</div>
+
+      <!-- Library Dashboard -->
+      <ul>
+        <li>
+          <a href="{% url 'librarymanagement:library_dashboard' %}">
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path
+                d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+              ></path>
+            </svg>
+            <div class="nav-text">
+              <h3>Library Dashboard</h3>
+              <p>Books & resources overview</p>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Books Management -->
+      <ul>
+        <li>
+          <a href="{% url 'librarymanagement:books_list' %}">
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 2v20"></path>
+              <path d="M6 6h12v12H6z"></path>
+            </svg>
+            <div class="nav-text">
+              <h3>Books</h3>
+              <p>Manage library resources</p>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Borrowing Transactions -->
+      <ul>
+        <li>
+          <a href="{% url 'librarymanagement:transactions_list' %}">
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M3 6h18"></path>
+              <path d="M3 12h18"></path>
+              <path d="M3 18h18"></path>
+            </svg>
+            <div class="nav-text">
+              <h3>Transactions</h3>
+              <p>Borrowing & returning</p>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Reservations -->
+      <ul>
+        <li>
+          <a href="{% url 'librarymanagement:reservations_list' %}">
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M4 4h16v16H4z"></path>
+              <path d="M4 9h16"></path>
+              <path d="M9 4v16"></path>
+            </svg>
+            <div class="nav-text">
+              <h3>Reservations</h3>
+              <p>Manage reservations</p>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Users & Activity -->
+      <ul>
+        <li>
+          <a href="{% url 'librarymanagement:user_activities' %}">
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="7" r="4"></circle>
+              <path d="M5.5 21a8.38 8.38 0 0 1 13 0"></path>
+            </svg>
+            <div class="nav-text">
+              <h3>User Activity</h3>
+              <p>Track user interactions</p>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Recommendations & Analytics -->
+      <ul>
+        <li>
+          <a href="{% url 'librarymanagement:recommendations_dashboard' %}">
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M3 3h18v18H3z"></path>
+              <path d="M3 9h18"></path>
+              <path d="M9 3v18"></path>
+            </svg>
+            <div class="nav-text">
+              <h3>Recommendations</h3>
+              <p>Personalized & trending books</p>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Reports -->
+      <ul>
+        <li>
+          <a href="{% url 'librarymanagement:reports_dashboard' %}">
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="4" y1="20" x2="20" y2="20"></line>
+              <rect x="6" y="10" width="3" height="10"></rect>
+              <rect x="11" y="6" width="3" height="14"></rect>
+              <rect x="16" y="13" width="3" height="7"></rect>
+            </svg>
+            <div class="nav-text">
+              <h3>Reports</h3>
+              <p>Library analytics</p>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Settings -->
+      <ul>
+        <li>
+          <a href="{% url 'librarymanagement:library_settings' %}">
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+              ></path>
+            </svg>
+            <div class="nav-text">
+              <h3>Settings</h3>
+              <p>Library preferences</p>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+    <!-- End Main Modules -->
+
+    <!-- Super Admin Modules untouched -->
+
+
+ 
+    {% include 'partials/super_admin_sidebar.html' %}
+
+
+
+    {% include 'partials/sidebar_footer_actions.html' %}
+
+
+
+  </nav>
+</aside>
