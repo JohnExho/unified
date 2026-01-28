@@ -21,12 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-hs=)gsf^#h)l4o=ra1+00*067*za0fa7x5b@=@$a$0#^5@$0@8'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-hs=)gsf^#h)l4o=ra1+00*067*za0fa7x5b@=@$a$0#^5@$0@8')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 AUTH_USER_MODEL = 'core.CustomUser'
 
@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.security_middleware.SecurityHeadersMiddleware',  # Security headers
     'core.middleware.SuperuserOnlyDashboardMiddleware',
 
     'projectmanagement.middleware.ProjectManagementSystemMiddleware',
@@ -139,7 +140,33 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-SECRET_KEY_ENCRYPTION = "oJNihj1GFMcAO1-jEsPRzRrectJaTl5zwkzdqVj0H5s="
+SECRET_KEY_ENCRYPTION = os.environ.get('ENCRYPTION_KEY', "oJNihj1GFMcAO1-jEsPRzRrectJaTl5zwkzdqVj0H5s=")
+
+# Session Security Settings
+SESSION_COOKIE_SECURE = not DEBUG  # HTTPS only in production
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+SESSION_COOKIE_AGE = 86400  # 24 hours
+
+# CSRF Protection
+CSRF_COOKIE_SECURE = not DEBUG  # HTTPS only in production
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Security Headers
+if not DEBUG:
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # if email verification is to be used, configure the email settings below
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

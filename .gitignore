@@ -5,3 +5,14 @@ media/avatars/*
 *.pyc
 __pycache__/
 **/__pycache__/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+
+# Security and sensitive files
+*.pem
+*.key
+*.crt
+secret_key.txt

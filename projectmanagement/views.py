@@ -5,6 +5,7 @@ from django.contrib.auth import update_session_auth_hash
 from .models import Project, Task, Team
 from core.models import Logs, SystemMembership, Systems, Address
 from core.utils import get_client_ip, get_user_agent, decrypt, encrypt
+from core.decorators import require_system_access, require_system_role, require_superadmin
 import uuid
 from django.contrib import messages
 from django.utils import timezone
@@ -22,6 +23,8 @@ now = timezone.now()
 User = get_user_model()
 
 
+@login_required
+@require_system_access
 def dashboard(request):
     current_system = request.current_system
 
@@ -140,6 +143,7 @@ def dashboard(request):
         'projects_page_number': page_number,
         'current_system': current_system,
         'now': now,
+        'is_admin_or_superadmin': is_admin_or_superadmin,
         # Stats - Total counts
         'total_projects_count': total_projects_count,
         'total_tasks_count': total_tasks_count,
@@ -384,6 +388,8 @@ def reports(request):
         context
     )
 
+@login_required
+@require_system_role(['admin', 'superadmin'])
 def admin_dashboard(request):
     current_system = request.current_system  # set by middleware
 
@@ -491,6 +497,8 @@ def admin_dashboard(request):
     )
 
 
+@login_required
+@require_system_access
 def settings(request):
     current_system = request.current_system  # set by middleware
 
@@ -534,6 +542,8 @@ def settings(request):
     )
 
 
+@login_required
+@require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def deactivate_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
@@ -553,6 +563,8 @@ def deactivate_user(request, user_id):
     return redirect("projectmanagement:pm_admin_dashboard") 
 
 
+@login_required
+@require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def activate_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
@@ -571,6 +583,8 @@ def activate_user(request, user_id):
     
     return redirect("projectmanagement:pm_admin_dashboard") 
 
+@login_required
+@require_superadmin
 def delete_user(request, user_id):
     """
     Delete a user by their ID.
@@ -626,6 +640,8 @@ def delete_user(request, user_id):
     # If not POST, redirect to dashboard
     return redirect("projectmanagement:pm_admin_dashboard") 
 
+@login_required
+@require_system_role(['admin', 'superadmin'])
 def manage_user_access(request, user_id):
     """
     Manage user access levels within the current system.
@@ -670,6 +686,8 @@ def manage_user_access(request, user_id):
 
     return redirect("projectmanagement:pm_admin_dashboard")
 
+@login_required
+@require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def update_tos(request):
     """
@@ -711,6 +729,8 @@ def update_tos(request):
     return redirect("projectmanagement:pm_admin_dashboard") 
 
 
+@login_required
+@require_system_role(['admin', 'superadmin'])
 def system_logs(request):
     current_system = request.current_system  # set by middleware
 
@@ -1861,6 +1881,8 @@ def assign_task(request, task_id):
             'message': f'Error assigning task: {str(e)}'
         }, status=500)
 
+@login_required
+@require_system_access
 def teams(request):
     current_system = request.current_system
 
@@ -1985,6 +2007,7 @@ def teams(request):
 
 
 @login_required
+@require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def add_team(request):
     current_system = request.current_system
@@ -2027,6 +2050,7 @@ def add_team(request):
 
 
 @login_required
+@require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def delete_team(request, team_id):
     current_system = request.current_system
@@ -2093,6 +2117,7 @@ def add_team_user_placeholder(request, team_id):
 
 
 @login_required
+@require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def add_team_user(request, team_id):
     current_system = request.current_system
@@ -2133,6 +2158,7 @@ def add_team_user(request, team_id):
 
 
 @login_required
+@require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def remove_team_user(request, team_id, user_id):
     current_system = request.current_system
