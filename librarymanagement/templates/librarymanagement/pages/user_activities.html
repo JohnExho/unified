@@ -1,0 +1,168 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+          content="Track and analyze library user behavior patterns, including book views, searches, borrows, and reservations." />
+    <meta name="keywords"
+          content="library, user activities, analytics, book views, searches, borrows, reservations, library management" />
+    <title>User Activities - Library Management</title>
+    <link rel="stylesheet"
+          href="{% static "librarymanagement/css/library-base.css" %}" />
+    <link rel="stylesheet"
+          href="{% static "librarymanagement/css/activities.css" %}" />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      {% include "librarymanagement/components/sidebar.html" %}
+      <main class="main-content">
+        <div class="content-wrapper">
+          <div class="page-header">
+            <h1 class="page-title">User Activities</h1>
+            <p class="page-description">Track and analyze library user behavior patterns</p>
+          </div>
+          <!-- Activity Stats -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <div class="stat-icon view">👁</div>
+              </div>
+              <div class="stat-value">{{ view_count }}</div>
+              <div class="stat-label">Book Views</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <div class="stat-icon info">🔍</div>
+              </div>
+              <div class="stat-value">{{ search_count }}</div>
+              <div class="stat-label">Searches</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <div class="stat-icon success">📚</div>
+              </div>
+              <div class="stat-value">{{ borrow_count }}</div>
+              <div class="stat-label">Borrowed</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <div class="stat-icon warning">📖</div>
+              </div>
+              <div class="stat-value">{{ reserve_count }}</div>
+              <div class="stat-label">Reserved</div>
+            </div>
+          </div>
+          <!-- Charts Grid -->
+          <div class="charts-grid">
+            <div class="chart-card">
+              <div class="chart-header">
+                <h3 class="chart-title">Activity Trends</h3>
+                <select class="chart-filter">
+                  <option>Last 7 days</option>
+                  <option>Last 30 days</option>
+                  <option>Last 90 days</option>
+                </select>
+              </div>
+              <div class="chart-placeholder">📊 Chart visualization would go here</div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-header">
+                <h3 class="chart-title">Activity by Type</h3>
+              </div>
+              <div class="chart-placeholder">🥧 Pie chart visualization would go here</div>
+            </div>
+          </div>
+          <!-- Top Users -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Most Active Users</h3>
+            </div>
+            <ul class="top-list">
+              <li class="top-list-item">
+                <div class="top-list-rank gold">1</div>
+                <div class="top-list-info">
+                  <div class="top-list-name">John Doe</div>
+                  <div class="top-list-meta">Active member • Joined Jan 2025</div>
+                </div>
+                <div class="top-list-value">156</div>
+              </li>
+              <li class="top-list-item">
+                <div class="top-list-rank silver">2</div>
+                <div class="top-list-info">
+                  <div class="top-list-name">Jane Smith</div>
+                  <div class="top-list-meta">Active member • Joined Dec 2024</div>
+                </div>
+                <div class="top-list-value">142</div>
+              </li>
+              <li class="top-list-item">
+                <div class="top-list-rank bronze">3</div>
+                <div class="top-list-info">
+                  <div class="top-list-name">Bob Johnson</div>
+                  <div class="top-list-meta">Regular member • Joined Nov 2024</div>
+                </div>
+                <div class="top-list-value">128</div>
+              </li>
+            </ul>
+          </div>
+          <!-- Activity Feed -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Recent Activities</h3>
+              <div class="btn-group">
+                <button class="btn btn-outline btn-sm">Filter</button>
+                <button class="btn btn-outline btn-sm">Export</button>
+              </div>
+            </div>
+            <div class="activity-feed">
+              {% for activity in activities|slice:":20" %}
+                <div class="activity-item">
+                  <div class="activity-icon {{ activity.activity_type }}">
+                    {% if activity.activity_type == 'view' %}
+                      👁
+                    {% elif activity.activity_type == 'search' %}
+                      🔍
+                    {% elif activity.activity_type == 'borrow' %}
+                      📚
+                    {% else %}
+                      📖
+                    {% endif %}
+                  </div>
+                  <div class="activity-content">
+                    <p class="activity-action">
+                      <span class="activity-user">{{ activity.user.username }}</span>
+                      {% if activity.activity_type == 'view' %}
+                        viewed
+                      {% elif activity.activity_type == 'search' %}
+                        searched for "{{ activity.search_query }}"
+                      {% elif activity.activity_type == 'borrow' %}
+                        borrowed
+                      {% elif activity.activity_type == 'reserve' %}
+                        reserved
+                      {% endif %}
+                      {% if activity.book %}<span class="activity-book">{{ activity.book.title }}</span>{% endif %}
+                    </p>
+                    <div class="activity-meta">
+                      <span class="activity-timestamp">🕒 {{ activity.timestamp|timesince }} ago</span>
+                      {% if activity.session_id %}<span>Session: {{ activity.session_id|truncatechars:8 }}</span>{% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% empty %}
+                <div class="empty-state">
+                  <div class="empty-state-icon">📊</div>
+                  <h3>No Activities Yet</h3>
+                  <p>
+                    User activities will appear here once users start interacting
+                    with the library.
+                  </p>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

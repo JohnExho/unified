@@ -1,0 +1,237 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+          content="Generate and view library analytics, usage, circulation, trending, and inventory reports in the Library Management system." />
+    <meta name="keywords"
+          content="library, reports, analytics, usage, circulation, trending, inventory, dashboard, management" />
+    <title>Reports Dashboard - Library Management</title>
+    <link rel="stylesheet"
+          href="{% static "librarymanagement/css/library-base.css" %}" />
+    <link rel="stylesheet"
+          href="{% static "librarymanagement/css/reports.css" %}" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      {% include "librarymanagement/components/sidebar.html" %}
+      <main class="main-content">
+        <div class="content-wrapper">
+          <div class="page-header">
+            <h1 class="page-title">Reports Dashboard</h1>
+            <p class="page-description">Generate and view library analytics reports</p>
+          </div>
+          <!-- Report Types Grid -->
+          <div class="reports-grid">
+            <div class="report-card" onclick="openReportGenerator('usage')">
+              <div class="report-card-icon usage">📊</div>
+              <h3 class="report-card-title">Usage Report</h3>
+              <p class="report-card-description">Analyze library resource usage patterns and statistics</p>
+              <div class="report-card-meta">
+                <span>Last generated: 2 days ago</span>
+              </div>
+            </div>
+            <div class="report-card" onclick="openReportGenerator('circulation')">
+              <div class="report-card-icon circulation">🔄</div>
+              <h3 class="report-card-title">Circulation Report</h3>
+              <p class="report-card-description">Track book borrowing, returns, and circulation metrics</p>
+              <div class="report-card-meta">
+                <span>Last generated: 5 days ago</span>
+              </div>
+            </div>
+            <div class="report-card" onclick="openReportGenerator('trending')">
+              <div class="report-card-icon trending">🔥</div>
+              <h3 class="report-card-title">Trending Analysis</h3>
+              <p class="report-card-description">Identify popular books and trending topics</p>
+              <div class="report-card-meta">
+                <span>Last generated: 1 week ago</span>
+              </div>
+            </div>
+            <div class="report-card" onclick="openReportGenerator('behavior')">
+              <div class="report-card-icon behavior">👥</div>
+              <h3 class="report-card-title">User Behavior</h3>
+              <p class="report-card-description">Understand user patterns and engagement levels</p>
+              <div class="report-card-meta">
+                <span>Last generated: 3 days ago</span>
+              </div>
+            </div>
+            <div class="report-card" onclick="openReportGenerator('inventory')">
+              <div class="report-card-icon inventory">📚</div>
+              <h3 class="report-card-title">Inventory Report</h3>
+              <p class="report-card-description">Review collection status and availability</p>
+              <div class="report-card-meta">
+                <span>Last generated: 1 day ago</span>
+              </div>
+            </div>
+            <div class="report-card" onclick="openReportGenerator('acquisition')">
+              <div class="report-card-icon acquisition">➕</div>
+              <h3 class="report-card-title">Acquisition Recommendation</h3>
+              <p class="report-card-description">Suggestions for new books to acquire</p>
+              <div class="report-card-meta">
+                <span>Last generated: 2 weeks ago</span>
+              </div>
+            </div>
+          </div>
+          <!-- Report Generation Form -->
+          <div class="report-form">
+            <div class="report-form-header">
+              <h3 class="report-form-title">Generate New Report</h3>
+              <p class="report-form-description">Select a date range and generate a comprehensive report</p>
+            </div>
+            <form method="post">
+              {% csrf_token %}
+              <div class="form-group">
+                <label class="form-label">Report Type</label>
+                <select name="report_type" class="form-control form-select">
+                  <option value="usage">Usage Report</option>
+                  <option value="circulation">Circulation Report</option>
+                  <option value="trending">Trending Analysis</option>
+                  <option value="user_behavior">User Behavior Analysis</option>
+                  <option value="inventory">Inventory Report</option>
+                  <option value="acquisition">Acquisition Recommendation</option>
+                </select>
+              </div>
+              <div class="quick-date-buttons">
+                <button type="button" class="quick-date-btn" onclick="setDateRange('today')">Today</button>
+                <button type="button" class="quick-date-btn" onclick="setDateRange('week')">This Week</button>
+                <button type="button" class="quick-date-btn" onclick="setDateRange('month')">This Month</button>
+                <button type="button"
+                        class="quick-date-btn"
+                        onclick="setDateRange('quarter')">This Quarter</button>
+                <button type="button" class="quick-date-btn" onclick="setDateRange('year')">This Year</button>
+              </div>
+              <div class="date-range-selector">
+                <div class="form-group">
+                  <label class="form-label">Start Date</label>
+                  <input type="date" name="period_start" class="form-control" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">End Date</label>
+                  <input type="date" name="period_end" class="form-control" required />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Report Title (Optional)</label>
+                <input type="text"
+                       name="title"
+                       class="form-control"
+                       placeholder="Enter a custom title for this report" />
+              </div>
+              <div class="btn-group">
+                <button type="submit" class="btn btn-primary">📊 Generate Report</button>
+                <button type="button" class="btn btn-outline" onclick="scheduleReport()">🕒 Schedule Report</button>
+              </div>
+            </form>
+          </div>
+          <!-- Report History -->
+          <div class="report-history">
+            <div class="report-history-header">
+              <h3>Recent Reports</h3>
+            </div>
+            <div class="report-history-item">
+              <div class="report-history-icon">📊</div>
+              <div class="report-history-content">
+                <div class="report-history-title">Monthly Usage Report - January 2026</div>
+                <div class="report-history-meta">Generated on Jan 29, 2026 • 2.4 MB • PDF</div>
+              </div>
+              <div class="report-history-actions">
+                <button class="btn btn-outline btn-sm">👁 View</button>
+                <button class="btn btn-primary btn-sm">⬇ Download</button>
+              </div>
+            </div>
+            <div class="report-history-item">
+              <div class="report-history-icon">🔄</div>
+              <div class="report-history-content">
+                <div class="report-history-title">Circulation Report - Q4 2025</div>
+                <div class="report-history-meta">Generated on Jan 24, 2026 • 1.8 MB • PDF</div>
+              </div>
+              <div class="report-history-actions">
+                <button class="btn btn-outline btn-sm">👁 View</button>
+                <button class="btn btn-primary btn-sm">⬇ Download</button>
+              </div>
+            </div>
+            <div class="report-history-item">
+              <div class="report-history-icon">🔥</div>
+              <div class="report-history-content">
+                <div class="report-history-title">Trending Books Analysis - January 2026</div>
+                <div class="report-history-meta">Generated on Jan 22, 2026 • 3.1 MB • PDF</div>
+              </div>
+              <div class="report-history-actions">
+                <button class="btn btn-outline btn-sm">👁 View</button>
+                <button class="btn btn-primary btn-sm">⬇ Download</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <script>
+      function openReportGenerator(type) {
+        document.querySelector('select[name="report_type"]').value = type;
+        document
+          .querySelector(".report-form")
+          .scrollIntoView({ behavior: "smooth" });
+      }
+
+      function setDateRange(period) {
+        const today = new Date();
+        const startDate = document.querySelector('input[name="period_start"]');
+        const endDate = document.querySelector('input[name="period_end"]');
+
+        endDate.valueAsDate = today;
+
+        const start = new Date(today);
+        switch (period) {
+          case "today":
+            break;
+          case "week":
+            start.setDate(today.getDate() - 7);
+            break;
+          case "month":
+            start.setMonth(today.getMonth() - 1);
+            break;
+          case "quarter":
+            start.setMonth(today.getMonth() - 3);
+            break;
+          case "year":
+            start.setFullYear(today.getFullYear() - 1);
+            break;
+        }
+        startDate.valueAsDate = start;
+
+        // Highlight active button
+        document
+          .querySelectorAll(".quick-date-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        event.target.classList.add("active");
+      }
+
+      function scheduleReport() {
+        Swal.fire({
+          title: "Schedule Report",
+          html: `
+                    <select id="schedule-frequency" class="swal2-input">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                `,
+          showCancelButton: true,
+          confirmButtonText: "Schedule",
+          confirmButtonColor: "#2563eb",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            Swal.fire(
+              "Scheduled!",
+              "Report has been scheduled successfully.",
+              "success",
+            );
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

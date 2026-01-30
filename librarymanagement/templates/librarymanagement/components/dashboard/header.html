@@ -1,12 +1,14 @@
-<div class="flex items-center justify-between mb-xl">
-  <div>
+<div class="dashboard-header">
+  <div class="dashboard-header-content">
     <h1>Library Dashboard</h1>
-    <p class="text-secondary text-sm">
-      Welcome back! Here's what's happening today.
-    </p>
+    <p>Welcome back! Here's what's happening today.</p>
   </div>
-  <div class="flex gap-md">
-    <button class="btn btn-outline">📥 Export</button>
-    <button class="btn btn-primary">➕ Add Book</button>
+  <div class="dashboard-actions">
+    <button class="btn btn-outline" onclick="exportData()">
+      <span>📥</span> Export
+    </button>
+    <a href="{% url 'librarymanagement:add_book' %}" class="btn btn-primary">
+      <span>➕</span> Add Book
+    </a>
   </div>
 </div>

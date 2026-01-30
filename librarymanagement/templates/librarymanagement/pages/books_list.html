@@ -1,45 +1,217 @@
 {% load static %}
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Project Management{% endblock %}</title>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description"
+              content="Browse and manage books in the Library Management system." />
+        <meta name="keywords"
+              content="library, books, management, authors, publishers, categories" />
+        <title>
+            {% block title %}
+                Library Management
+            {% endblock title %}
+        </title>
+        <link rel="stylesheet"
+              href="{% static 'librarymanagement/css/library-base.css' %}" />
+        <link rel="stylesheet"
+              href="{% static 'librarymanagement/css/book_page.css' %}" />
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        {% block extra_head %}
+        {% endblock extra_head %}
+    </head>
+    <body>
+        {% block content %}
+            {% include "librarymanagement/components/sidebar.html" %}
+            {% include "librarymanagement/components/books/main.html" %}
+            <!-- Add Book Modal -->
+            <div id="addBookModal" class="modal-overlay">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3>Add New Book</h3>
+                        <button class="modal-close" onclick="closeAddBookModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addBookForm"
+                              method="post"
+                              action="{% url 'librarymanagement:add_book' %}">
+                            {% csrf_token %}
+                            {% if form.errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+                            <div class="form-grid">
+                                <!-- Library Selection -->
+                                <div class="form-group">
+                                    <label for="library">
+                                        Library <span class="required">*</span>
+                                    </label>
+                                    <select id="library" name="library" class="form-control" required>
+                                        <option value="">Select Library</option>
+                                        {% for lib in libraries %}<option value="{{ lib.id }}">{{ lib.name }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <!-- Title -->
+                                <div class="form-group">
+                                    <label for="title">
+                                        Title <span class="required">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="title"
+                                           name="title"
+                                           class="form-control"
+                                           required
+                                           placeholder="Enter book title" />
+                                </div>
+                                <!-- ISBN -->
+                                <div class="form-group">
+                                    <label for="isbn">ISBN</label>
+                                    <input type="text"
+                                           id="isbn"
+                                           name="isbn"
+                                           class="form-control"
+                                           placeholder="Enter ISBN" />
+                                </div>
+                                <!-- Authors -->
+                                <div class="form-group">
+                                    <label for="authors">Authors</label>
+                                    <select id="authors" name="authors" class="form-control" multiple size="3">
+                                        {% for author in authors %}<option value="{{ author.id }}">{{ author.full_name }}</option>{% endfor %}
+                                    </select>
+                                    <small class="form-text">Hold Ctrl/Cmd to select multiple</small>
+                                </div>
+                                <!-- Publisher -->
+                                <div class="form-group">
+                                    <label for="publisher">Publisher</label>
+                                    <select id="publisher" name="publisher" class="form-control">
+                                        <option value="">Select Publisher</option>
+                                        {% for pub in publishers %}<option value="{{ pub.id }}">{{ pub.name }}</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <!-- Publication Year -->
+                                <div class="form-group">
+                                    <label for="publication_year">Publication Year</label>
+                                    <input type="number"
+                                           id="publication_year"
+                                           name="publication_year"
+                                           class="form-control"
+                                           min="1000"
+                                           max="2100"
+                                           placeholder="YYYY" />
+                                </div>
+                                <!-- Edition -->
+                                <div class="form-group">
+                                    <label for="edition">Edition</label>
+                                    <input type="text"
+                                           id="edition"
+                                           name="edition"
+                                           class="form-control"
+                                           placeholder="e.g., 1st, 2nd" />
+                                </div>
+                                <!-- Language -->
+                                <div class="form-group">
+                                    <label for="language">Language</label>
+                                    <input type="text"
+                                           id="language"
+                                           name="language"
+                                           class="form-control"
+                                           value="English"
+                                           placeholder="Language" />
+                                </div>
+                                <!-- Pages -->
+                                <div class="form-group">
+                                    <label for="pages">Number of Pages</label>
+                                    <input type="number"
+                                           id="pages"
+                                           name="pages"
+                                           class="form-control"
+                                           min="1"
+                                           placeholder="Number of pages" />
+                                </div>
+                                <!-- Resource Type -->
+                                <div class="form-group">
+                                    <label for="resource_type">Resource Type</label>
+                                    <select id="resource_type" name="resource_type" class="form-control">
+                                        <option value="physical">Physical Book</option>
+                                        <option value="digital">Digital Resource</option>
+                                        <option value="audio">Audio Book</option>
+                                        <option value="video">Video Resource</option>
+                                    </select>
+                                </div>
+                                <!-- Total Copies -->
+                                <div class="form-group">
+                                    <label for="total_copies">Total Copies</label>
+                                    <input type="number"
+                                           id="total_copies"
+                                           name="total_copies"
+                                           class="form-control"
+                                           value="1"
+                                           min="1"
+                                           required />
+                                </div>
+                                <!-- Shelf Location -->
+                                <div class="form-group">
+                                    <label for="shelf_location">Shelf Location</label>
+                                    <input type="text"
+                                           id="shelf_location"
+                                           name="shelf_location"
+                                           class="form-control"
+                                           placeholder="e.g., A1-B3" />
+                                </div>
+                                <!-- Categories (Tagify) -->
+                                <div class="form-group form-group-full">
+                                    <label for="categories">Categories</label>
+                                    <input id="categories"
+                                           name="categories"
+                                           class="form-control"
+                                           placeholder="Add categories (type and press Enter)" />
+                                    <small class="form-text">Type to add or select multiple categories</small>
+                                </div>
+                                <!-- Tagify JS and CSS for categories -->
+                                <link rel="stylesheet"
+                                      href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" />
+                                <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+                                <script>
+                // Prepare category whitelist from Django context
+                const categoryWhitelist = [
+                  {% for cat in categories %}
+                    { value: "{{ cat.name|escapejs }}", id: "{{ cat.id }}" }{% if not forloop.last %},{% endif %}
+                  {% endfor %}
+                ];
 
-    <link
-      rel="stylesheet"
-      href="{% static 'librarymanagement/css/base.css' %}"
-    />
-    <link
-    rel="stylesheet"
-    href="{% static 'librarymanagement/css/book_page.css' %}"
-  />
-    <link
-      rel="stylesheet"
-      href="{% static 'projectmanagement/css/base.css' %}"
-    />
-    <link
-      rel="stylesheet"
-      href="{% static 'projectmanagement/css/sidebar.css' %}"
-    />
-    <link
-      rel="stylesheet"
-      href="{% static 'projectmanagement/css/components.css' %}"
-    />
-
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    {% block extra_head %}{% endblock %}
-  </head>
-
-  <body>
-    {% block content %}
-    {% include 'librarymanagement/components/sidebar.html' %}
-    {% include 'librarymanagement/components/books/main.html' %}
-
-    {% endblock%}
-
-    <script>
+                // Initialize Tagify on the categories input
+                const categoriesInput = document.getElementById('categories');
+                if (categoriesInput) {
+                  new Tagify(categoriesInput, {
+                    whitelist: categoryWhitelist,
+                    enforceWhitelist: false, // allow new tags
+                    dropdown: {
+                      enabled: 0, // show suggestions on focus
+                      maxItems: 20,
+                      classname: "categories-suggestions",
+                      closeOnSelect: false
+                    }
+                  });
+                }
+                                </script>
+                                <!-- Description -->
+                                <div class="form-group form-group-full">
+                                    <label for="description">Description</label>
+                                    <textarea id="description"
+                                              name="description"
+                                              class="form-control"
+                                              rows="3"
+                                              placeholder="Enter book description"></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-ghost" onclick="closeAddBookModal()">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Add Book</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endblock content %}
+        <script>
       window.DJANGO_MESSAGES = [
         {% for message in messages %}
           {
@@ -48,12 +220,37 @@
           }{% if not forloop.last %},{% endif %}
         {% endfor %}
       ];
-    </script>
+        </script>
+        <script src="{% static 'core/js/sidebar.js' %}"></script>
+        <script src="{% static 'projectmanagement/js/global-toast.js' %}" defer></script>
+        <!-- Add Book Modal Scripts -->
+        <script>
+      function openAddBookModal() {
+        document.getElementById("addBookModal").classList.add("active");
+        document.body.style.overflow = "hidden";
+      }
 
-    <script src="{% static 'core/js/sidebar.js' %}"></script>
-    <script
-      src="{% static 'projectmanagement/js/global-toast.js' %}"
-      defer
-    ></script>
-  </body>
+      function closeAddBookModal() {
+        document.getElementById("addBookModal").classList.remove("active");
+        document.body.style.overflow = "auto";
+        document.getElementById("addBookForm").reset();
+      }
+
+      // Close modal when clicking outside
+      document
+        .getElementById("addBookModal")
+        ?.addEventListener("click", function (e) {
+          if (e.target === this) {
+            closeAddBookModal();
+          }
+        });
+
+      // Close modal with Escape key
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+          closeAddBookModal();
+        }
+      });
+        </script>
+    </body>
 </html>

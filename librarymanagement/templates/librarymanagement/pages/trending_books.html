@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+          content="Discover the most popular and trending books in the library. Stay updated with the latest reading trends and insights." />
+    <meta name="keywords"
+          content="library, trending books, popular books, book trends, reading, borrows, library management" />
+    <title>Trending Books - Library Management</title>
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/library-base.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/recommendations.css' %}" />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      {% include "librarymanagement/components/sidebar.html" %}
+      <main class="main-content">
+        <div class="content-wrapper">
+          <div class="page-header">
+            <h1 class="page-title">Trending Books</h1>
+            <p class="page-description">Discover the most popular books in the library</p>
+          </div>
+          <!-- Period Selector -->
+          <div class="period-tabs">
+            <button class="period-tab active">📅 Daily</button>
+            <button class="period-tab">📆 Weekly</button>
+            <button class="period-tab">🗓️ Monthly</button>
+            <button class="period-tab">📊 Yearly</button>
+          </div>
+          <!-- Trending Books Grid -->
+          <div class="trending-grid">
+            {% if trending %}
+              {% for item in trending %}
+                <div class="trending-card">
+                  <div class="trending-badge {% if item.popularity_score > 80 %}hot{% else %}rising{% endif %}">
+                    {% if item.popularity_score > 80 %}
+                      🔥 HOT
+                    {% else %}
+                      📈 RISING
+                    {% endif %}
+                  </div>
+                  <div class="trending-cover">
+                    {% if item.book.cover_image %}
+                      <img src="{{ item.book.cover_image.url }}"
+                           alt="{{ item.book.title }}"
+                           width="120"
+                           height="180" />
+                    {% else %}
+                      📚
+                    {% endif %}
+                  </div>
+                  <div class="trending-body">
+                    <h3 class="trending-title">{{ item.book.title }}</h3>
+                    <p class="trending-author">
+                      {% if item.book.authors.all %}
+                        By {{
+                        item.book.authors.all.0.full_name }}
+                      {% endif %}
+                    </p>
+                    <div class="trending-stats">
+                      <div class="trending-stat">
+                        <span class="trending-stat-value">{{ item.view_count }}</span>
+                        <span class="trending-stat-label">Views</span>
+                      </div>
+                      <div class="trending-stat">
+                        <span class="trending-stat-value">{{ item.borrow_count }}</span>
+                        <span class="trending-stat-label">Borrows</span>
+                      </div>
+                      <div class="trending-stat">
+                        <span class="trending-stat-value">{{ item.reservation_count }}</span>
+                        <span class="trending-stat-label">Reserves</span>
+                      </div>
+                    </div>
+                    <div class="trending-score">
+                      <div>
+                        <div class="trending-score-value">{{ item.popularity_score }}</div>
+                        <div class="trending-score-label">Popularity Score</div>
+                      </div>
+                    </div>
+                    <button class="btn btn-primary btn-block">View Details</button>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="card full-width-card">
+                <div class="empty-state">
+                  <div class="empty-state-icon">📊</div>
+                  <h3>No Trending Data</h3>
+                  <p>
+                    Trending information will appear once there is enough user
+                    activity.
+                  </p>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+          <!-- Insights Card -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">📈 Trending Insights</h3>
+            </div>
+            <div class="grid-2">
+              <div>
+                <h4>Most Popular Categories</h4>
+                <ul class="top-list">
+                  <li class="top-list-item">
+                    <div class="top-list-rank">1</div>
+                    <div class="top-list-info">
+                      <div class="top-list-name">Fiction</div>
+                      <div class="top-list-meta">42% of all borrows</div>
+                    </div>
+                    <div class="top-list-value">156</div>
+                  </li>
+                  <li class="top-list-item">
+                    <div class="top-list-rank">2</div>
+                    <div class="top-list-info">
+                      <div class="top-list-name">Science</div>
+                      <div class="top-list-meta">28% of all borrows</div>
+                    </div>
+                    <div class="top-list-value">104</div>
+                  </li>
+                  <li class="top-list-item">
+                    <div class="top-list-rank">3</div>
+                    <div class="top-list-info">
+                      <div class="top-list-name">History</div>
+                      <div class="top-list-meta">18% of all borrows</div>
+                    </div>
+                    <div class="top-list-value">67</div>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h4>Growth Trends</h4>
+                <div class="stat-card">
+                  <div class="stat-value text-success">+24%</div>
+                  <div class="stat-label">Increase in borrows this month</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-value text-primary">+15%</div>
+                  <div class="stat-label">More unique book views</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-value text-warning">+8%</div>
+                  <div class="stat-label">New user registrations</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+          content="Manage authors and publishers in the Library Management system." />
+    <meta name="keywords"
+          content="library, authors, publishers, management, books" />
+    <title>Authors & Publishers - Library Management</title>
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/library-base.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/authors_publishers.css' %}" />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      {% include "librarymanagement/components/sidebar.html" %}
+      <main class="main-content">
+        <div class="content-wrapper">
+          <div class="page-header">
+            <h1 class="page-title">Authors & Publishers</h1>
+            <p class="page-description">View, add, and manage authors and publishers</p>
+          </div>
+          <div class="management-grid">
+            <div class="management-section">
+              <h2>Authors</h2>
+              <table class="management-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Books</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for author in authors %}
+                    <tr>
+                      <td>{{ author.full_name }}</td>
+                      <td>{{ author.books.count }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="2">No authors found.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <div class="management-section">
+              <h2>Publishers</h2>
+              <table class="management-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Books</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for publisher in publishers %}
+                    <tr>
+                      <td>{{ publisher.name }}</td>
+                      <td>{{ publisher.books.count }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="2">No publishers found.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

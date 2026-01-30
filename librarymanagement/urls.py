@@ -13,9 +13,15 @@ urlpatterns = [
     ),
     path("dashboard/", views.dashboard, name="library_dashboard"),
     path("books/", views.books_list, name="books_list"),
+    path("books/add/", views.add_book, name="add_book"),
     path("transactions/", views.transactions_list, name="transactions_list"),
     path("reservations/", views.reservations_list, name="reservations_list"),
     path("user-activity/", views.user_activities, name="user_activities"),
+    path(
+        "authors-publishers/",
+        views.authors_publishers_management,
+        name="authors_publishers_management",
+    ),
     path(
         "recommendations/",
         views.recommendations_dashboard,

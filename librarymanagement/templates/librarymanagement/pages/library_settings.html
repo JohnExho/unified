@@ -1,0 +1,335 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+          content="Configure and manage your library system settings, notifications, and features for the University Library." />
+    <meta name="keywords"
+          content="library, settings, management, notifications, fines, features, university" />
+    <title>Library Settings - Library Management</title>
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/library-base.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/reports.css' %}" />
+    <style>
+            .input-width-120 {
+                width: 120px;
+            }
+            .input-width-300 {
+                width: 300px;
+            }
+            .input-group-width-200 {
+                width: 200px;
+            }
+            .currency-prefix {
+                padding: 0.625rem 0.875rem;
+                background: var(--bg-tertiary);
+                border: 1px solid var(--border-color);
+                border-right: none;
+                border-radius: var(--radius-md) 0 0 var(--radius-md);
+            }
+            .currency-input {
+                border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      {% include "librarymanagement/components/sidebar.html" %}
+      <main class="main-content">
+        <div class="content-wrapper settings-container">
+          <div class="page-header">
+            <h1 class="page-title">Library Settings</h1>
+            <p class="page-description">Configure and manage your library system</p>
+          </div>
+          <!-- Library Information -->
+          <div class="library-info-card">
+            <div class="library-info-header">
+              <div>
+                <h2 class="library-info-title">University Library</h2>
+                <p>Main Campus Branch</p>
+              </div>
+              <div class="library-info-logo">📚</div>
+            </div>
+            <div class="library-info-meta">
+              <div class="library-info-item">
+                <span>📍</span>
+                <span>123 University Avenue, City</span>
+              </div>
+              <div class="library-info-item">
+                <span>📞</span>
+                <span>(123) 456-7890</span>
+              </div>
+              <div class="library-info-item">
+                <span>📧</span>
+                <span>library@university.edu</span>
+              </div>
+              <div class="library-info-item">
+                <span>🕒</span>
+                <span>Mon-Fri: 8AM - 8PM</span>
+              </div>
+            </div>
+          </div>
+          <!-- General Settings -->
+          <div class="settings-section">
+            <div class="settings-section-header">
+              <h3 class="settings-section-title">General Settings</h3>
+              <p class="settings-section-description">Basic library system configuration</p>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Library Name</div>
+                <div class="settings-item-description">The display name for your library</div>
+              </div>
+              <div class="settings-item-control">
+                <input type="text"
+                       class="form-control input-width-300"
+                       value="University Library" />
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Default Loan Period</div>
+                <div class="settings-item-description">Number of days for standard book loans</div>
+              </div>
+              <div class="settings-item-control">
+                <input type="number" class="form-control input-width-120" value="14" />
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Maximum Renewals</div>
+                <div class="settings-item-description">How many times a book can be renewed</div>
+              </div>
+              <div class="settings-item-control">
+                <input type="number" class="form-control input-width-120" value="3" />
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Maximum Books Per User</div>
+                <div class="settings-item-description">Concurrent book lending limit</div>
+              </div>
+              <div class="settings-item-control">
+                <input type="number" class="form-control input-width-120" value="5" />
+              </div>
+            </div>
+          </div>
+          <!-- Fine & Fee Settings -->
+          <div class="settings-section">
+            <div class="settings-section-header">
+              <h3 class="settings-section-title">Fines & Fees</h3>
+              <p class="settings-section-description">Configure overdue fines and penalties</p>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Enable Late Fines</div>
+                <div class="settings-item-description">Charge users for overdue books</div>
+              </div>
+              <div class="settings-item-control">
+                <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Daily Fine Amount</div>
+                <div class="settings-item-description">Fine charged per day overdue</div>
+              </div>
+              <div class="settings-item-control">
+                <div class="input-group input-group-width-200">
+                  <span class="currency-prefix">₱</span>
+                  <input type="number"
+                         class="form-control currency-input"
+                         value="10.00"
+                         step="0.01" />
+                </div>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Maximum Fine Amount</div>
+                <div class="settings-item-description">Cap on total fines per book</div>
+              </div>
+              <div class="settings-item-control">
+                <div class="input-group input-group-width-200">
+                  <span class="currency-prefix">₱</span>
+                  <input type="number"
+                         class="form-control currency-input"
+                         value="500.00"
+                         step="0.01" />
+                </div>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Grace Period</div>
+                <div class="settings-item-description">Days before fines start accumulating</div>
+              </div>
+              <div class="settings-item-control">
+                <input type="number" class="form-control input-width-120" value="0" />
+              </div>
+            </div>
+          </div>
+          <!-- Notification Settings -->
+          <div class="settings-section">
+            <div class="settings-section-header">
+              <h3 class="settings-section-title">Notifications</h3>
+              <p class="settings-section-description">Configure user notification preferences</p>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Email Notifications</div>
+                <div class="settings-item-description">Send email alerts to users</div>
+              </div>
+              <div class="settings-item-control">
+                <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Due Date Reminders</div>
+                <div class="settings-item-description">Notify users before books are due</div>
+              </div>
+              <div class="settings-item-control">
+                <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Reminder Days Before Due</div>
+                <div class="settings-item-description">Send reminder X days before due date</div>
+              </div>
+              <div class="settings-item-control">
+                <input type="number" class="form-control input-width-120" value="3" />
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Overdue Notifications</div>
+                <div class="settings-item-description">Alert users when books are overdue</div>
+              </div>
+              <div class="settings-item-control">
+                <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Reservation Ready Alerts</div>
+                <div class="settings-item-description">Notify when reserved books are available</div>
+              </div>
+              <div class="settings-item-control">
+                <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+              </div>
+            </div>
+          </div>
+          <!-- System Features -->
+          <div class="settings-section">
+            <div class="settings-section-header">
+              <h3 class="settings-section-title">System Features</h3>
+              <p class="settings-section-description">Enable or disable advanced features</p>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Book Recommendations</div>
+                <div class="settings-item-description">AI-powered personalized suggestions</div>
+              </div>
+              <div class="settings-item-control">
+                <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">User Activity Tracking</div>
+                <div class="settings-item-description">Monitor user behavior for analytics</div>
+              </div>
+              <div class="settings-item-control">
+                <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Trending Books Display</div>
+                <div class="settings-item-description">Show popular books on dashboard</div>
+              </div>
+              <div class="settings-item-control">
+                <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+              </div>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-info">
+                <div class="settings-item-label">Digital Resources</div>
+                <div class="settings-item-description">Enable e-books and digital content</div>
+              </div>
+              <div class="settings-item-control">
+                <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Save Button -->
+          <div class="card">
+            <div class="btn-group">
+              <button class="btn btn-primary btn-lg" onclick="saveSettings()">💾 Save All Settings</button>
+              <button class="btn btn-outline btn-lg" onclick="resetSettings()">🔄 Reset to Defaults</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <script>
+      function toggleSwitch(element) {
+        element.classList.toggle("active");
+      }
+
+      function saveSettings() {
+        Swal.fire({
+          title: "Save Settings?",
+          text: "All changes will be applied to the library system.",
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "Yes, save changes",
+          confirmButtonColor: "#2563eb",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            Swal.fire({
+              title: "Saving...",
+              text: "Please wait while we update your settings.",
+              allowOutsideClick: false,
+              didOpen: () => {
+                Swal.showLoading();
+                setTimeout(() => {
+                  Swal.fire(
+                    "Saved!",
+                    "Your settings have been updated successfully.",
+                    "success",
+                  );
+                }, 1500);
+              },
+            });
+          }
+        });
+      }
+
+      function resetSettings() {
+        Swal.fire({
+          title: "Reset Settings?",
+          text: "This will restore all settings to their default values.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Yes, reset",
+          confirmButtonColor: "#ef4444",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            Swal.fire(
+              "Reset!",
+              "Settings have been restored to defaults.",
+              "success",
+            );
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

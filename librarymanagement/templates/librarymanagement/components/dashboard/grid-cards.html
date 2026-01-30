@@ -1,57 +1,55 @@
-<div class="grid-2">
-  <!-- Recent Borrowings Component -->
-  <div class="card">
-    <div class="card-header">
-      <h3 class="card-title">Recent Borrowings</h3>
-      <a href="#" class="text-sm">View All →</a>
-    </div>
-    <div class="card-body">
-      <div class="table-container">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Book</th>
-              <th>Member</th>
-              <th>Due Date</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>The Great Gatsby</td>
-              <td>John Smith</td>
-              <td>Jan 30, 2026</td>
-              <td>
-                <span class="badge badge-success">Active</span>
-              </td>
-            </tr>
-            <tr>
-              <td>To Kill a Mockingbird</td>
-              <td>Emma Wilson</td>
-              <td>Jan 28, 2026</td>
-              <td>
-                <span class="badge badge-warning">Due Soon</span>
-              </td>
-            </tr>
-            <tr>
-              <td>1984</td>
-              <td>Michael Brown</td>
-              <td>Jan 25, 2026</td>
-              <td>
-                <span class="badge badge-danger">Overdue</span>
-              </td>
-            </tr>
-            <tr>
-              <td>Pride and Prejudice</td>
-              <td>Sarah Davis</td>
-              <td>Feb 02, 2026</td>
-              <td>
-                <span class="badge badge-success">Active</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+<!-- Recent Borrowings Component -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Recent Borrowings</h3>
+    <a href="{% url 'librarymanagement:transactions_list' %}">View All →</a>
+  </div>
+  <div class="card-body">
+    <div class="table-container">
+      <table class="table dashboard-table">
+        <thead>
+          <tr>
+            <th>Book</th>
+            <th>Member</th>
+            <th>Due Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>The Great Gatsby</td>
+            <td>John Smith</td>
+            <td>Jan 30, 2026</td>
+            <td>
+              <span class="badge badge-success">Active</span>
+            </td>
+          </tr>
+          <tr>
+            <td>To Kill a Mockingbird</td>
+            <td>Emma Wilson</td>
+            <td>Jan 28, 2026</td>
+            <td>
+              <span class="badge badge-warning">Due Soon</span>
+            </td>
+          </tr>
+          <tr>
+            <td>1984</td>
+            <td>Michael Brown</td>
+            <td>Jan 25, 2026</td>
+            <td>
+              <span class="badge badge-danger">Overdue</span>
+            </td>
+          </tr>
+          <tr>
+            <td>Pride and Prejudice</td>
+            <td>Sarah Davis</td>
+            <td>Feb 02, 2026</td>
+            <td>
+              <span class="badge badge-success">Active</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
