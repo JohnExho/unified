@@ -1,0 +1,424 @@
+{% extends 'inventorymanagement/base.html' %}
+{% load static %}
+
+{% block title %}Reports - Inventory Management{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/reports.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+	<div class="top-bar">
+		<div class="page-header">
+			<div class="breadcrumb">Dashboard <span class="breadcrumb-sep">›</span> Reports</div>
+			<h1>Reports & Analytics</h1>
+		</div>
+		<div class="top-actions">
+			<button class="btn btn-secondary">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+					<polyline points="7 10 12 15 17 10"></polyline>
+					<line x1="12" y1="15" x2="12" y2="3"></line>
+				</svg>
+				Export PDF
+			</button>
+			<button class="btn btn-primary">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M12 4v16m8-8H4"></path>
+				</svg>
+				Generate Report
+			</button>
+		</div>
+	</div>
+
+	<div class="content-wrap">
+		<div class="summary-grid">
+			<div class="summary-card">
+				<div class="summary-label">Total Inventory Items</div>
+				<div class="summary-value">{{ total_items|default:0 }}</div>
+				<div class="summary-meta">Active items</div>
+			</div>
+			<div class="summary-card">
+				<div class="summary-label">Low Stock Items</div>
+				<div class="summary-value">{{ low_stock_items|default:0 }}</div>
+				<div class="summary-meta">Requires attention</div>
+			</div>
+			<div class="summary-card">
+				<div class="summary-label">Total Assets</div>
+				<div class="summary-value">{{ total_assets|default:0 }}</div>
+				<div class="summary-meta">Tracked assets</div>
+			</div>
+			<div class="summary-card">
+				<div class="summary-label">Total Requisitions</div>
+				<div class="summary-value">{{ total_requisitions|default:0 }}</div>
+				<div class="summary-meta">All time</div>
+			</div>
+		</div>
+
+		<div class="toolbar">
+			<div class="toolbar-actions">
+				<a href="?report=inventory" class="btn btn-secondary {% if report_type == 'inventory' %}active{% endif %}">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<rect x="3" y="4" width="18" height="16" rx="2"></rect>
+						<line x1="3" y1="10" x2="21" y2="10"></line>
+					</svg>
+					Inventory Report
+				</a>
+				<a href="?report=assets" class="btn btn-secondary {% if report_type == 'assets' %}active{% endif %}">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+					</svg>
+					Assets Report
+				</a>
+				<a href="?report=requisitions" class="btn btn-secondary {% if report_type == 'requisitions' %}active{% endif %}">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+					</svg>
+					Requisitions Report
+				</a>
+				<a href="?report=transactions" class="btn btn-secondary {% if report_type == 'transactions' or not report_type %}active{% endif %}">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+					</svg>
+					Transactions
+				</a>
+			</div>
+			<div class="toolbar-search">
+				<select class="filter-select">
+					<option>Last 7 days</option>
+					<option>Last 30 days</option>
+					<option>Last 90 days</option>
+					<option>This year</option>
+					<option>All time</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="filters">
+			<div class="filter-item">
+				<label>Category</label>
+				<select class="filter-select">
+					<option>All Categories</option>
+					<option>Electronics</option>
+					<option>Furniture</option>
+					<option>Office Supplies</option>
+				</select>
+			</div>
+			<div class="filter-item">
+				<label>Format</label>
+				<select class="filter-select">
+					<option>PDF</option>
+					<option>Excel</option>
+					<option>CSV</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="charts-grid">
+			{% if report_type == 'inventory' %}
+			<div class="chart-card">
+				<h3 class="chart-title">Inventory Stock Trend</h3>
+				<div class="chart-container">
+					<canvas id="inventoryTrendChart"></canvas>
+				</div>
+			</div>
+			<div class="chart-card">
+				<h3 class="chart-title">Inventory by Category</h3>
+				<div class="chart-container">
+					<canvas id="inventoryCategoryChart"></canvas>
+				</div>
+			</div>
+
+			{% elif report_type == 'assets' %}
+			<div class="chart-card">
+				<h3 class="chart-title">Asset Status Distribution</h3>
+				<div class="chart-container">
+					<canvas id="assetStatusChart"></canvas>
+				</div>
+			</div>
+			<div class="chart-card">
+				<h3 class="chart-title">Asset Assignments Over Time</h3>
+				<div class="chart-container">
+					<canvas id="assetAssignmentChart"></canvas>
+				</div>
+			</div>
+
+			{% elif report_type == 'requisitions' %}
+			<div class="chart-card">
+				<h3 class="chart-title">Requisition Status Distribution</h3>
+				<div class="chart-container">
+					<canvas id="requisitionStatusChart"></canvas>
+				</div>
+			</div>
+			<div class="chart-card">
+				<h3 class="chart-title">Requisitions Fulfillment Trend</h3>
+				<div class="chart-container">
+					<canvas id="requisitionTrendChart"></canvas>
+				</div>
+			</div>
+
+			{% else %}
+			<div class="chart-card">
+				<h3 class="chart-title">Transaction Types Distribution</h3>
+				<div class="chart-container">
+					<canvas id="transactionTypeChart"></canvas>
+				</div>
+			</div>
+			<div class="chart-card">
+				<h3 class="chart-title">Transaction Volume Trend</h3>
+				<div class="chart-container">
+					<canvas id="transactionTrendChart"></canvas>
+				</div>
+			</div>
+			{% endif %}
+		</div>
+
+		{% if report_type == 'inventory' %}
+			{% include 'inventorymanagement/partials/_inventory_report_table.html' %}
+		{% elif report_type == 'assets' %}
+			{% include 'inventorymanagement/partials/_assets_report_table.html' %}
+		{% elif report_type == 'requisitions' %}
+			{% include 'inventorymanagement/partials/_requisitions_report_table.html' %}
+		{% else %}
+			{% include 'inventorymanagement/partials/_transactions_report_table.html' %}
+		{% endif %}
+	</div>
+</main>
+
+{% block extra_scripts %}
+<script>
+	{% if report_type == 'inventory' %}
+	// Inventory Stock Trend Chart
+	const inventoryTrendCtx = document.getElementById('inventoryTrendChart').getContext('2d');
+	new Chart(inventoryTrendCtx, {
+		type: 'line',
+		data: {
+			labels: ['Jan 1', 'Jan 5', 'Jan 10', 'Jan 15', 'Jan 20', 'Jan 25', 'Jan 30'],
+			datasets: [{
+				label: 'Total Stock Level',
+				data: [1245, 1268, 1234, 1289, 1276, 1302, 1284],
+				borderColor: '#4f46e5',
+				backgroundColor: 'rgba(79, 70, 229, 0.1)',
+				tension: 0.4,
+				pointRadius: 4,
+				pointBackgroundColor: '#4f46e5',
+				fill: true
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			plugins: {
+				legend: { display: false }
+			},
+			scales: {
+				y: { beginAtZero: true, grid: { color: '#f3f4f6' }, ticks: { color: '#6b7280' } },
+				x: { grid: { display: false }, ticks: { color: '#6b7280' } }
+			}
+		}
+	});
+
+	// Inventory by Category Chart
+	const inventoryCategoryCtx = document.getElementById('inventoryCategoryChart').getContext('2d');
+	new Chart(inventoryCategoryCtx, {
+		type: 'doughnut',
+		data: {
+			labels: ['Electronics', 'Furniture', 'Office Supplies', 'Equipment', 'Other'],
+			datasets: [{
+				data: [35, 25, 20, 15, 5],
+				backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#6b7280'],
+				borderWidth: 0
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			plugins: {
+				legend: {
+					position: 'right',
+					labels: { padding: 15, font: { size: 12 }, color: '#6b7280', boxWidth: 12 }
+				}
+			},
+			cutout: '65%'
+		}
+	});
+
+	{% elif report_type == 'assets' %}
+	// Asset Status Distribution Chart
+	const assetStatusCtx = document.getElementById('assetStatusChart').getContext('2d');
+	new Chart(assetStatusCtx, {
+		type: 'pie',
+		data: {
+			labels: ['Active', 'In Maintenance', 'Available', 'Retired'],
+			datasets: [{
+				data: [45, 12, 28, 15],
+				backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#6b7280'],
+				borderWidth: 0
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			plugins: {
+				legend: {
+					position: 'right',
+					labels: { padding: 15, font: { size: 12 }, color: '#6b7280', boxWidth: 12 }
+				}
+			}
+		}
+	});
+
+	// Asset Assignments Over Time Chart
+	const assetAssignmentCtx = document.getElementById('assetAssignmentChart').getContext('2d');
+	new Chart(assetAssignmentCtx, {
+		type: 'bar',
+		data: {
+			labels: ['Jan 1', 'Jan 5', 'Jan 10', 'Jan 15', 'Jan 20', 'Jan 25', 'Jan 30'],
+			datasets: [{
+				label: 'Assignments',
+				data: [15, 18, 12, 22, 19, 25, 20],
+				backgroundColor: '#4f46e5',
+				borderRadius: 6,
+				barThickness: 30
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			plugins: { legend: { display: false } },
+			scales: {
+				y: { beginAtZero: true, grid: { color: '#f3f4f6' }, ticks: { color: '#6b7280' } },
+				x: { grid: { display: false }, ticks: { color: '#6b7280' } }
+			}
+		}
+	});
+
+	{% elif report_type == 'requisitions' %}
+	// Requisition Status Distribution Chart
+	const requisitionStatusCtx = document.getElementById('requisitionStatusChart').getContext('2d');
+	new Chart(requisitionStatusCtx, {
+		type: 'doughnut',
+		data: {
+			labels: ['Pending', 'Approved', 'Rejected', 'Fulfilled'],
+			datasets: [{
+				data: [25, 35, 10, 30],
+				backgroundColor: ['#f59e0b', '#10b981', '#ef4444', '#3b82f6'],
+				borderWidth: 0
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			plugins: {
+				legend: {
+					position: 'right',
+					labels: { padding: 15, font: { size: 12 }, color: '#6b7280', boxWidth: 12 }
+				}
+			},
+			cutout: '65%'
+		}
+	});
+
+	// Requisitions Fulfillment Trend Chart
+	const requisitionTrendCtx = document.getElementById('requisitionTrendChart').getContext('2d');
+	new Chart(requisitionTrendCtx, {
+		type: 'line',
+		data: {
+			labels: ['Jan 1', 'Jan 5', 'Jan 10', 'Jan 15', 'Jan 20', 'Jan 25', 'Jan 30'],
+			datasets: [
+				{
+					label: 'Submitted',
+					data: [8, 12, 10, 15, 14, 18, 16],
+					borderColor: '#4f46e5',
+					backgroundColor: 'rgba(79, 70, 229, 0.1)',
+					tension: 0.4,
+					pointRadius: 4,
+					fill: true
+				},
+				{
+					label: 'Fulfilled',
+					data: [5, 9, 8, 12, 11, 15, 13],
+					borderColor: '#10b981',
+					backgroundColor: 'rgba(16, 185, 129, 0.1)',
+					tension: 0.4,
+					pointRadius: 4,
+					fill: true
+				}
+			]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			plugins: {
+				legend: {
+					position: 'top',
+					align: 'end',
+					labels: { boxWidth: 12, padding: 15, font: { size: 12 }, color: '#6b7280' }
+				}
+			},
+			scales: {
+				y: { beginAtZero: true, grid: { color: '#f3f4f6' }, ticks: { color: '#6b7280' } },
+				x: { grid: { display: false }, ticks: { color: '#6b7280' } }
+			}
+		}
+	});
+
+	{% else %}
+	// Transaction Types Distribution Chart
+	const transactionTypeCtx = document.getElementById('transactionTypeChart').getContext('2d');
+	new Chart(transactionTypeCtx, {
+		type: 'bar',
+		data: {
+			labels: ['Issue', 'Return', 'Transfer', 'Dispose', 'Adjust'],
+			datasets: [{
+				label: 'Count',
+				data: [85, 42, 28, 15, 22],
+				backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+				borderRadius: 6,
+				barThickness: 40
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			plugins: { legend: { display: false } },
+			scales: {
+				y: { beginAtZero: true, grid: { color: '#f3f4f6' }, ticks: { color: '#6b7280' } },
+				x: { grid: { display: false }, ticks: { color: '#6b7280' } }
+			}
+		}
+	});
+
+	// Transaction Volume Trend Chart
+	const transactionTrendCtx = document.getElementById('transactionTrendChart').getContext('2d');
+	new Chart(transactionTrendCtx, {
+		type: 'line',
+		data: {
+			labels: ['Jan 1', 'Jan 5', 'Jan 10', 'Jan 15', 'Jan 20', 'Jan 25', 'Jan 30'],
+			datasets: [{
+				label: 'Daily Transactions',
+				data: [45, 52, 48, 62, 57, 68, 64],
+				borderColor: '#4f46e5',
+				backgroundColor: 'rgba(79, 70, 229, 0.1)',
+				tension: 0.4,
+				pointRadius: 4,
+				pointBackgroundColor: '#4f46e5',
+				fill: true
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			plugins: { legend: { display: false } },
+			scales: {
+				y: { beginAtZero: true, grid: { color: '#f3f4f6' }, ticks: { color: '#6b7280' } },
+				x: { grid: { display: false }, ticks: { color: '#6b7280' } }
+			}
+		}
+	});
+	{% endif %}
+</script>
+{% endblock %}
+{% endblock %}

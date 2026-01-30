@@ -1,0 +1,422 @@
+{% extends 'inventorymanagement/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Inventory Management{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+    <div class="top-bar">
+        <div class="page-header">
+            <div class="breadcrumb">Dashboard</div>
+            <h1>Inventory Dashboard</h1>
+        </div>
+        <div class="top-actions">
+            <button class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export
+            </button>
+            <button class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Item
+            </button>
+        </div>
+    </div>
+
+    <div class="content-wrap">
+        <div class="toolbar">
+            <div>
+                <h2 class="dashboard-title">Overview</h2>
+                <p class="last-updated">Last updated: Jan 29, 2026, 12:46 AM</p>
+            </div>
+            <div class="toolbar-search">
+                <form class="search-box" method="get" action="{{ request.path }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="M21 21l-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" name="search" placeholder="Search inventory items..." />
+                </form>
+            </div>
+        </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Total Inventory Items</div>
+                        <div class="stat-icon icon-blue">
+                            <svg width="20" height="20" fill="none" stroke="#3b82f6" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value">1,284</div>
+                    <div class="stat-change positive">+12% from last month</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Low Stock Items</div>
+                        <div class="stat-icon icon-red">
+                            <svg width="20" height="20" fill="none" stroke="#ef4444" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value">38</div>
+                    <div class="action-required">Action required</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Items Issued Today</div>
+                        <div class="stat-icon icon-green">
+                            <svg width="20" height="20" fill="none" stroke="#10b981" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value">58</div>
+                    <div class="stat-change positive">+8% vs yesterday</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Items Returned Today</div>
+                        <div class="stat-icon icon-yellow">
+                            <svg width="20" height="20" fill="none" stroke="#f59e0b" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value">41</div>
+                    <div class="stat-change positive">+5% vs yesterday</div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3 class="chart-title">Inventory by Category</h3>
+                    <div class="chart-container">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3 class="chart-title">Inventory Transactions Trend (Last 30 Days)</h3>
+                    <div class="chart-container">
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color legend-blue"></div>
+                            <span>issued</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color legend-green"></div>
+                            <span>returned</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Grid -->
+            <div class="bottom-grid">
+                <div class="chart-card">
+                    <h3 class="chart-title">Stock Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3 class="chart-title">Low Stock Items</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Category</th>
+                                    <th>Quantity</th>
+                                    <th>Threshold</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Wireless Mouse</td>
+                                    <td>Electronics</td>
+                                    <td class="quantity-warning">8</td>
+                                    <td>10</td>
+                                    <td class="action-icons">
+                                        <svg class="action-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        <svg class="action-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                        </svg>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Office Chair Premium</td>
+                                    <td>Furniture</td>
+                                    <td class="quantity-warning">3</td>
+                                    <td>5</td>
+                                    <td class="action-icons">
+                                        <svg class="action-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        <svg class="action-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                        </svg>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Printer Cartridge Black</td>
+                                    <td>Office Supplies</td>
+                                    <td class="quantity-warning">5</td>
+                                    <td>15</td>
+                                    <td class="action-icons">
+                                        <svg class="action-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        <svg class="action-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                        </svg>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="transaction-card">
+                <h3 class="chart-title">Recent Transactions</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Type</th>
+                                <th>Quantity</th>
+                                <th>User</th>
+                                <th>Date/Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Laptop Dell XPS 15</td>
+                                <td><span class="badge badge-issue">Issue</span></td>
+                                <td>+2</td>
+                                <td>Sarah Johnson</td>
+                                <td>Jan 28, 2026 09:15 AM</td>
+                            </tr>
+                            <tr>
+                                <td>Office Desk Standard</td>
+                                <td><span class="badge badge-return">Return</span></td>
+                                <td>+1</td>
+                                <td>Mike Chen</td>
+                                <td>Jan 28, 2026 08:45 AM</td>
+                            </tr>
+                            <tr>
+                                <td>Printer Paper A4</td>
+                                <td><span class="badge badge-issue">Issue</span></td>
+                                <td>+5</td>
+                                <td>Emily Davis</td>
+                                <td>Jan 27, 2026 04:30 PM</td>
+                            </tr>
+                            <tr>
+                                <td>Wireless Keyboard</td>
+                                <td><span class="badge badge-adjust">Adjust</span></td>
+                                <td>-3</td>
+                                <td>Admin</td>
+                                <td>Jan 27, 2026 02:20 PM</td>
+                            </tr>
+                            <tr>
+                                <td>Monitor 27 inch</td>
+                                <td><span class="badge badge-issue">Issue</span></td>
+                                <td>+4</td>
+                                <td>James Wilson</td>
+                                <td>Jan 27, 2026 11:00 AM</td>
+                            </tr>
+                            <tr>
+                                <td>Ethernet Cable 10ft</td>
+                                <td><span class="badge badge-return">Return</span></td>
+                                <td>+2</td>
+                                <td>Lisa Anderson</td>
+                                <td>Jan 27, 2026 09:30 AM</td>
+                            </tr>
+                            <tr>
+                                <td>Standing Desk Electric</td>
+                                <td><span class="badge badge-issue">Issue</span></td>
+                                <td>+1</td>
+                                <td>David Martinez</td>
+                                <td>Jan 26, 2026 03:15 PM</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Bar Chart - Inventory by Category
+    const barCtx = document.getElementById('barChart').getContext('2d');
+    const barChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Electronics', 'Furniture', 'Machinery', 'Tools'],
+            datasets: [{
+                label: 'Quantity',
+                data: [250, 320, 150, 280],
+                backgroundColor: '#4f46e5',
+                borderRadius: 6,
+                barThickness: 60
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#f3f4f6'
+                    },
+                    ticks: {
+                        color: '#6b7280'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#6b7280'
+                    }
+                }
+            }
+        }
+    });
+
+    // Line Chart - Inventory Transactions Trend
+    const lineCtx = document.getElementById('lineChart').getContext('2d');
+    const lineChart = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan 1', 'Jan 5', 'Jan 10', 'Jan 15', 'Jan 20', 'Jan 25', 'Jan 28'],
+            datasets: [
+                {
+                    label: 'Issued',
+                    data: [45, 52, 48, 62, 57, 68, 64],
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#4f46e5',
+                    fill: false
+                },
+                {
+                    label: 'Returned',
+                    data: [28, 25, 32, 35, 40, 42, 38],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#10b981',
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#f3f4f6'
+                    },
+                    ticks: {
+                        color: '#6b7280'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#6b7280'
+                    }
+                }
+            }
+        }
+    });
+
+    // Pie Chart - Stock Distribution
+    const pieCtx = document.getElementById('pieChart').getContext('2d');
+    const pieChart = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['In Stock', 'Low Stock', 'Out of Stock'],
+            datasets: [{
+                data: [94, 6, 0],
+                backgroundColor: [
+                    '#10b981',
+                    '#fbbf24',
+                    '#ef4444'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 13
+                        },
+                        color: '#6b7280'
+                    }
+                }
+            },
+            cutout: '70%'
+        }
+    });
+</script>
+{% endblock %}

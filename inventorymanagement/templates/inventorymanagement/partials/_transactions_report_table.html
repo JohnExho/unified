@@ -1,0 +1,43 @@
+<div class="table-card">
+	<h3 class="table-title">Recent Transactions</h3>
+	<table class="reports-table">
+		<thead>
+			<tr>
+				<th>Date</th>
+				<th>Item</th>
+				<th>Type</th>
+				<th>Quantity</th>
+				<th>Performed By</th>
+				<th>Remarks</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for transaction in recent_transactions %}
+			<tr>
+				<td>{{ transaction.created_at|date:"M d, Y H:i" }}</td>
+				<td>{{ transaction.item.name }}</td>
+				<td>
+					{% if transaction.transaction_type == 'ISSUE' %}
+						<span class="pill type-issue">Issue</span>
+					{% elif transaction.transaction_type == 'RETURN' %}
+						<span class="pill type-return">Return</span>
+					{% elif transaction.transaction_type == 'TRANSFER' %}
+						<span class="pill type-transfer">Transfer</span>
+					{% elif transaction.transaction_type == 'DISPOSE' %}
+						<span class="pill type-dispose">Dispose</span>
+					{% else %}
+						<span class="pill type-adjust">Adjust</span>
+					{% endif %}
+				</td>
+				<td>{{ transaction.quantity }}</td>
+				<td>{{ transaction.performed_by.get_full_name|default:transaction.performed_by.username }}</td>
+				<td>{{ transaction.remarks|default:"—" }}</td>
+			</tr>
+			{% empty %}
+			<tr>
+				<td colspan="6" class="empty-state">No transactions found.</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>

@@ -1,0 +1,67 @@
+<div class="table-card">
+	<table class="requisition-table">
+		<thead>
+			<tr>
+				<th>Request ID</th>
+				<th>Requested By</th>
+				<th>Items</th>
+				<th>Status</th>
+				<th>Approved By</th>
+				<th>Submitted</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for requisition in requisitions %}
+			<tr>
+				<td>{{ requisition.id }}</td>
+				<td>
+					{{ requisition.requested_by.get_full_name|default:requisition.requested_by.username }}
+				</td>
+				<td>{{ requisition.item_count|default:requisition.items.count }} items</td>
+				<td>
+					{% if requisition.status == 'PENDING' %}
+						<span class="pill status-pending">Pending</span>
+					{% elif requisition.status == 'APPROVED' %}
+						<span class="pill status-approved">Approved</span>
+					{% elif requisition.status == 'REJECTED' %}
+						<span class="pill status-rejected">Rejected</span>
+					{% else %}
+						<span class="pill status-issued">Issued</span>
+					{% endif %}
+				</td>
+				<td>
+					{% if requisition.approved_by %}
+						{{ requisition.approved_by.get_full_name|default:requisition.approved_by.username }}
+					{% else %}
+						—
+					{% endif %}
+				</td>
+				<td>{{ requisition.created_at|date:"M d, Y" }}</td>
+				<td class="actions">
+					<button class="icon-btn" title="View">
+						<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+						</svg>
+					</button>
+					<button class="icon-btn" title="Approve">
+						<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+						</svg>
+					</button>
+					<button class="icon-btn danger" title="Reject">
+						<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+						</svg>
+					</button>
+				</td>
+			</tr>
+			{% empty %}
+			<tr>
+				<td colspan="7" class="empty-state">No requisitions found.</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
