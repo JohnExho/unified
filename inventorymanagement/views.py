@@ -1437,44 +1437,6 @@ def delete_inventory_category(request, category_id):
 
 @login_required
 @require_system_access
-def export_dashboard(request):
-    """Export dashboard data to CSV"""
-    import csv
-    from django.http import HttpResponse
-    
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="dashboard_inventory.csv"'
-    
-    writer = csv.writer(response)
-    writer.writerow(['Item Name', 'Category', 'Quantity', 'Unit', 'Low Stock Threshold', 'Status'])
-    
-    inventories = InventoryItem.objects.select_related('category').all()
-    for item in inventories:
-        writer.writerow([
-            item.name,
-            item.category.name if item.category else 'Uncategorized',
-            item.quantity,
-            item.unit,
-            item.low_stock_threshold,
-            'Active' if item.is_active else 'Inactive'
-        ])
-    
-    # Log the action
-    Logs.objects.create(
-        user=request.user,
-        system_name='inventorymanagement',
-        action='EXPORT',
-        target_model='InventoryItem',
-        description=f"Exported dashboard inventory data ({inventories.count()} items)",
-        hidden_description=f"User '{request.user.username}' exported dashboard inventory data",
-        ip_address=get_client_ip(request),
-        user_agent=get_user_agent(request),
-    )
-    
-    return response
-
-@login_required
-@require_system_access
 def export_report(request):
     """Export reports data to CSV based on report type with chart data"""
     import csv
