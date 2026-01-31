@@ -1,0 +1,96 @@
+{% load system_extras %}
+<!-- User Access View Partial -->
+{% if users %}
+<table class="user-table">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>
+                <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
+                <div class="user-email">@{{ user.username }}</div>
+            </td>
+            <td>{{ user.email }}</td>
+            <td>
+                {% if system_roles %}
+                    {% with role_info=system_roles|dict_get:user.id %}
+                        {% if role_info.0 == 'superadmin' %}
+                            <span class="role-badge superadmin">{{ role_info.1 }}</span>
+                        {% elif role_info.0 == 'admin' %}
+                            <span class="role-badge admin">{{ role_info.1 }}</span>
+                        {% else %}
+                            <span class="role-badge user">{{ role_info.1 }}</span>
+                        {% endif %}
+                    {% endwith %}
+                {% else %}
+                    <span class="role-badge user">User</span>
+                {% endif %}
+            </td>
+            <td>
+                <div class="user-status">
+                    <span class="status-indicator {% if user.is_active %}active{% else %}inactive{% endif %}"></span>
+                    {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                </div>
+            </td>
+            <td>
+                <div class="action-buttons">
+                    <button type="button" class="manage-access-btn" 
+                            data-user-id="{{ user.id }}" 
+                            data-username="{{ user.username }}" 
+                            data-role="{% if system_roles %}{% with role_info=system_roles|dict_get:user.id %}{{ role_info.0 }}{% endwith %}{% else %}user{% endif %}">
+                        Manage Access
+                    </button>
+                    {% if user.is_active %}
+                    <form method="post" action="{% url 'inventorymanagement:deactivate_user' user.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="deactivate-btn" onclick="return confirm('Are you sure?')">Deactivate</button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{% url 'inventorymanagement:activate_user' user.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="activate-btn">Activate</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Pagination -->
+{% if users.has_other_pages %}
+<div class="pagination">
+    {% if users.has_previous %}
+        <a href="{{ request.path }}?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-link">First</a>
+        <a href="{{ request.path }}?page={{ users.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-link">Previous</a>
+    {% endif %}
+    
+    <span class="pagination-info">
+        Page {{ users.number }} of {{ users.paginator.num_pages }}
+    </span>
+    
+    {% if users.has_next %}
+        <a href="{{ request.path }}?page={{ users.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-link">Next</a>
+        <a href="{{ request.path }}?page={{ users.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-link">Last</a>
+    {% endif %}
+</div>
+{% endif %}
+{% else %}
+<div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+    <h3>No users found</h3>
+    <p>{% if search_query %}Try a different search term{% else %}No users in this system{% endif %}</p>
+</div>
+{% endif %}

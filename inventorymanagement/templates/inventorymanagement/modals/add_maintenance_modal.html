@@ -1,0 +1,62 @@
+<div id="addMaintenanceModal" class="modal">
+	<div class="modal-content">
+		<div class="modal-header">
+			<h2>Add Maintenance Record</h2>
+			<button type="button" class="modal-close" onclick="closeModal('addMaintenanceModal')">&times;</button>
+		</div>
+		<form id="addMaintenanceForm" onsubmit="submitAddMaintenanceForm(event)">
+			{% csrf_token %}
+			<input type="hidden" id="maintenanceAssetId" name="asset_id" />
+			<div class="form-group">
+				<label for="maintenanceDescription">Description *</label>
+				<textarea id="maintenanceDescription" name="description" placeholder="Describe the maintenance work..." rows="4" required></textarea>
+			</div>
+			<div class="form-group">
+				<label for="maintenanceDate">Maintenance Date *</label>
+				<input type="date" id="maintenanceDate" name="maintenance_date" required />
+			</div>
+			<div class="form-group">
+				<label for="maintenancePerformedBy">Performed By</label>
+				<input type="text" id="maintenancePerformedBy" name="performed_by" placeholder="e.g., John Doe" />
+			</div>
+			<div class="form-actions">
+				<button type="button" class="btn btn-secondary" onclick="closeModal('addMaintenanceModal')">Cancel</button>
+				<button type="submit" class="btn btn-primary">Add Maintenance</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script>
+function openAddMaintenanceModal(assetId) {
+	document.getElementById('maintenanceAssetId').value = assetId;
+	document.getElementById('addMaintenanceForm').reset();
+	document.getElementById('maintenanceDate').valueAsDate = new Date();
+	document.getElementById('addMaintenanceModal').style.display = 'flex';
+}
+
+function submitAddMaintenanceForm(event) {
+	event.preventDefault();
+	const assetId = document.getElementById('maintenanceAssetId').value;
+	const formData = new FormData(document.getElementById('addMaintenanceForm'));
+	const url = `/inventorymanagement/asset/${assetId}/maintenance/create/`;
+	
+	fetch(url, {
+		method: 'POST',
+		body: formData,
+		headers: {
+			'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+		}
+	})
+	.then(response => response.json())
+	.then(data => {
+		if (data.success) {
+			closeModal('addMaintenanceModal');
+			loadAssetMaintenance(assetId);
+		} else {
+			alert('Error: ' + (data.error || 'Failed to add maintenance record'));
+		}
+	})
+	.catch(error => console.error('Error:', error));
+}
+</script>

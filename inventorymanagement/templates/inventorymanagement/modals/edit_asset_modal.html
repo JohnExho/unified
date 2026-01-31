@@ -1,0 +1,101 @@
+<div id="editAssetModal" class="modal">
+	<div class="modal-content">
+		<div class="modal-header">
+			<h2>Edit Asset</h2>
+			<button type="button" class="modal-close" onclick="closeModal('editAssetModal')">&times;</button>
+		</div>
+		<form id="editAssetForm" onsubmit="submitEditAssetForm(event)">
+			{% csrf_token %}
+			<input type="hidden" id="editAssetId" name="asset_id" />
+			<div class="form-group">
+				<label for="editAssetCode">Asset Code *</label>
+				<input type="text" id="editAssetCode" name="asset_code" placeholder="e.g., AST-001" required />
+			</div>
+			<div class="form-group">
+				<label for="editAssetName">Asset Name *</label>
+				<input type="text" id="editAssetName" name="name" placeholder="e.g., Laptop" required />
+			</div>
+			<div class="form-group">
+				<label for="editAssetCategory">Category *</label>
+				<select id="editAssetCategory" name="category" required>
+					<option value="">Select category...</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label for="editAssetStatus">Status</label>
+				<select id="editAssetStatus" name="status">
+					<option value="">Select status...</option>
+					<option value="AVAILABLE">Available</option>
+					<option value="ASSIGNED">Assigned</option>
+					<option value="UNDER_REPAIR">Under Repair</option>
+					<option value="RETIRED">Retired</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label for="editAssetDescription">Description</label>
+				<textarea id="editAssetDescription" name="description" placeholder="Asset description..." rows="3"></textarea>
+			</div>
+			<div class="form-actions">
+				<button type="button" class="btn btn-secondary" onclick="closeModal('editAssetModal')">Cancel</button>
+				<button type="submit" class="btn btn-primary">Update Asset</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script>
+function openEditAssetModal(assetId, assetCode, assetName, categoryId, status, description) {
+	document.getElementById('editAssetId').value = assetId;
+	document.getElementById('editAssetCode').value = assetCode;
+	document.getElementById('editAssetName').value = assetName;
+	document.getElementById('editAssetStatus').value = status;
+	document.getElementById('editAssetDescription').value = description || '';
+	
+	loadEditAssetCategories().then(() => {
+		document.getElementById('editAssetCategory').value = categoryId;
+	});
+	
+	document.getElementById('editAssetModal').style.display = 'flex';
+}
+
+function loadEditAssetCategories() {
+	return fetch('{% url "inventorymanagement:get_asset_categories" %}')
+		.then(response => response.json())
+		.then(data => {
+			const categorySelect = document.getElementById('editAssetCategory');
+			categorySelect.innerHTML = '<option value="">Select category...</option>';
+			data.categories.forEach(category => {
+				const option = document.createElement('option');
+				option.value = category.id;
+				option.textContent = category.name;
+				categorySelect.appendChild(option);
+			});
+		})
+		.catch(error => console.error('Error loading categories:', error));
+}
+
+function submitEditAssetForm(event) {
+	event.preventDefault();
+	const assetId = document.getElementById('editAssetId').value;
+	const formData = new FormData(document.getElementById('editAssetForm'));
+	const url = `/inventorymanagement/asset/edit/${assetId}/`;
+	
+	fetch(url, {
+		method: 'POST',
+		body: formData,
+		headers: {
+			'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+		}
+	})
+	.then(response => response.json())
+	.then(data => {
+		if (data.success) {
+			closeModal('editAssetModal');
+			location.reload();
+		} else {
+			alert('Error: ' + (data.error || 'Failed to update asset'));
+		}
+	})
+	.catch(error => console.error('Error:', error));
+}
+</script>

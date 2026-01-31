@@ -1,76 +1,108 @@
 <div class="table-card">
-  <table class="inventory-table">
-    <thead>
-      <tr>
-        <th><input type="checkbox" aria-label="Select all" /></th>
-        <th>Asset Code</th>
-        <th>Asset Name</th>
-        <th>Category</th>
-        <th>Status</th>
-        <th>Assigned To</th>
-        <th>Created Date</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% if assets_data %}
-        {% for item in assets_data %}
-        <tr>
-          <td><input type="checkbox" aria-label="Select {{ item.asset.name }}" /></td>
-          <td>{{ item.asset.asset_code }}</td>
-          <td>{{ item.asset.name }}</td>
-          <td>{{ item.asset.category.name }}</td>
-          <td>
-            {% if item.asset.status == 'AVAILABLE' %}
-            <span class="status-pill active">Available</span>
-            {% elif item.asset.status == 'ASSIGNED' %}
-            <span class="status-pill active">Assigned</span>
-            {% elif item.asset.status == 'UNDER_REPAIR' %}
-            <span class="status-pill inactive">Under Repair</span>
-            {% elif item.asset.status == 'RETIRED' %}
-            <span class="status-pill inactive">Retired</span>
-            {% endif %}
-          </td>
-          <td>
-            {% if item.assigned_to %}
-            {{ item.assigned_to.get_full_name|default:item.assigned_to.username }}
-            {% else %}
-            —
-            {% endif %}
-          </td>
-          <td>{{ item.asset.created_at|date:"Y-m-d" }}</td>
-          <td class="actions">
-            <button class="icon-btn" title="View">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"></path>
-              </svg>
-            </button>
-            <button class="icon-btn" title="Edit">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
-              </svg>
-            </button>
-            <button class="icon-btn danger" title="Delete">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-                <path d="M10 11v6"></path>
-                <path d="M14 11v6"></path>
-                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
-              </svg>
-            </button>
-          </td>
-        </tr>
-        {% endfor %}
-        {% else %}
-            <tr>
-                <td colspan="8" style="text-align: center; padding: 2rem;">
-                    No assets found
-                </td>
-            </tr>
-      {% endif %}
-    </tbody>
-  </table>
+	<table class="inventory-table">
+		<thead>
+			<tr>
+				<th>Asset Code</th>
+				<th>Name</th>
+				<th>Category</th>
+				<th>Status</th>
+				<th>Assigned To</th>
+				<th>Created</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% if assets_data %}
+				{% for item in assets_data %}
+				<tr>
+					<td><strong>{{ item.asset.asset_code }}</strong></td>
+					<td>{{ item.asset.name }}</td>
+					<td>{{ item.asset.category.name }}</td>
+					<td>
+						<span class="status-pill {% if item.asset.status == 'AVAILABLE' %}available{% elif item.asset.status == 'ASSIGNED' %}assigned{% elif item.asset.status == 'UNDER_REPAIR' %}repair{% else %}retired{% endif %}">
+							{{ item.asset.get_status_display }}
+						</span>
+					</td>
+					<td>
+						{% if item.assigned_to %}
+							{{ item.assigned_to.get_full_name|default:item.assigned_to.username }}
+						{% else %}
+							Not Assigned
+						{% endif %}
+					</td>
+					<td>{{ item.asset.created_at|date:"Y-m-d" }}</td>
+					<td class="actions">
+						{% if item.asset.status == 'AVAILABLE' %}
+						<button class="icon-btn" title="Assign" onclick="openAssignAssetModal('{{ item.asset.id }}')">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+								<circle cx="12" cy="7" r="4"></circle>
+								<path d="M12 12h0"></path>
+							</svg>
+						</button>
+						{% elif item.asset.status == 'ASSIGNED' %}
+						<button class="icon-btn" title="Return" onclick="returnAsset('{{ item.asset.id }}')">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<polyline points="5 12 3 12 12 3 21 12 19 12"></polyline>
+								<polyline points="19 18 21 18 12 27 3 18 5 18"></polyline>
+							</svg>
+						</button>
+						{% elif item.asset.status == 'UNDER_REPAIR' %}
+						<a href="{% url 'inventorymanagement:asset_detail' item.asset.id %}" class="icon-btn" title="View Details">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+								<circle cx="12" cy="12" r="3"></circle>
+							</svg>
+						</a>
+						{% endif %}
+						<button class="icon-btn" title="Edit" onclick="openEditAssetModal('{{ item.asset.id }}', '{{ item.asset.asset_code }}', '{{ item.asset.name }}', '{{ item.asset.category.id }}', '{{ item.asset.status }}', '{{ item.asset.description|escapejs }}')">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M12 20h9"></path>
+								<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+							</svg>
+						</button>
+						<button class="icon-btn danger" title="Delete" onclick="openDeleteAssetModal('{{ item.asset.id }}', '{{ item.asset.asset_code }}')">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<polyline points="3 6 5 6 21 6"></polyline>
+								<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+								<path d="M10 11v6"></path>
+								<path d="M14 11v6"></path>
+								<path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+							</svg>
+						</button>
+					</td>
+				</tr>
+				{% endfor %}
+			{% else %}
+				<tr>
+					<td colspan="7" style="text-align: center; padding: 2rem;">
+						No assets found
+					</td>
+				</tr>
+			{% endif %}
+		</tbody>
+	</table>
 </div>
+
+<script>
+function returnAsset(assetId) {
+	if (confirm('Return this asset?')) {
+		const url = `/inventorymanagement/asset/return/${assetId}/`;
+		fetch(url, {
+			method: 'POST',
+			headers: {
+				'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+			}
+		})
+		.then(response => response.json())
+		.then(data => {
+			if (data.success) {
+				location.reload();
+			} else {
+				alert('Error: ' + (data.error || 'Failed to return asset'));
+			}
+		})
+		.catch(error => console.error('Error:', error));
+	}
+}
+</script>

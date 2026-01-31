@@ -5,7 +5,7 @@
 }
 
 .main-content {
-  margin-left: 240px;
+  margin-left: 280px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -85,6 +85,22 @@
   color: #111827;
 }
 
+.clear-search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.clear-search-btn:hover {
+  color: #111827;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -97,6 +113,7 @@
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-decoration: none;
 }
 
 .btn-primary {
@@ -149,12 +166,24 @@
   background: #fff;
 }
 
-.inventory-table th,
-.inventory-table td {
+.inventory-table tbody tr {
+  height: 56px;
+}
+
+.inventory-table th {
   padding: 12px 14px;
   border-bottom: 1px solid #e5e7eb;
   text-align: left;
   vertical-align: middle;
+}
+
+.inventory-table td {
+  padding: 0 14px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: middle;
+  height: 56px;
+  display: table-cell;
 }
 
 .inventory-table th {
@@ -193,9 +222,12 @@
   align-items: center;
 }
 
-.actions {
+.inventory-table td.actions {
   display: flex;
-  gap: 10px;
+  gap: 32px;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 0 14px;
 }
 
 .icon-btn {

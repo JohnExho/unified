@@ -1,0 +1,48 @@
+<div id="deleteAssetModal" class="modal">
+	<div class="modal-content modal-small">
+		<div class="modal-header">
+			<h2>Delete Asset</h2>
+			<button type="button" class="modal-close" onclick="closeModal('deleteAssetModal')">&times;</button>
+		</div>
+		<div class="modal-body">
+			<p>Are you sure you want to delete <strong id="deleteAssetName"></strong>?</p>
+			<p style="color: #ef4444; font-size: 14px; margin-top: 12px;">This action cannot be undone.</p>
+		</div>
+		<div class="form-actions">
+			<button type="button" class="btn btn-secondary" onclick="closeModal('deleteAssetModal')">Cancel</button>
+			<button type="button" class="btn btn-danger" onclick="confirmDeleteAsset()">Delete</button>
+		</div>
+	</div>
+</div>
+
+<script>
+let assetToDelete = null;
+
+function openDeleteAssetModal(assetId, assetName) {
+	assetToDelete = assetId;
+	document.getElementById('deleteAssetName').textContent = assetName;
+	document.getElementById('deleteAssetModal').style.display = 'flex';
+}
+
+function confirmDeleteAsset() {
+	if (!assetToDelete) return;
+	const url = `/inventorymanagement/asset/delete/${assetToDelete}/`;
+	
+	fetch(url, {
+		method: 'POST',
+		headers: {
+			'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+		}
+	})
+	.then(response => response.json())
+	.then(data => {
+		if (data.success) {
+			closeModal('deleteAssetModal');
+			location.reload();
+		} else {
+			alert('Error: ' + (data.error || 'Failed to delete asset'));
+		}
+	})
+	.catch(error => console.error('Error:', error));
+}
+</script>

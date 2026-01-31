@@ -1,0 +1,66 @@
+<div id="editMaintenanceModal" class="modal">
+	<div class="modal-content">
+		<div class="modal-header">
+			<h2>Edit Maintenance Record</h2>
+			<button type="button" class="modal-close" onclick="closeModal('editMaintenanceModal')">&times;</button>
+		</div>
+		<form id="editMaintenanceForm" onsubmit="submitEditMaintenanceForm(event)">
+			{% csrf_token %}
+			<input type="hidden" id="editMaintenanceId" name="maintenance_id" />
+			<input type="hidden" id="editMaintenanceAssetId" name="asset_id" />
+			<div class="form-group">
+				<label for="editMaintenanceDescription">Description *</label>
+				<textarea id="editMaintenanceDescription" name="description" placeholder="Describe the maintenance work..." rows="4" required></textarea>
+			</div>
+			<div class="form-group">
+				<label for="editMaintenanceDate">Maintenance Date *</label>
+				<input type="date" id="editMaintenanceDate" name="maintenance_date" required />
+			</div>
+			<div class="form-group">
+				<label for="editMaintenancePerformedBy">Performed By</label>
+				<input type="text" id="editMaintenancePerformedBy" name="performed_by" placeholder="e.g., John Doe" />
+			</div>
+			<div class="form-actions">
+				<button type="button" class="btn btn-secondary" onclick="closeModal('editMaintenanceModal')">Cancel</button>
+				<button type="submit" class="btn btn-primary">Update Maintenance</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script>
+function openEditMaintenanceModal(maintenanceId, assetId, description, maintenanceDate, performedBy) {
+	document.getElementById('editMaintenanceId').value = maintenanceId;
+	document.getElementById('editMaintenanceAssetId').value = assetId;
+	document.getElementById('editMaintenanceDescription').value = description;
+	document.getElementById('editMaintenanceDate').value = maintenanceDate;
+	document.getElementById('editMaintenancePerformedBy').value = performedBy;
+	document.getElementById('editMaintenanceModal').style.display = 'flex';
+}
+
+function submitEditMaintenanceForm(event) {
+	event.preventDefault();
+	const maintenanceId = document.getElementById('editMaintenanceId').value;
+	const assetId = document.getElementById('editMaintenanceAssetId').value;
+	const formData = new FormData(document.getElementById('editMaintenanceForm'));
+	const url = `/inventorymanagement/asset-maintenance/${maintenanceId}/edit/`;
+	
+	fetch(url, {
+		method: 'POST',
+		body: formData,
+		headers: {
+			'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+		}
+	})
+	.then(response => response.json())
+	.then(data => {
+		if (data.success) {
+			closeModal('editMaintenanceModal');
+			loadAssetMaintenance(assetId);
+		} else {
+			alert('Error: ' + (data.error || 'Failed to update maintenance record'));
+		}
+	})
+	.catch(error => console.error('Error:', error));
+}
+</script>

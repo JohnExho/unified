@@ -1,0 +1,30 @@
+<!-- Update Terms of Service Modal -->
+<div id="updateTosModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Update Terms of Service</h2>
+            <button type="button" class="modal-close" onclick="closeTosModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="tosForm" method="POST" action="{% url 'inventorymanagement:update_tos' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="tosContent">Terms of Service Content</label>
+                    <textarea id="tosContent" name="tos_text" rows="15" required placeholder="Enter the terms of service content here...">{{ tos_text }}</textarea>
+                </div>
+                <div class="alert alert-info">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span>Changes to the Terms of Service will be visible to all new users.</span>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeTosModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveTosChanges()">Save Changes</button>
+        </div>
+    </div>
+</div>

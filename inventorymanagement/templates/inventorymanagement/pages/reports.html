@@ -16,19 +16,13 @@
 			<h1>Reports & Analytics</h1>
 		</div>
 		<div class="top-actions">
-			<button class="btn btn-secondary">
+			<button class="btn btn-primary" id="exportBtn">
 				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
 					<polyline points="7 10 12 15 17 10"></polyline>
 					<line x1="12" y1="15" x2="12" y2="3"></line>
 				</svg>
-				Export PDF
-			</button>
-			<button class="btn btn-primary">
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M12 4v16m8-8H4"></path>
-				</svg>
-				Generate Report
+				Export CSV
 			</button>
 		</div>
 	</div>
@@ -84,35 +78,6 @@
 					</svg>
 					Transactions
 				</a>
-			</div>
-			<div class="toolbar-search">
-				<select class="filter-select">
-					<option>Last 7 days</option>
-					<option>Last 30 days</option>
-					<option>Last 90 days</option>
-					<option>This year</option>
-					<option>All time</option>
-				</select>
-			</div>
-		</div>
-
-		<div class="filters">
-			<div class="filter-item">
-				<label>Category</label>
-				<select class="filter-select">
-					<option>All Categories</option>
-					<option>Electronics</option>
-					<option>Furniture</option>
-					<option>Office Supplies</option>
-				</select>
-			</div>
-			<div class="filter-item">
-				<label>Format</label>
-				<select class="filter-select">
-					<option>PDF</option>
-					<option>Excel</option>
-					<option>CSV</option>
-				</select>
 			</div>
 		</div>
 
@@ -186,6 +151,7 @@
 		{% endif %}
 	</div>
 </main>
+{% endblock %}
 
 {% block extra_scripts %}
 <script>
@@ -195,10 +161,10 @@
 	new Chart(inventoryTrendCtx, {
 		type: 'line',
 		data: {
-			labels: ['Jan 1', 'Jan 5', 'Jan 10', 'Jan 15', 'Jan 20', 'Jan 25', 'Jan 30'],
+			labels: {{ stock_trend_dates|safe }},
 			datasets: [{
 				label: 'Total Stock Level',
-				data: [1245, 1268, 1234, 1289, 1276, 1302, 1284],
+				data: {{ stock_trend_levels|safe }},
 				borderColor: '#4f46e5',
 				backgroundColor: 'rgba(79, 70, 229, 0.1)',
 				tension: 0.4,
@@ -225,9 +191,9 @@
 	new Chart(inventoryCategoryCtx, {
 		type: 'doughnut',
 		data: {
-			labels: ['Electronics', 'Furniture', 'Office Supplies', 'Equipment', 'Other'],
+			labels: {{ category_labels|safe }},
 			datasets: [{
-				data: [35, 25, 20, 15, 5],
+				data: {{ category_values|safe }},
 				backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#6b7280'],
 				borderWidth: 0
 			}]
@@ -251,9 +217,9 @@
 	new Chart(assetStatusCtx, {
 		type: 'pie',
 		data: {
-			labels: ['Active', 'In Maintenance', 'Available', 'Retired'],
+			labels: {{ asset_status_labels|safe }},
 			datasets: [{
-				data: [45, 12, 28, 15],
+				data: {{ asset_status_values|safe }},
 				backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#6b7280'],
 				borderWidth: 0
 			}]
@@ -275,10 +241,10 @@
 	new Chart(assetAssignmentCtx, {
 		type: 'bar',
 		data: {
-			labels: ['Jan 1', 'Jan 5', 'Jan 10', 'Jan 15', 'Jan 20', 'Jan 25', 'Jan 30'],
+			labels: {{ trend_dates|safe }},
 			datasets: [{
-				label: 'Assignments',
-				data: [15, 18, 12, 22, 19, 25, 20],
+				label: 'Transactions',
+				data: {{ trend_volumes|safe }},
 				backgroundColor: '#4f46e5',
 				borderRadius: 6,
 				barThickness: 30
@@ -301,9 +267,9 @@
 	new Chart(requisitionStatusCtx, {
 		type: 'doughnut',
 		data: {
-			labels: ['Pending', 'Approved', 'Rejected', 'Fulfilled'],
+			labels: {{ req_status_labels|safe }},
 			datasets: [{
-				data: [25, 35, 10, 30],
+				data: {{ req_status_values|safe }},
 				backgroundColor: ['#f59e0b', '#10b981', '#ef4444', '#3b82f6'],
 				borderWidth: 0
 			}]
@@ -326,22 +292,13 @@
 	new Chart(requisitionTrendCtx, {
 		type: 'line',
 		data: {
-			labels: ['Jan 1', 'Jan 5', 'Jan 10', 'Jan 15', 'Jan 20', 'Jan 25', 'Jan 30'],
+			labels: {{ trend_dates|safe }},
 			datasets: [
 				{
-					label: 'Submitted',
-					data: [8, 12, 10, 15, 14, 18, 16],
+					label: 'Transactions',
+					data: {{ trend_volumes|safe }},
 					borderColor: '#4f46e5',
 					backgroundColor: 'rgba(79, 70, 229, 0.1)',
-					tension: 0.4,
-					pointRadius: 4,
-					fill: true
-				},
-				{
-					label: 'Fulfilled',
-					data: [5, 9, 8, 12, 11, 15, 13],
-					borderColor: '#10b981',
-					backgroundColor: 'rgba(16, 185, 129, 0.1)',
 					tension: 0.4,
 					pointRadius: 4,
 					fill: true
@@ -371,10 +328,10 @@
 	new Chart(transactionTypeCtx, {
 		type: 'bar',
 		data: {
-			labels: ['Issue', 'Return', 'Transfer', 'Dispose', 'Adjust'],
+			labels: {{ trans_type_labels|safe }},
 			datasets: [{
 				label: 'Count',
-				data: [85, 42, 28, 15, 22],
+				data: {{ trans_type_values|safe }},
 				backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
 				borderRadius: 6,
 				barThickness: 40
@@ -396,10 +353,10 @@
 	new Chart(transactionTrendCtx, {
 		type: 'line',
 		data: {
-			labels: ['Jan 1', 'Jan 5', 'Jan 10', 'Jan 15', 'Jan 20', 'Jan 25', 'Jan 30'],
+			labels: {{ trend_dates|safe }},
 			datasets: [{
 				label: 'Daily Transactions',
-				data: [45, 52, 48, 62, 57, 68, 64],
+				data: {{ trend_volumes|safe }},
 				borderColor: '#4f46e5',
 				backgroundColor: 'rgba(79, 70, 229, 0.1)',
 				tension: 0.4,
@@ -419,6 +376,15 @@
 		}
 	});
 	{% endif %}
+
+	// Export to CSV functionality
+	const exportBtn = document.getElementById('exportBtn');
+	if (exportBtn) {
+		exportBtn.addEventListener('click', function() {
+			const urlParams = new URLSearchParams(window.location.search);
+			const reportType = urlParams.get('report') || 'transactions';
+			window.location.href = `/inventorymanagement/export-report/?report=${reportType}`;
+		});
+	}
 </script>
-{% endblock %}
 {% endblock %}

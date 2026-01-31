@@ -20,9 +20,6 @@
 
         <!-- Sidebar Overlay (Mobile) -->
         <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-        {% include 'projectmanagement/components/sidebar.html' %}
-
         <!-- Main Content Area -->
         <div class="top-bar">
             <div class="page-header">
@@ -71,8 +68,8 @@
                         {% include 'projectmanagement/partials/admin/_user_access_view.html' %}
                     </div>
             </div>
-        {% include 'projectmanagement/modals/admin/manage_user_access_modal.html' %}
-        {% include 'projectmanagement/modals/admin/update_tos_modal.html' %}
+            {% include 'projectmanagement/modals/admin/manage_user_access_modal.html' %}
+            {% include 'projectmanagement/modals/admin/update_tos_modal.html' %}
         </main>
 {% endblock %}
 {% block extra_scripts %}
@@ -106,7 +103,7 @@
 
             // Handle Terms of Service modal
             const openTosBtn = document.getElementById('openTosModal');
-            const tosModal = document.getElementById('tosModal');
+            const tosModal = document.getElementById('updateTosModal');
             const closeTosBtn = document.getElementById('closeTosModal');
             const cancelTosBtn = document.getElementById('cancelTos');
 
@@ -117,27 +114,45 @@
                 });
             }
 
-            if (closeTosBtn && tosModal) {
-                closeTosBtn.addEventListener('click', function() {
+            function closeTosModal() {
+                if (tosModal) {
                     tosModal.style.display = 'none';
                     tosModal.classList.remove('active');
-                });
+                }
+            }
+
+            if (closeTosBtn && tosModal) {
+                closeTosBtn.addEventListener('click', closeTosModal);
             }
 
             if (cancelTosBtn && tosModal) {
-                cancelTosBtn.addEventListener('click', function() {
-                    tosModal.style.display = 'none';
-                    tosModal.classList.remove('active');
-                });
+                cancelTosBtn.addEventListener('click', closeTosModal);
             }
 
             // Close modal when clicking outside of it
             window.addEventListener('click', function(event) {
                 if (tosModal && event.target === tosModal) {
-                    tosModal.style.display = 'none';
-                    tosModal.classList.remove('active');
+                    closeTosModal();
+                }
+                const manageModal = document.getElementById('manageAccessModal');
+                if (manageModal && event.target === manageModal) {
+                    closeManageAccessModal();
                 }
             });
+
+            // Save ToS changes by submitting the form
+            window.saveTosChanges = function() {
+                const form = document.getElementById('tosForm');
+                const content = document.getElementById('tosContent').value;
+                
+                if (!content.trim()) {
+                    alert('Please enter the Terms of Service content.');
+                    return;
+                }
+                
+                // Submit the form directly instead of AJAX to preserve Django messages
+                form.submit();
+            };
 
         // ===== AJAX SEARCH FOR USERS =====
         document.addEventListener('DOMContentLoaded', function() {

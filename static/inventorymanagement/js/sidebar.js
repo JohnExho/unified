@@ -1,11 +1,15 @@
 // Sidebar functionality
 document.addEventListener('DOMContentLoaded', function() {
     // Handle active navigation state
-    const navItems = document.querySelectorAll('.nav-item');
+    const navLinks = document.querySelectorAll('.sidebar-nav a');
     const currentPath = window.location.pathname;
     
-    navItems.forEach(item => {
-        // You can add logic here to match the current URL with nav items
-        // and set the active state accordingly
+    navLinks.forEach(link => {
+        const linkPath = new URL(link.href).pathname;
+        
+        // Check if current path matches the link
+        if (linkPath === currentPath) {
+            link.classList.add('active');
+        }
     });
 });

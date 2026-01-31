@@ -5,6 +5,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/assets.css' %}">
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/modals/assets_modals.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -15,7 +16,7 @@
 			<h1>Asset Management</h1>
 		</div>
 		<div class="top-actions">
-			<button class="btn btn-primary">
+			<button class="btn btn-primary" onclick="openAddAssetModal()">
 				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					<line x1="12" y1="5" x2="12" y2="19"></line>
 					<line x1="5" y1="12" x2="19" y2="12"></line>
@@ -28,7 +29,7 @@
 	<div class="content-wrap">
 		<div class="toolbar">
 			<div class="toolbar-actions">
-				<button class="btn btn-secondary">
+				<button class="btn btn-secondary" onclick="openAddAssetCategoryModal()">
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<rect x="3" y="3" width="18" height="18" rx="2"></rect>
 						<path d="M9 12h6"></path>
@@ -36,14 +37,14 @@
 					</svg>
 					Add Category
 				</button>
-				<button class="btn btn-secondary">
+				<a href="{% url 'inventorymanagement:export_assets' %}" class="btn btn-secondary">
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
 						<polyline points="7 10 12 15 17 10"></polyline>
 						<line x1="12" y1="15" x2="12" y2="3"></line>
 					</svg>
 					Export
-				</button>
+				</a>
 			</div>
 			<div class="toolbar-search">
 				<form class="search-box" method="get" action="{{ request.path }}">
@@ -61,42 +62,29 @@
 			</div>
 		</div>
 
-		<!-- Status tabs -->
-		<div class="status-tabs">
-			<a href="?search={{ search_query|default:'' }}" class="status-tab {% if not status_filter %}active{% endif %}">
-				All <span class="count">{{ all_count }}</span>
-			</a>
-			<a href="?search={{ search_query|default:'' }}&status=AVAILABLE" class="status-tab {% if status_filter == 'AVAILABLE' %}active{% endif %}">
-				Available <span class="count">{{ available_count }}</span>
-			</a>
-			<a href="?search={{ search_query|default:'' }}&status=ASSIGNED" class="status-tab {% if status_filter == 'ASSIGNED' %}active{% endif %}">
-				Assigned <span class="count">{{ assigned_count }}</span>
-			</a>
-			<a href="?search={{ search_query|default:'' }}&status=UNDER_REPAIR" class="status-tab {% if status_filter == 'UNDER_REPAIR' %}active{% endif %}">
-				Under Repair <span class="count">{{ repair_count }}</span>
-			</a>
-			<a href="?search={{ search_query|default:'' }}&status=RETIRED" class="status-tab {% if status_filter == 'RETIRED' %}active{% endif %}">
-				Retired <span class="count">{{ retired_count }}</span>
-			</a>
-		</div>
-
 		<div class="filters">
 			<div class="filter-item">
 				<label>Category</label>
-				<select class="filter-select">
-					<option>All Categories</option>
+				<select class="filter-select" id="categoryFilter" onchange="applyAssetFilters()">
+					<option value="">All Categories</option>
 				</select>
 			</div>
 			<div class="filter-item">
 				<label>Status</label>
-				<select class="filter-select">
-					<option>All Statuses</option>
+				<select class="filter-select" id="statusFilter" onchange="applyAssetFilters()">
+					<option value="">All Statuses</option>
+					<option value="AVAILABLE">Available</option>
+					<option value="ASSIGNED">Assigned</option>
+					<option value="UNDER_REPAIR">Under Repair</option>
+					<option value="RETIRED">Retired</option>
 				</select>
 			</div>
 			<div class="filter-item">
 				<label>Assignment</label>
-				<select class="filter-select">
-					<option>All Assets</option>
+				<select class="filter-select" id="assignmentFilter" onchange="applyAssetFilters()">
+					<option value="">All Assets</option>
+					<option value="assigned">Assigned</option>
+					<option value="unassigned">Unassigned</option>
 				</select>
 			</div>
 		</div>
@@ -104,4 +92,91 @@
 		{% include 'inventorymanagement/partials/_assets_table.html' %}
 	</div>
 </main>
+
+<!-- Include Modals -->
+{% include 'inventorymanagement/modals/add_asset_modal.html' %}
+{% include 'inventorymanagement/modals/edit_asset_modal.html' %}
+{% include 'inventorymanagement/modals/delete_asset_modal.html' %}
+{% include 'inventorymanagement/modals/add_asset_category_modal.html' %}
+{% include 'inventorymanagement/modals/assign_asset_modal.html' %}
+
+<script>
+function closeModal(modalId) {
+	document.getElementById(modalId).style.display = 'none';
+}
+
+window.onclick = function(event) {
+	if (event.target.classList.contains('modal')) {
+		event.target.style.display = 'none';
+	}
+}
+
+document.addEventListener('keydown', function(event) {
+	if (event.key === 'Escape') {
+		const modals = document.querySelectorAll('.modal');
+		modals.forEach(modal => {
+			if (modal.style.display === 'flex') {
+				modal.style.display = 'none';
+			}
+		});
+	}
+});
+
+// Load categories on page load
+document.addEventListener('DOMContentLoaded', function() {
+	loadCategoryFilter();
+});
+
+function loadCategoryFilter() {
+	fetch('{% url "inventorymanagement:get_asset_categories" %}')
+		.then(response => response.json())
+		.then(data => {
+			const categorySelect = document.getElementById('categoryFilter');
+			data.categories.forEach(category => {
+				const option = document.createElement('option');
+				option.value = category.id;
+				option.textContent = category.name;
+				categorySelect.appendChild(option);
+			});
+		})
+		.catch(error => console.error('Error loading categories:', error));
+}
+
+function applyAssetFilters() {
+	const categoryFilter = document.getElementById('categoryFilter').value;
+	const statusFilter = document.getElementById('statusFilter').value;
+	const assignmentFilter = document.getElementById('assignmentFilter').value;
+	const searchQuery = document.querySelector('input[name="search"]').value;
+
+	// Build query parameters
+	const params = new URLSearchParams();
+	if (categoryFilter) params.append('category', categoryFilter);
+	if (statusFilter) params.append('status', statusFilter);
+	if (assignmentFilter) params.append('assignment', assignmentFilter);
+	if (searchQuery) params.append('search', searchQuery);
+
+	// Make AJAX request for table partial only
+	const queryString = params.toString();
+	const url = queryString ? '{{ request.path }}?' + queryString : '{{ request.path }}';
+
+	fetch(url, {
+		method: 'GET',
+		headers: {
+			'X-Requested-With': 'XMLHttpRequest'
+		}
+	})
+	.then(response => response.text())
+	.then(html => {
+		// Extract just the table from the response
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(html, 'text/html');
+		const tableCard = doc.querySelector('.table-card');
+		
+		if (tableCard) {
+			document.querySelector('.table-card').outerHTML = tableCard.outerHTML;
+		}
+	})
+	.catch(error => console.error('Error:', error));
+}
+</script>
 {% endblock %}

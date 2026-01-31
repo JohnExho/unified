@@ -1,0 +1,49 @@
+<div id="addAssetCategoryModal" class="modal">
+	<div class="modal-content modal-small">
+		<div class="modal-header">
+			<h2>Add Asset Category</h2>
+			<button type="button" class="modal-close" onclick="closeModal('addAssetCategoryModal')">&times;</button>
+		</div>
+		<form id="addAssetCategoryForm" onsubmit="submitAddAssetCategoryForm(event)">
+			{% csrf_token %}
+			<div class="form-group">
+				<label for="categoryName">Category Name *</label>
+				<input type="text" id="categoryName" name="name" placeholder="e.g., Electronics" required />
+			</div>
+			<div class="form-actions">
+				<button type="button" class="btn btn-secondary" onclick="closeModal('addAssetCategoryModal')">Cancel</button>
+				<button type="submit" class="btn btn-primary">Add Category</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script>
+function openAddAssetCategoryModal() {
+	document.getElementById('addAssetCategoryForm').reset();
+	document.getElementById('addAssetCategoryModal').style.display = 'flex';
+}
+
+function submitAddAssetCategoryForm(event) {
+	event.preventDefault();
+	const formData = new FormData(document.getElementById('addAssetCategoryForm'));
+	
+	fetch('{% url "inventorymanagement:create_asset_category" %}', {
+		method: 'POST',
+		body: formData,
+		headers: {
+			'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+		}
+	})
+	.then(response => response.json())
+	.then(data => {
+		if (data.success) {
+			closeModal('addAssetCategoryModal');
+			location.reload();
+		} else {
+			alert('Error: ' + (data.error || 'Failed to create category'));
+		}
+	})
+	.catch(error => console.error('Error:', error));
+}
+</script>
