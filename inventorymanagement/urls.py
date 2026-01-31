@@ -13,7 +13,6 @@ def root_redirect(request):
 urlpatterns = [
     path('',  root_redirect, name='inventory-root'),
     path('dashboard/', views.dashboard, name='inventory-dashboard'),
-    path('export-dashboard/', views.export_dashboard, name='export_dashboard'),
     path('inventory/', views.inventory, name='inventory'),
     path('assets/', views.assets, name='assets'),
     path('asset/<uuid:asset_id>/', views.asset_detail, name='asset_detail'),
