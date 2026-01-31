@@ -1459,6 +1459,18 @@ def export_dashboard(request):
             'Active' if item.is_active else 'Inactive'
         ])
     
+    # Log the action
+    Logs.objects.create(
+        user=request.user,
+        system_name='inventorymanagement',
+        action='EXPORT',
+        target_model='InventoryItem',
+        description=f"Exported dashboard inventory data ({inventories.count()} items)",
+        hidden_description=f"User '{request.user.username}' exported dashboard inventory data",
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+    
     return response
 
 @login_required
@@ -1648,6 +1660,18 @@ def export_report(request):
                 trans.performed_by.username,
                 trans.remarks or ''
             ])
+    
+    # Log the action
+    Logs.objects.create(
+        user=request.user,
+        system_name='inventorymanagement',
+        action='EXPORT',
+        target_model='Reports',
+        description=f"Exported {report_type.title()} report",
+        hidden_description=f"User '{request.user.username}' exported {report_type} report",
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
     
     return response
 
@@ -2046,6 +2070,18 @@ def export_requisitions(request):
             (req.approved_by.get_full_name() or req.approved_by.username) if req.approved_by else '-',
             req.approved_at.strftime('%Y-%m-%d %H:%M') if req.approved_at else '-'
         ])
+    
+    # Log the action
+    Logs.objects.create(
+        user=request.user,
+        system_name='inventorymanagement',
+        action='EXPORT',
+        target_model='Requisition',
+        description=f"Exported {requisitions.count()} requisitions",
+        hidden_description=f"User '{request.user.username}' exported requisition data",
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
     
     return response
 
