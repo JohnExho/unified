@@ -423,6 +423,9 @@
   text-align: center;
   padding: 3rem 1.5rem;
   color: var(--text-secondary);
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .empty-state-icon {

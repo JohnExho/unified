@@ -3,153 +3,176 @@
   <div class="card-header">
     <h3 class="card-title">Book Collection</h3>
     <div class="view-toggle">
-      <button class="active" onclick="switchView('grid')">📱 Grid</button>
-      <button onclick="switchView('list')">📋 List</button>
+      <button class="active" onclick="switchView('grid')">
+        {% include "librarymanagement/components/icons/layout-dashboard.svg" %}
+        Grid
+      </button>
+      <button onclick="switchView('list')">
+        {% include "librarymanagement/components/icons/clipboard-list.svg" %}
+        List
+      </button>
     </div>
   </div>
-
-  <!-- Grid View -->
-  <div id="grid-view" class="books-grid">
-    <!-- Book Card 1 -->
-    <div class="book-card" onclick="viewBookDetails('1')">
-      <div class="book-cover">
-        <div class="book-status-badge">
-          <span class="badge badge-success">Available</span>
-        </div>
-        📚
-      </div>
-      <div class="book-info">
-        <h4 class="book-title">The Great Gatsby</h4>
-        <p class="book-author">by F. Scott Fitzgerald</p>
-        <div class="book-meta">
-          <span>ISBN: 978-0743273565</span>
-          <span>2023</span>
-        </div>
-        <div class="book-meta">
-          <span>📍 Shelf A-12</span>
-          <span>Available: 3/5</span>
-        </div>
-        <div class="book-actions">
-          <button class="btn btn-sm btn-primary">Borrow</button>
-          <button class="btn btn-sm btn-outline">Details</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Book Card 2 -->
-    <div class="book-card">
-      <div
-        class="book-cover"
-        style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
-      >
-        <div class="book-status-badge">
-          <span class="badge badge-warning">Borrowed</span>
-        </div>
-        📖
-      </div>
-      <div class="book-info">
-        <h4 class="book-title">To Kill a Mockingbird</h4>
-        <p class="book-author">by Harper Lee</p>
-        <div class="book-meta">
-          <span>ISBN: 978-0061120084</span>
-          <span>1960</span>
-        </div>
-        <div class="book-meta">
-          <span>📍 Shelf B-08</span>
-          <span>Available: 0/4</span>
-        </div>
-        <div class="book-actions">
-          <button class="btn btn-sm btn-warning">Reserve</button>
-          <button class="btn btn-sm btn-outline">Details</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Book Card 3 -->
-    <div class="book-card">
-      <div
-        class="book-cover"
-        style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
-      >
-        <div class="book-status-badge">
-          <span class="badge badge-success">Available</span>
-        </div>
-        📕
-      </div>
-      <div class="book-info">
-        <h4 class="book-title">1984</h4>
-        <p class="book-author">by George Orwell</p>
-        <div class="book-meta">
-          <span>ISBN: 978-0451524935</span>
-          <span>1949</span>
-        </div>
-        <div class="book-meta">
-          <span>📍 Shelf C-15</span>
-          <span>Available: 5/6</span>
-        </div>
-        <div class="book-actions">
-          <button class="btn btn-sm btn-primary">Borrow</button>
-          <button class="btn btn-sm btn-outline">Details</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Book Card 4 -->
-    <div class="book-card">
-      <div
-        class="book-cover"
-        style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
-      >
-        <div class="book-status-badge">
-          <span class="badge badge-info">Reserved</span>
-        </div>
-        📗
-      </div>
-      <div class="book-info">
-        <h4 class="book-title">Pride and Prejudice</h4>
-        <p class="book-author">by Jane Austen</p>
-        <div class="book-meta">
-          <span>ISBN: 978-0141439518</span>
-          <span>1813</span>
-        </div>
-        <div class="book-meta">
-          <span>📍 Shelf D-22</span>
-          <span>Available: 2/3</span>
-        </div>
-        <div class="book-actions">
-          <button class="btn btn-sm btn-primary">Borrow</button>
-          <button class="btn btn-sm btn-outline">Details</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- List View (Hidden by default) -->
-  <div id="list-view" style="display: none">
-    <div class="table-container">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Book Details</th>
-            <th>ISBN</th>
-            <th>Category</th>
-            <th>Location</th>
-            <th>Status</th>
-            <th>Availability</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr>
-            <td>
-              <div class="book-details-cell">
-                <div class="book-thumbnail">📚</div>
+  <div class="card-body">
+    <!-- Grid View -->
+    <div id="grid-view" class="books-grid">
+      {% if books %}
+        {% for book in books %}
+          <div class="book-card" onclick="viewBookDetails('{{ book.id }}')">
+            <div class="book-cover"
+                 {% if book.cover_image %}style="background-image: url('{{ book.cover_image.url }}'); background-size: cover;"{% else %}class="gradient-bg"{% endif %}>
+              <div class="book-status-badge">
+                <span class="badge {% if book.status == 'available' %}badge-success{% elif book.status == 'borrowed' %}badge-warning{% elif book.status == 'reserved' %}badge-info{% else %}badge-danger{% endif %}">
+                  {{ book.get_status_display }}
+                </span>
               </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              {% if not book.cover_image %}
+                {% include "librarymanagement/components/icons/book.svg" %}
+              {% endif %}
+            </div>
+            <div class="book-info">
+              <h4 class="book-title">{{ book.title }}</h4>
+              <p class="book-author">
+                {% if book.authors.all %}
+                  by {{ book.authors.all.0.full_name }}
+                  {% if book.authors.count > 1 %}et al.{% endif %}
+                {% else %}
+                  Unknown Author
+                {% endif %}
+              </p>
+              <div class="book-meta">
+                {% if book.isbn %}<span>ISBN: {{ book.isbn }}</span>{% endif %}
+                {% if book.publication_year %}<span>{{ book.publication_year }}</span>{% endif %}
+              </div>
+              <div class="book-meta">
+                {% if book.shelf_location %}<span>📍 {{ book.shelf_location }}</span>{% endif %}
+                <span>Available: {{ book.available_copies }}/{{ book.total_copies }}</span>
+              </div>
+              <div class="book-actions">
+                {% if book.is_available %}
+                  <button class="btn btn-sm btn-primary"
+                          onclick="event.stopPropagation(); borrowBook('{{ book.id }}', '{{ book.title|escapejs }}')">
+                    Borrow
+                  </button>
+                {% else %}
+                  <button class="btn btn-sm btn-warning"
+                          onclick="event.stopPropagation(); reserveBook('{{ book.id }}')">Reserve</button>
+                {% endif %}
+                <button class="btn btn-sm btn-outline"
+                        onclick="event.stopPropagation(); viewBookDetails('{{ book.id }}')">Details</button>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">📚</div>
+          <h3>No Books Found</h3>
+          <p>Start adding books to your library collection.</p>
+        </div>
+      {% endif %}
+    </div>
+    <!-- List View (Hidden by default) -->
+    <div id="list-view" class="hidden-view">
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Author</th>
+              <th>ISBN</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Availability</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if books %}
+              {% for book in books %}
+                <tr>
+                  <td>
+                    <div class="book-details-cell">
+                      <strong>{{ book.title }}</strong>
+                      {% if book.subtitle %}
+                        <br>
+                        <small>{{ book.subtitle }}</small>
+                      {% endif %}
+                    </div>
+                  </td>
+                  <td>
+                    {% if book.authors.all %}
+                      {{ book.authors.all.0.full_name }}
+                      {% if book.authors.count > 1 %}
+                        <br>
+                        <small>+{{ book.authors.count|add:"-1" }} more</small>
+                      {% endif %}
+                    {% else %}
+                      <span class="text-muted">Unknown</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ book.isbn|default:"—" }}</td>
+                  <td>{{ book.shelf_location|default:"—" }}</td>
+                  <td>
+                    <span class="badge {% if book.status == 'available' %}badge-success{% elif book.status == 'borrowed' %}badge-warning{% elif book.status == 'reserved' %}badge-info{% else %}badge-danger{% endif %}">
+                      {{ book.get_status_display }}
+                    </span>
+                  </td>
+                  <td>{{ book.available_copies }}/{{ book.total_copies }}</td>
+                  <td>
+                    <div class="btn-group">
+                      {% if book.is_available %}
+                        <button class="btn btn-sm btn-primary"
+                                onclick="borrowBook('{{ book.id }}', '{{ book.title|escapejs }}')">Borrow</button>
+                      {% else %}
+                        <button class="btn btn-sm btn-warning" onclick="reserveBook('{{ book.id }}')">Reserve</button>
+                      {% endif %}
+                      <button class="btn btn-sm btn-outline"
+                              onclick="viewBookDetails('{{ book.id }}')">Details</button>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="7" class="text-center">
+                  <div class="empty-state">
+                    <div class="empty-state-icon">📚</div>
+                    <h3>No Books Found</h3>
+                    <p>Start adding books to your library collection.</p>
+                  </div>
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
+<style>
+.gradient-bg {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+.hidden-view {
+  display: none;
+}
+.books-grid .empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 1rem;
+  min-height: 300px;
+}
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+</style>

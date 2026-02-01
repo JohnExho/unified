@@ -26,42 +26,22 @@
           <!-- Stats -->
           <div class="stats-grid">
             <div class="stat-card">
-              <div class="stat-icon info">🤖</div>
+              <div class="stat-icon info">{% include "librarymanagement/components/icons/robot-face.svg" %}</div>
               <div class="stat-value">{{ recommendations|length }}</div>
               <div class="stat-label">Active Recommendations</div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon success">✓</div>
+              <div class="stat-icon success">{% include "librarymanagement/components/icons/check.svg" %}</div>
               <div class="stat-value">{{ actioned_count }}</div>
               <div class="stat-label">Actioned</div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon warning">📊</div>
+              <div class="stat-icon warning">{% include "librarymanagement/components/icons/chart-bar.svg" %}</div>
               <div class="stat-value">{{ success_rate }}%</div>
               <div class="stat-label">Success Rate</div>
             </div>
           </div>
-          <!-- Filters -->
-          <div class="recommendation-filters">
-            <div class="filter-section">
-              <div class="filter-label">Filter by Category</div>
-              <div class="filter-options">
-                <button class="filter-chip active">All Categories</button>
-                <button class="filter-chip">Fiction</button>
-                <button class="filter-chip">Non-Fiction</button>
-                <button class="filter-chip">Science</button>
-                <button class="filter-chip">History</button>
-              </div>
-            </div>
-            <div class="filter-section">
-              <div class="filter-label">Sort by</div>
-              <div class="filter-options">
-                <button class="filter-chip active">Highest Score</button>
-                <button class="filter-chip">Most Recent</button>
-                <button class="filter-chip">Most Viewed</button>
-              </div>
-            </div>
-          </div>
+          <!-- Filters (can be implemented when filtering logic is added) -->
           <!-- Recommendations Grid -->
           <div class="recommendations-grid">
             {% if recommendations %}

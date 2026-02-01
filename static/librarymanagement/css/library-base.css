@@ -218,6 +218,14 @@ ol {
   font-size: 1.5rem;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   flex-shrink: 0;
+  color: white;
+}
+
+/* SVG Icon Styling for Logo */
+.logo-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke-width: 2;
 }
 
 .logo-text h2 {
@@ -256,6 +264,13 @@ ol {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* SVG Icon Styling for Nav Section */
+.nav-section-title svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
 }
 
 .sidebar-nav ul {
@@ -351,8 +366,24 @@ ol {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* SVG Icon Styling for Nav Items */
+.nav-item-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .sidebar-nav .nav-item:hover .nav-item-icon {
   background: rgba(59, 130, 246, 0.15);
+  transform: scale(1.05);
+}
+
+.sidebar-nav .nav-item:hover .nav-item-icon svg {
+  transform: scale(1.1);
+}
+
+.sidebar-nav .nav-item.active .nav-item-icon svg {
   transform: scale(1.05);
 }
 
@@ -676,6 +707,19 @@ ol {
   font-size: 1.5rem;
   background: var(--primary-light);
   color: var(--primary-color);
+  transition: all var(--transition-base);
+}
+
+/* SVG Icon Styling */
+.stat-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
+  transition: transform var(--transition-base);
+}
+
+.stat-card:hover .stat-icon svg {
+  transform: scale(1.1);
 }
 
 .stat-icon.success {
@@ -691,6 +735,10 @@ ol {
   color: var(--danger-color);
 }
 .stat-icon.info {
+  background: var(--info-light);
+  color: var(--info-color);
+}
+.stat-icon.view {
   background: var(--info-light);
   color: var(--info-color);
 }
@@ -749,6 +797,18 @@ ol {
   transition: all var(--transition-fast);
   text-decoration: none;
   white-space: nowrap;
+}
+
+/* SVG Icon Styling for Buttons */
+.btn svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+  transition: transform var(--transition-fast);
+}
+
+.btn:hover svg {
+  transform: scale(1.1);
 }
 
 .btn:focus {

@@ -13,6 +13,11 @@
           href="{% static "librarymanagement/css/library-base.css" %}" />
     <link rel="stylesheet"
           href="{% static "librarymanagement/css/transactions.css" %}" />
+    <style>
+      .hidden-form {
+        display: none;
+      }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
   <body>
@@ -175,6 +180,10 @@
       </main>
     </div>
     <script>
+      function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+      }
+
       function returnBook(id) {
         Swal.fire({
           title: "Return Book?",
@@ -183,10 +192,30 @@
           showCancelButton: true,
           confirmButtonText: "Yes, return it",
           confirmButtonColor: "#10b981",
+          input: 'checkbox',
+          inputPlaceholder: 'Apply fine for overdue',
         }).then((result) => {
           if (result.isConfirmed) {
-            // Handle return logic here
-            Swal.fire("Success!", "Book has been returned.", "success");
+            fetch(`/library/transactions/${id}/return/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken(),
+              },
+              body: `apply_fine=${result.value ? 'true' : 'false'}`
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                Swal.fire("Success!", "Book has been returned.", "success")
+                  .then(() => window.location.reload());
+              } else {
+                Swal.fire("Error!", data.message, "error");
+              }
+            })
+            .catch(error => {
+              Swal.fire("Error!", "Failed to return book.", "error");
+            });
           }
         });
       }
@@ -199,18 +228,47 @@
           showCancelButton: true,
           confirmButtonText: "Yes, renew it",
           confirmButtonColor: "#3b82f6",
+          input: 'number',
+          inputLabel: 'Extend by how many days?',
+          inputValue: 14,
+          inputAttributes: {
+            min: 1,
+            max: 30,
+            step: 1
+          }
         }).then((result) => {
           if (result.isConfirmed) {
-            // Handle renewal logic here
-            Swal.fire("Success!", "Book has been renewed.", "success");
+            fetch(`/library/transactions/${id}/renew/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken(),
+              },
+              body: `extend_days=${result.value || 14}`
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                Swal.fire("Success!", "Book has been renewed.", "success")
+                  .then(() => window.location.reload());
+              } else {
+                Swal.fire("Error!", data.message, "error");
+              }
+            })
+            .catch(error => {
+              Swal.fire("Error!", "Failed to renew book.", "error");
+            });
           }
         });
       }
 
       function viewDetails(id) {
-        // Handle view details logic here
         window.location.href = `/library/transactions/${id}/`;
       }
     </script>
+    <!-- Hidden CSRF token for JavaScript -->
+    <form class="hidden-form">
+      {% csrf_token %}
+    </form>
   </body>
 </html>

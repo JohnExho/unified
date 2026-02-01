@@ -13,6 +13,11 @@
           href="{% static "librarymanagement/css/library-base.css" %}" />
     <link rel="stylesheet"
           href="{% static "librarymanagement/css/reservations.css" %}" />
+    <style>
+      .hidden-form {
+        display: none;
+      }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
   <body>
@@ -167,6 +172,10 @@
       </main>
     </div>
     <script>
+      function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+      }
+
       function markReady(id) {
         Swal.fire({
           title: "Mark as Ready?",
@@ -177,8 +186,26 @@
           confirmButtonColor: "#10b981",
         }).then((result) => {
           if (result.isConfirmed) {
-            // Handle mark ready logic here
-            Swal.fire("Success!", "Reservation marked as ready.", "success");
+            fetch(`/library/reservations/${id}/ready/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken(),
+              },
+              body: 'notify=true'
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                Swal.fire("Success!", "Reservation marked as ready.", "success")
+                  .then(() => window.location.reload());
+              } else {
+                Swal.fire("Error!", data.message, "error");
+              }
+            })
+            .catch(error => {
+              Swal.fire("Error!", "Failed to mark reservation as ready.", "error");
+            });
           }
         });
       }
@@ -193,8 +220,25 @@
           confirmButtonColor: "#3b82f6",
         }).then((result) => {
           if (result.isConfirmed) {
-            // Handle notification logic here
-            Swal.fire("Sent!", "User has been notified.", "success");
+            fetch(`/library/reservations/${id}/notify/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken(),
+              }
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                Swal.fire("Sent!", "User has been notified.", "success")
+                  .then(() => window.location.reload());
+              } else {
+                Swal.fire("Error!", data.message, "error");
+              }
+            })
+            .catch(error => {
+              Swal.fire("Error!", "Failed to send notification.", "error");
+            });
           }
         });
       }
@@ -209,8 +253,25 @@
           confirmButtonColor: "#10b981",
         }).then((result) => {
           if (result.isConfirmed) {
-            // Handle fulfill logic here
-            Swal.fire("Success!", "Reservation has been fulfilled.", "success");
+            fetch(`/library/reservations/${id}/fulfill/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken(),
+              }
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                Swal.fire("Success!", "Reservation has been fulfilled.", "success")
+                  .then(() => window.location.reload());
+              } else {
+                Swal.fire("Error!", data.message, "error");
+              }
+            })
+            .catch(error => {
+              Swal.fire("Error!", "Failed to fulfill reservation.", "error");
+            });
           }
         });
       }
@@ -223,17 +284,37 @@
           showCancelButton: true,
           confirmButtonText: "Yes, cancel it",
           confirmButtonColor: "#ef4444",
+          input: 'textarea',
+          inputPlaceholder: 'Reason for cancellation (optional)',
         }).then((result) => {
           if (result.isConfirmed) {
-            // Handle cancel logic here
-            Swal.fire(
-              "Cancelled!",
-              "Reservation has been cancelled.",
-              "success",
-            );
+            fetch(`/library/reservations/${id}/cancel/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCsrfToken(),
+              },
+              body: `reason=${encodeURIComponent(result.value || '')}`
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                Swal.fire("Cancelled!", "Reservation has been cancelled.", "success")
+                  .then(() => window.location.reload());
+              } else {
+                Swal.fire("Error!", data.message, "error");
+              }
+            })
+            .catch(error => {
+              Swal.fire("Error!", "Failed to cancel reservation.", "error");
+            });
           }
         });
       }
     </script>
+    <!-- Hidden CSRF token for JavaScript -->
+    <form class="hidden-form">
+      {% csrf_token %}
+    </form>
   </body>
 </html>

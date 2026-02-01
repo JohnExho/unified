@@ -16,42 +16,29 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Atomic Habits</td>
-            <td>James Clear</td>
-            <td>245</td>
-            <td>
-              <span class="status-dot borrowed"></span>
-              Borrowed
-            </td>
-          </tr>
-          <tr>
-            <td>The Midnight Library</td>
-            <td>Matt Haig</td>
-            <td>198</td>
-            <td>
-              <span class="status-dot available"></span>
-              Available
-            </td>
-          </tr>
-          <tr>
-            <td>Educated</td>
-            <td>Tara Westover</td>
-            <td>187</td>
-            <td>
-              <span class="status-dot reserved"></span>
-              Reserved
-            </td>
-          </tr>
-          <tr>
-            <td>Sapiens</td>
-            <td>Yuval Noah Harari</td>
-            <td>176</td>
-            <td>
-              <span class="status-dot available"></span>
-              Available
-            </td>
-          </tr>
+          {% if popular_books %}
+            {% for item in popular_books %}
+              <tr>
+                <td>{{ item.book.title|truncatechars:30 }}</td>
+                <td>
+                  {% if item.book.authors.all %}
+                    {{ item.book.authors.all.0.full_name }}
+                  {% else %}
+                    Unknown
+                  {% endif %}
+                </td>
+                <td>{{ item.borrow_count }}</td>
+                <td>
+                  <span class="status-dot {% if item.book.status == 'available' %}available{% elif item.book.status == 'borrowed' %}borrowed{% else %}reserved{% endif %}"></span>
+                  {{ item.book.get_status_display }}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="4" class="text-center">No trending data available</td>
+            </tr>
+          {% endif %}
         </tbody>
       </table>
     </div>

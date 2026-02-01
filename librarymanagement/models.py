@@ -7,8 +7,11 @@ import uuid
 from django.utils import timezone
 import datetime
 
+
 def manila_now():
-    return timezone.now().astimezone(timezone.get_fixed_timezone(8*60))
+    return timezone.now().astimezone(timezone.get_fixed_timezone(8 * 60))
+
+
 # Create your models here.
 
 
@@ -124,7 +127,11 @@ class Book(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     library = models.ForeignKey(Library, on_delete=models.CASCADE, related_name="books")
     accession_number = models.CharField(
-        max_length=50, unique=True, help_text="Unique identifier for the book copy"
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Unique identifier for the book copy",
     )
 
     # Book details

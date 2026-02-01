@@ -1,37 +1,38 @@
 <div class="card">
   <div class="card-header">
     <h3 class="card-title">Library Activity Overview</h3>
-    <select class="btn btn-ghost">
-      <option>Last 7 Days</option>
-      <option>Last 30 Days</option>
-      <option>Last 3 Months</option>
+    <select class="btn btn-ghost"
+            onchange="window.location.href='?days='+this.value">
+      <option value="7" {% if activity_summary.days == 7 %}selected{% endif %}>Last 7 Days</option>
+      <option value="30" {% if activity_summary.days == 30 %}selected{% endif %}>Last 30 Days</option>
+      <option value="90" {% if activity_summary.days == 90 %}selected{% endif %}>Last 3 Months</option>
     </select>
   </div>
-
   <div class="card-body">
     <div class="grid-3">
       <div class="activity-stat-group">
         <p class="activity-stat-label">Books Borrowed</p>
         <div class="progress">
-          <div class="progress-bar success" style="width: 75%"></div>
+          <div class="progress-bar success"
+               style="width: {{ activity_summary.borrowed_percentage }}%"></div>
         </div>
-        <p class="activity-stat-info">1,845 this week</p>
+        <p class="activity-stat-info">{{ activity_summary.borrowed_count }} in last {{ activity_summary.days }} days</p>
       </div>
-
       <div class="activity-stat-group">
         <p class="activity-stat-label">Books Returned</p>
         <div class="progress">
-          <div class="progress-bar" style="width: 68%"></div>
+          <div class="progress-bar"
+               style="width: {{ activity_summary.returned_percentage }}%"></div>
         </div>
-        <p class="activity-stat-info">1,658 this week</p>
+        <p class="activity-stat-info">{{ activity_summary.returned_count }} in last {{ activity_summary.days }} days</p>
       </div>
-
       <div class="activity-stat-group">
         <p class="activity-stat-label">New Reservations</p>
         <div class="progress">
-          <div class="progress-bar warning" style="width: 45%"></div>
+          <div class="progress-bar warning"
+               style="width: {{ activity_summary.reservations_percentage }}%"></div>
         </div>
-        <p class="activity-stat-info">342 this week</p>
+        <p class="activity-stat-info">{{ activity_summary.reservations_count }} in last {{ activity_summary.days }} days</p>
       </div>
     </div>
   </div>
