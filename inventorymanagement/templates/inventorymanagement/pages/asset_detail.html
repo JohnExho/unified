@@ -1,0 +1,167 @@
+{% extends 'inventorymanagement/base.html' %}
+{% load static %}
+
+{% block title %}{{ asset.asset_code }} - Asset Details{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/assets.css' %}">
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/modals/assets_modals.css' %}">
+<style>
+	.asset-details {
+		background: #fff;
+		border-radius: 12px;
+		border: 1px solid #e5e7eb;
+		padding: 24px;
+		margin-bottom: 24px;
+	}
+
+	.details-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		gap: 24px;
+		margin-bottom: 24px;
+	}
+
+	.detail-item {
+		border-bottom: 1px solid #e5e7eb;
+		padding-bottom: 12px;
+	}
+
+	.detail-item label {
+		font-size: 12px;
+		font-weight: 600;
+		color: #6b7280;
+		text-transform: uppercase;
+		display: block;
+		margin-bottom: 6px;
+	}
+
+	.detail-item p {
+		font-size: 14px;
+		color: #111827;
+		margin: 0;
+	}
+
+	.maintenance-section {
+		background: #fff;
+		border-radius: 12px;
+		border: 1px solid #e5e7eb;
+		padding: 24px;
+		margin-top: 24px;
+	}
+
+	.maintenance-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 24px;
+	}
+
+	.maintenance-header h3 {
+		margin: 0;
+		font-size: 16px;
+		color: #111827;
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+	<div class="top-bar">
+		<div class="page-header">
+			<div class="breadcrumb">
+				<a href="{% url 'inventorymanagement:assets' %}" style="color: #718096; text-decoration: none;">Dashboard <span class="breadcrumb-sep">›</span> Assets</a>
+				<span class="breadcrumb-sep">›</span>
+				{{ asset.asset_code }}
+			</div>
+			<h1>{{ asset.asset_code }} - {{ asset.name }}</h1>
+		</div>
+		<div class="top-actions">
+			<a href="{% url 'inventorymanagement:assets' %}" class="btn btn-secondary">Back to Assets</a>
+		</div>
+	</div>
+
+	<div class="content-wrap">
+		<div class="asset-details">
+			<div class="details-grid">
+				<div class="detail-item">
+					<label>Asset Code</label>
+					<p>{{ asset.asset_code }}</p>
+				</div>
+				<div class="detail-item">
+					<label>Name</label>
+					<p>{{ asset.name }}</p>
+				</div>
+				<div class="detail-item">
+					<label>Category</label>
+					<p>{{ asset.category.name }}</p>
+				</div>
+				<div class="detail-item">
+					<label>Status</label>
+					<p>
+						<span class="status-pill {% if asset.status == 'AVAILABLE' %}available{% elif asset.status == 'ASSIGNED' %}assigned{% elif asset.status == 'UNDER_REPAIR' %}repair{% else %}retired{% endif %}">
+							{{ asset.get_status_display }}
+						</span>
+					</p>
+				</div>
+				<div class="detail-item">
+					<label>Assigned To</label>
+					<p>
+						{% if assigned_to %}
+							{{ assigned_to.get_full_name|default:assigned_to.username }}
+						{% else %}
+							<span style="color: #9ca3af;">Not Assigned</span>
+						{% endif %}
+					</p>
+				</div>
+				<div class="detail-item">
+					<label>Created Date</label>
+					<p>{{ asset.created_at|date:"Y-m-d H:i" }}</p>
+				</div>
+			</div>
+
+			{% if asset.description %}
+			<div class="detail-item" style="border: none; padding: 12px 0 0;">
+				<label>Description</label>
+				<p>{{ asset.description }}</p>
+			</div>
+			{% endif %}
+		</div>
+
+		{% include 'inventorymanagement/partials/_maintenance_table.html' %}
+	</div>
+</main>
+
+<!-- Include Modals -->
+{% include 'inventorymanagement/modals/add_maintenance_modal.html' %}
+{% include 'inventorymanagement/modals/edit_maintenance_modal.html' %}
+{% include 'inventorymanagement/modals/delete_maintenance_modal.html' %}
+
+<script>
+function closeModal(modalId) {
+	document.getElementById(modalId).style.display = 'none';
+}
+
+window.onclick = function(event) {
+	if (event.target.classList.contains('modal')) {
+		event.target.style.display = 'none';
+	}
+}
+
+document.addEventListener('keydown', function(event) {
+	if (event.key === 'Escape') {
+		const modals = document.querySelectorAll('.modal');
+		modals.forEach(modal => {
+			if (modal.style.display === 'flex') {
+				modal.style.display = 'none';
+			}
+		});
+	}
+});
+
+// Load maintenance records on page load
+document.addEventListener('DOMContentLoaded', function() {
+	loadAssetMaintenance('{{ asset.id }}');
+});
+</script>
+{% endblock %}

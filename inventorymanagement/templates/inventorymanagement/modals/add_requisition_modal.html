@@ -1,0 +1,165 @@
+<div id="addRequisitionModal" class="modal">
+	<div class="modal-content">
+		<div class="modal-header">
+			<h2>New Requisition</h2>
+			<button type="button" class="modal-close" onclick="closeModal('addRequisitionModal')">
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<line x1="18" y1="6" x2="6" y2="18"></line>
+					<line x1="6" y1="6" x2="18" y2="18"></line>
+				</svg>
+			</button>
+		</div>
+		<form id="addRequisitionForm" onsubmit="submitAddRequisitionForm(event)">
+			{% csrf_token %}
+			
+			<div class="modal-body">
+				<div class="form-group">
+					<label>Purpose</label>
+					<textarea id="requisitionPurpose" name="purpose" placeholder="Describe the purpose of this requisition..." required style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; min-height: 80px;"></textarea>
+				</div>
+				
+				<div class="form-group">
+					<label>Items Required</label>
+					<div id="requisitionItemsContainer">
+						<div class="requisition-item-row">
+							<select class="item-select" onchange="updateItemRow(this)">
+								<option value="">Select an item...</option>
+							</select>
+							<input type="number" class="item-quantity" placeholder="Qty" min="1" required>
+							<button type="button" class="btn-remove-item" onclick="removeItemRow(this)" title="Remove">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<line x1="18" y1="6" x2="6" y2="18"></line>
+									<line x1="6" y1="6" x2="18" y2="18"></line>
+								</svg>
+							</button>
+						</div>
+					</div>
+					<button type="button" class="btn btn-secondary" onclick="addItemRow()" style="margin-top: 12px;">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="12" y1="5" x2="12" y2="19"></line>
+							<line x1="5" y1="12" x2="19" y2="12"></line>
+						</svg>
+						Add Item
+					</button>
+				</div>
+			</div>
+			
+			<div class="form-actions">
+				<button type="button" class="btn btn-secondary" onclick="closeModal('addRequisitionModal')">Cancel</button>
+				<button type="submit" class="btn btn-primary">Create Requisition</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script>
+function openAddRequisitionModal() {
+	// Load items
+	fetch('{% url "inventorymanagement:create_requisition" %}')
+		.then(response => response.json())
+		.then(data => {
+			// Populate all item selects
+			const selects = document.querySelectorAll('#addRequisitionModal .item-select');
+			selects.forEach(select => {
+				select.innerHTML = '<option value="">Select an item...</option>';
+				data.items.forEach(item => {
+					const option = document.createElement('option');
+					option.value = item.id;
+					option.textContent = `${item.name} (${item.category})`;
+					select.appendChild(option);
+				});
+			});
+		})
+		.catch(error => console.error('Error:', error));
+	
+	document.getElementById('addRequisitionModal').style.display = 'flex';
+}
+
+function addItemRow() {
+	const container = document.getElementById('requisitionItemsContainer');
+	const row = document.createElement('div');
+	row.className = 'requisition-item-row';
+	row.innerHTML = `
+		<select class="item-select" onchange="updateItemRow(this)">
+			<option value="">Select an item...</option>
+		</select>
+		<input type="number" class="item-quantity" placeholder="Qty" min="1" required>
+		<button type="button" class="btn-remove-item" onclick="removeItemRow(this)" title="Remove">
+			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<line x1="18" y1="6" x2="6" y2="18"></line>
+				<line x1="6" y1="6" x2="18" y2="18"></line>
+			</svg>
+		</button>
+	`;
+	
+	// Populate items in new row
+	fetch('{% url "inventorymanagement:create_requisition" %}')
+		.then(response => response.json())
+		.then(data => {
+			const select = row.querySelector('.item-select');
+			select.innerHTML = '<option value="">Select an item...</option>';
+			data.items.forEach(item => {
+				const option = document.createElement('option');
+				option.value = item.id;
+				option.textContent = `${item.name} (${item.category})`;
+				select.appendChild(option);
+			});
+		});
+	
+	container.appendChild(row);
+}
+
+function removeItemRow(button) {
+	button.closest('.requisition-item-row').remove();
+}
+
+function updateItemRow(select) {
+	// Can be used for additional validation or UI updates
+}
+
+function submitAddRequisitionForm(event) {
+	event.preventDefault();
+	
+	const purpose = document.getElementById('requisitionPurpose').value;
+	const rows = document.querySelectorAll('#requisitionItemsContainer .requisition-item-row');
+	
+	const items = [];
+	rows.forEach(row => {
+		const itemId = row.querySelector('.item-select').value;
+		const quantity = row.querySelector('.item-quantity').value;
+		
+		if (itemId && quantity) {
+			items.push({
+				item_id: itemId,
+				quantity: quantity
+			});
+		}
+	});
+	
+	if (items.length === 0) {
+		alert('Please add at least one item');
+		return;
+	}
+	
+	const formData = new FormData();
+	formData.append('purpose', purpose);
+	formData.append('items', JSON.stringify(items));
+	formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+	
+	fetch('{% url "inventorymanagement:create_requisition" %}', {
+		method: 'POST',
+		body: formData
+	})
+	.then(response => response.json())
+	.then(data => {
+		if (data.success) {
+			closeModal('addRequisitionModal');
+			document.getElementById('addRequisitionForm').reset();
+			location.reload();
+		} else {
+			alert('Error: ' + data.error);
+		}
+	})
+	.catch(error => console.error('Error:', error));
+}
+</script>

@@ -1,0 +1,80 @@
+<!-- Terms and Conditions Modal - Inventory Management -->
+<div id="termsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Terms and Conditions - {{ system_info.description }}</h2>
+      <button class="close-btn" onclick="closeTermsModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Terms of Service -->
+      {% if system_info.terms_of_service %}
+        <div class="terms-text">
+          {{ system_info.terms_of_service|linebreaks }}
+        </div>
+      {% else %}
+        <div class="terms-text">
+          <h3>Inventory Management System - Terms and Conditions</h3>
+          
+          <h4>1. Acceptance of Terms</h4>
+          <p>By accessing and using the Inventory Management System, you accept and agree to be bound by the terms and provision of this agreement.</p>
+          
+          <h4>2. Use License</h4>
+          <p>Permission is granted to use this system for inventory tracking, asset management, and related operations within the organization. This is the grant of a license, not a transfer of title.</p>
+          
+          <h4>3. User Responsibilities</h4>
+          <ul>
+            <li>Maintain the confidentiality of your account credentials</li>
+            <li>Ensure accurate inventory records and transaction data</li>
+            <li>Report discrepancies or inventory issues immediately</li>
+            <li>Follow proper procedures for requisitions and asset management</li>
+            <li>Comply with all inventory policies and procedures</li>
+            <li>Report lost, damaged, or stolen items promptly</li>
+          </ul>
+          
+          <h4>4. Inventory Accountability</h4>
+          <p>Users are responsible for the accuracy of inventory transactions they perform. All transactions are logged and may be audited. Intentional misrepresentation of inventory data is prohibited.</p>
+          
+          <h4>5. Asset Management</h4>
+          <p>Users assigned to assets are accountable for their proper use and maintenance. Assets must be returned or transferred according to organizational procedures.</p>
+          
+          <h4>6. Data Accuracy</h4>
+          <p>Users must ensure that all data entered into the system is accurate and complete. Regular inventory counts and reconciliations may be required.</p>
+          
+          <h4>7. Prohibited Activities</h4>
+          <ul>
+            <li>Unauthorized access to inventory records</li>
+            <li>Falsifying inventory transactions or counts</li>
+            <li>Removing assets without proper authorization</li>
+            <li>Attempting to bypass approval workflows</li>
+            <li>Using the system for personal inventory management</li>
+            <li>Sharing access credentials with unauthorized users</li>
+          </ul>
+          
+          <h4>8. System Access</h4>
+          <p>Access levels are assigned based on job responsibilities. Users must not attempt to access areas or perform functions beyond their authorization level.</p>
+          
+          <h4>9. Privacy and Confidentiality</h4>
+          <p>Inventory data, including pricing and supplier information, is confidential and must not be shared outside the organization without authorization.</p>
+          
+          <h4>10. Audit Trail</h4>
+          <p>The system maintains a complete audit trail of all transactions. This data may be reviewed by management and auditors as necessary.</p>
+          
+          <h4>11. Modifications to Terms</h4>
+          <p>We reserve the right to modify these terms at any time. Users will be notified of changes and continued use constitutes acceptance of modified terms.</p>
+          
+          <h4>12. Contact Information</h4>
+          <p>For questions regarding these terms or inventory management policies, please contact the system administrator or inventory manager.</p>
+        </div>
+      {% endif %}
+    </div>
+    <div class="modal-footer">
+      <div class="checkbox-wrapper">
+        <input type="checkbox" id="agreeCheckbox" onchange="toggleAcceptButton()">
+        <label for="agreeCheckbox">I have read and agree to the Terms and Conditions</label>
+      </div>
+      <div class="modal-buttons">
+        <button type="button" class="btn-accept" id="acceptBtn" disabled onclick="acceptTerms()">Accept & Continue</button>
+      </div>
+    </div>
+  </div>
+</div>

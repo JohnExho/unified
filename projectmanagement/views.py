@@ -28,13 +28,6 @@ User = get_user_model()
 def dashboard(request):
     current_system = request.current_system
 
-    # ---- Access control ----
-    if not request.user.is_superuser and not SystemMembership.objects.filter(
-        user=request.user,
-        system_name=current_system
-    ).exists():
-        return render(request, '404.html', status=404)
-
     # ---- Get current user's role ----
     user_membership = SystemMembership.objects.filter(
         user=request.user,
@@ -199,15 +192,9 @@ def dashboard(request):
 
 
 @login_required
+@require_system_access
 def reports(request):
     current_system = request.current_system
-
-    # Access control
-    if not request.user.is_superuser and not SystemMembership.objects.filter(
-        user=request.user,
-        system_name=current_system
-    ).exists():
-        return render(request, '404.html', status=404)
 
     user_membership = SystemMembership.objects.filter(
         user=request.user,
@@ -502,12 +489,6 @@ def admin_dashboard(request):
 def settings(request):
     current_system = request.current_system  # set by middleware
 
-    # Superuser bypass
-    if not request.user.is_superuser and not SystemMembership.objects.filter(
-        user=request.user, system_name=current_system
-    ).exists():
-        return render(request, '404.html', status=404)
-
     systems = request.session.get('accessible_systems', [])
 
     home_address = request.user.addresses.filter(type='home').first()
@@ -591,16 +572,6 @@ def delete_user(request, user_id):
     Only accessible by system_role = superusers.
     """
     current_system = request.current_system  # set by middleware
-
-    current_user_role = SystemMembership.objects.filter(
-        user=request.user,
-        system_name=current_system
-    ).values_list('system_role', flat=True).first()
-
-
-    if not request.user.is_superuser and current_user_role != 'superadmin':
-        messages.error(request, "You do not have permission to perform this action.")
-        return redirect("projectmanagement:pm_admin_dashboard") 
 
     target_user = get_object_or_404(User, id=user_id)
 
@@ -721,6 +692,7 @@ def update_tos(request):
         target_model='Systems',
         target_id=system.id,
         description=f"Updated Terms of Service for system '{current_system}'",
+        hidden_description=f"Admin '{request.user.username}' updated Terms of Service for system '{current_system}'",
         ip_address=get_client_ip(request),
         user_agent=get_user_agent(request),
     )
@@ -733,13 +705,6 @@ def update_tos(request):
 @require_system_role(['admin', 'superadmin'])
 def system_logs(request):
     current_system = request.current_system  # set by middleware
-
-    # Access control
-    if not request.user.is_superuser and not SystemMembership.objects.filter(
-        user=request.user,
-        system_name=current_system
-    ).exists():
-        return render(request, '404.html', status=404)
 
     # ---- Get search query ----
     search_query = request.GET.get('search', '').strip()
@@ -1090,18 +1055,12 @@ def change_password(request):
     return redirect("projectmanagement:pm_settings")
 
 @login_required
+@require_system_access
 def projects(request):
     """
     Display user's projects in a table format with search and pagination.
     """
     current_system = request.current_system
-
-    # ---- Access control ----
-    if not request.user.is_superuser and not SystemMembership.objects.filter(
-        user=request.user,
-        system_name=current_system
-    ).exists():
-        return render(request, '404.html', status=404)
 
     # ---- Get current user's role ----
     user_membership = SystemMembership.objects.filter(
@@ -1178,17 +1137,11 @@ def projects(request):
     )
 
 @login_required
+@require_system_access
 @require_http_methods(["GET", "POST"])
 def create_project(request):
     """Create a new project via modal"""
     current_system = request.current_system
-    
-    # Access control - only allow system members
-    if not request.user.is_superuser and not SystemMembership.objects.filter(
-        user=request.user,
-        system_name=current_system
-    ).exists():
-        return render(request, '404.html', status=404)
     
     if request.method == 'POST':
         try:
@@ -1886,13 +1839,6 @@ def assign_task(request, task_id):
 def teams(request):
     current_system = request.current_system
 
-    # Access control: must be system member or superuser
-    if not request.user.is_superuser and not SystemMembership.objects.filter(
-        user=request.user,
-        system_name=current_system
-    ).exists():
-        return render(request, '404.html', status=404)
-
     # Get current user's role
     user_membership = SystemMembership.objects.filter(
         user=request.user,
@@ -2196,6 +2142,7 @@ def remove_team_user(request, team_id, user_id):
 
 @login_required
 @login_required
+@require_system_access
 def calendar(request):
     """
     Display a calendar view with active and late projects and tasks.
@@ -2205,13 +2152,6 @@ def calendar(request):
     from datetime import timedelta
     
     current_system = request.current_system
-    
-    # ---- Access control ----
-    if not request.user.is_superuser and not SystemMembership.objects.filter(
-        user=request.user,
-        system_name=current_system
-    ).exists():
-        return redirect("projectmanagement:pm_dashboard")
     
     # ---- Get current user's role ----
     user_membership = SystemMembership.objects.filter(

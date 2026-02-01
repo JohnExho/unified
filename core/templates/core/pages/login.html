@@ -4,6 +4,8 @@
 {% block extra_head %}
 {% if system_name == 'projectmanagement' %}
 <link rel="stylesheet" href="{% static 'projectmanagement/css/pages/login.css' %}" />
+{% elif system_name == 'inventorymanagement' %}
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/login.css' %}" />
 {% elif system_name == 'librarymanagement' %}
 <link rel="stylesheet" href="{% static 'core/css/library_styles.css' %}" />
 {% else %}

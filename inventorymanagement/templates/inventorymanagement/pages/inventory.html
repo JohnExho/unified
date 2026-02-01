@@ -1,0 +1,202 @@
+{% extends 'inventorymanagement/base.html' %}
+{% load static %}
+
+{% block title %}Inventory - Inventory Management{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/inventory.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+	<div class="top-bar">
+		<div class="page-header">
+			<div class="breadcrumb">Dashboard <span class="breadcrumb-sep">›</span> Inventory Management</div>
+			<h1>Inventory Management</h1>
+		</div>
+		<div class="top-actions">
+			<button class="btn btn-primary" onclick="openAddItemModal()">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<line x1="12" y1="5" x2="12" y2="19"></line>
+					<line x1="5" y1="12" x2="19" y2="12"></line>
+				</svg>
+				Add Item
+			</button>
+		</div>
+	</div>
+
+	<div class="content-wrap">
+		<div class="toolbar">
+			<div class="toolbar-actions">
+				<button class="btn btn-secondary" onclick="openAddCategoryModal()">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<rect x="3" y="3" width="18" height="18" rx="2"></rect>
+						<path d="M9 12h6"></path>
+						<path d="M12 9v6"></path>
+					</svg>
+					Add Category
+				</button>
+				<a href="{% url 'inventorymanagement:export_inventory' %}" class="btn btn-secondary">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+						<polyline points="7 10 12 15 17 10"></polyline>
+						<line x1="12" y1="15" x2="12" y2="3"></line>
+					</svg>
+					Export
+				</a>
+			</div>
+			<div class="toolbar-search">
+				<form class="search-box" method="get" action="{{ request.path }}">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<circle cx="11" cy="11" r="8"></circle>
+						<path d="M21 21l-4.35-4.35"></path>
+					</svg>
+					<input
+						type="text"
+						name="search"
+						id="searchInput"
+						placeholder="Search items..."
+						value="{{ search_query|default:'' }}"
+					/>
+					{% if search_query %}
+					<button type="button" class="clear-search-btn" onclick="clearSearch()" title="Clear search">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="18" y1="6" x2="6" y2="18"></line>
+							<line x1="6" y1="6" x2="18" y2="18"></line>
+						</svg>
+					</button>
+					{% endif %}
+				</form>
+			</div>
+		</div>
+
+		<div class="filters">
+			<div class="filter-item">
+				<label>Category</label>
+				<select class="filter-select" id="categoryFilter" onchange="applyFilters()">
+					<option value="">All Categories</option>
+					{% for category in categories %}
+					<option value="{{ category.id }}" {% if category.id|stringformat:"s" == category_filter %}selected{% endif %}>{{ category.name }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			<div class="filter-item">
+				<label>Stock Status</label>
+				<select class="filter-select" id="stockStatusFilter" onchange="applyFilters()">
+					<option value="">All Stock Levels</option>
+					<option value="normal" {% if stock_status_filter == 'normal' %}selected{% endif %}>In Stock</option>
+					<option value="low" {% if stock_status_filter == 'low' %}selected{% endif %}>Low Stock</option>
+				</select>
+			</div>
+			<div class="filter-item">
+				<label>Status</label>
+				<select class="filter-select" id="statusFilter" onchange="applyFilters()">
+					<option value="">All Status</option>
+					<option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+					<option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+				</select>
+			</div>
+		</div>
+
+		{% include 'inventorymanagement/partials/_inventory_table.html' %}
+	</div>
+</main>
+
+<!-- Include Modals -->
+{% include 'inventorymanagement/modals/add_item_modal.html' %}
+{% include 'inventorymanagement/modals/edit_item_modal.html' %}
+{% include 'inventorymanagement/modals/delete_item_modal.html' %}
+{% include 'inventorymanagement/modals/add_category_modal.html' %}
+
+<script>
+function applyFilters() {
+	const categoryFilter = document.getElementById('categoryFilter').value;
+	const stockStatusFilter = document.getElementById('stockStatusFilter').value;
+	const statusFilter = document.getElementById('statusFilter').value;
+	const searchQuery = document.querySelector('input[name="search"]').value;
+
+	// Build query parameters
+	const params = new URLSearchParams();
+	if (categoryFilter) params.append('category', categoryFilter);
+	if (stockStatusFilter) params.append('stock_status', stockStatusFilter);
+	if (statusFilter) params.append('status', statusFilter);
+	if (searchQuery) params.append('search', searchQuery);
+
+	// Make AJAX request for table partial only
+	const queryString = params.toString();
+	const url = queryString ? '{{ request.path }}?' + queryString : '{{ request.path }}';
+
+	fetch(url, {
+		method: 'GET',
+		headers: {
+			'X-Requested-With': 'XMLHttpRequest'
+		}
+	})
+	.then(response => response.text())
+	.then(html => {
+		// Extract just the table from the response
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(html, 'text/html');
+		const tableCard = doc.querySelector('.table-card');
+		
+		if (tableCard) {
+			document.querySelector('.table-card').outerHTML = tableCard.outerHTML;
+		}
+	})
+	.catch(error => console.error('Error:', error));
+}
+
+function clearSearch() {
+	document.getElementById('searchInput').value = '';
+	// Apply filters with empty search to refresh the page
+	applyFilters();
+}
+
+// Allow search to apply filters on keyup
+document.addEventListener('DOMContentLoaded', function() {
+	const searchInput = document.getElementById('searchInput');
+	const searchForm = document.querySelector('.search-box');
+	let searchTimeout;
+	
+	if (searchInput) {
+		// Search on input change (as user types)
+		searchInput.addEventListener('input', function() {
+			// Clear previous timeout
+			clearTimeout(searchTimeout);
+			
+			// Show/hide clear button
+			const clearBtn = document.querySelector('.clear-search-btn');
+			if (this.value.trim()) {
+				// Show clear button if input has text
+				if (!clearBtn) {
+					const btn = document.createElement('button');
+					btn.type = 'button';
+					btn.className = 'clear-search-btn';
+					btn.onclick = clearSearch;
+					btn.title = 'Clear search';
+					btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+					searchForm.appendChild(btn);
+				}
+				
+				// Trigger search with debounce
+				searchTimeout = setTimeout(() => applyFilters(), 300);
+			} else {
+				// Hide clear button and search immediately if empty
+				if (clearBtn) {
+					clearBtn.remove();
+				}
+				applyFilters();
+			}
+		});
+	}
+
+	// Prevent form submission
+	if (searchForm) {
+		searchForm.addEventListener('submit', function(e) {
+			e.preventDefault();
+		});
+	}
+});
+</script>
+
+{% endblock %}

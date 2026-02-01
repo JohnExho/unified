@@ -1,0 +1,204 @@
+<style>
+/* Modal overlay */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+/* Show modal */
+.modal:not(.hidden) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Modal content box */
+.modal-content {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  transform: translateY(-20px);
+  transition: transform 0.3s ease;
+}
+
+/* Animate modal content when shown */
+.modal:not(.hidden) .modal-content {
+  transform: translateY(0);
+}
+
+/* Input and label styling */
+.modal-content label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.modal-content input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Buttons inside modal */
+.modal-content .btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modal-content .btn + .btn {
+  margin-left: 0.5rem;
+}
+
+/* Grid layout for addresses */
+.grid {
+  display: grid;
+}
+
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-6 {
+  gap: 1.5rem;
+}
+
+.space-y-2 > * + * {
+  margin-top: 0.5rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mt-6 {
+  margin-top: 1.5rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.flex {
+  display: flex;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+/* Optional: hide address2 fields initially */
+#address2Fields.hidden {
+  display: none;
+}
+</style>
+
+<div id="addressModal" class="modal hidden">
+  <div class="modal-content">
+    <h2 class="text-xl font-semibold mb-4">Update Addresses</h2>
+    <form id="addressForm" method="post" action="{% url 'inventorymanagement:save_addresses' %}">
+      {% csrf_token %}
+
+      <div class="grid grid-cols-2 gap-6">
+        
+        <!-- Home Address -->
+        <div>
+          <h3 class="font-medium text-lg mb-2">Home Address</h3>
+
+          <label for="country1">Country</label>
+          <input type="text" id="country1" name="country1"
+                 value="{{ home_address.country|default:'' }}" required />
+
+          <label for="address1">Full Address</label>
+          <input type="text" id="address1" name="address1"
+                 value="{{ home_address.full_address|default:'' }}" required />
+
+          <div class="grid grid-cols-3 gap-2">
+            <input type="text" name="city1" placeholder="City"
+                   value="{{ home_address.city|default:'' }}" required />
+            <input type="text" name="province1" placeholder="Province"
+                   value="{{ home_address.province|default:'' }}" required />
+            <input type="text" name="zip1" placeholder="ZIP Code"
+                   value="{{ home_address.postal_code|default:'' }}" required />
+          </div>
+        </div>
+
+        <!-- Billing Address -->
+        <div>
+          <h3 class="font-medium text-lg mb-2">Billing Address (optional)</h3>
+
+          <label for="country2">Country</label>
+          <input type="text" id="country2" name="country2"
+                 value="{{ secondary_address.country|default:'' }}" />
+
+          <div id="address2Fields"
+               class="space-y-2 {% if not secondary_address %}hidden{% endif %}">
+            <input type="text" name="address2" placeholder="Full Address"
+                   value="{{ secondary_address.full_address|default:'' }}" />
+            <div class="grid grid-cols-3 gap-2">
+              <input type="text" name="city2" placeholder="City"
+                     value="{{ secondary_address.city|default:'' }}" />
+              <input type="text" name="province2" placeholder="Province"
+                     value="{{ secondary_address.province|default:'' }}" />
+              <input type="text" name="zip2" placeholder="ZIP Code"
+                     value="{{ secondary_address.postal_code|default:'' }}" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex justify-end gap-2 mt-6">
+        <button type="button" id="closeModal" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Both Addresses</button>
+      </div>
+    </form>
+  </div>
+</div>

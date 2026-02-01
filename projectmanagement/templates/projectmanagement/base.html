@@ -11,7 +11,7 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    {% include 'projectmanagement/components/sidebar.html' %} 
+    {% include 'projectmanagement/components/sidebar.html' with current_system=current_system %} 
     {% block content %}{% endblock %}
     <script>
         window.DJANGO_MESSAGES = [

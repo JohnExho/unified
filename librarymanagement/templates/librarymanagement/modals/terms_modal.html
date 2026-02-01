@@ -1,0 +1,89 @@
+<!-- Terms and Conditions Modal - Library Management -->
+<div id="termsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Terms and Conditions - {{ system_info.description }}</h2>
+      <button class="close-btn" onclick="closeTermsModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Terms of Service -->
+      {% if system_info.terms_of_service %}
+        <div class="terms-text">
+          {{ system_info.terms_of_service|linebreaks }}
+        </div>
+      {% else %}
+        <div class="terms-text">
+          <h3>Library Management System - Terms and Conditions</h3>
+          
+          <h4>1. Acceptance of Terms</h4>
+          <p>By accessing and using the Library Management System, you accept and agree to be bound by the terms and provision of this agreement.</p>
+          
+          <h4>2. Library Card and Account</h4>
+          <p>Your library account is personal to you and may not be shared. You are responsible for all activities that occur under your account.</p>
+          
+          <h4>3. Borrowing Privileges</h4>
+          <ul>
+            <li>Borrowing limits are set according to your membership type</li>
+            <li>Loan periods vary by material type and are displayed at checkout</li>
+            <li>Materials must be returned or renewed by the due date</li>
+            <li>Renewals may be limited or unavailable for high-demand items</li>
+            <li>Reserved items must be picked up within the specified timeframe</li>
+          </ul>
+          
+          <h4>4. User Responsibilities</h4>
+          <ul>
+            <li>Care for borrowed materials and return them in good condition</li>
+            <li>Report lost or damaged materials immediately</li>
+            <li>Keep contact information current in your account</li>
+            <li>Pay fines and fees promptly when due</li>
+            <li>Respect library policies and staff instructions</li>
+            <li>Maintain appropriate conduct in library spaces</li>
+          </ul>
+          
+          <h4>5. Late Returns and Fines</h4>
+          <p>Late fees may be assessed for overdue materials. Accounts with outstanding fines or unreturned materials may be suspended until resolved.</p>
+          
+          <h4>6. Lost or Damaged Materials</h4>
+          <p>Users are financially responsible for lost or damaged materials. Replacement costs will be charged to your account and must be paid before borrowing privileges are restored.</p>
+          
+          <h4>7. Reservations</h4>
+          <p>Materials may be reserved if currently checked out. You will be notified when reserved items become available. Unclaimed reservations may be released to other patrons.</p>
+          
+          <h4>8. Digital Resources</h4>
+          <p>Access to digital resources is subject to licensing agreements. Do not share login credentials or attempt to circumvent usage restrictions.</p>
+          
+          <h4>9. Privacy Policy</h4>
+          <p>We protect patron privacy in accordance with applicable laws. Circulation records are confidential, though certain data may be shared as required by law.</p>
+          
+          <h4>10. Prohibited Activities</h4>
+          <ul>
+            <li>Using another person's library account</li>
+            <li>Returning materials to avoid fines when not actually borrowed</li>
+            <li>Intentionally damaging library materials</li>
+            <li>Removing security tags or library property markings</li>
+            <li>Using library resources for illegal purposes</li>
+            <li>Excessive holds or reservations beyond reasonable use</li>
+          </ul>
+          
+          <h4>11. Suspension and Termination</h4>
+          <p>The library reserves the right to suspend or terminate accounts that violate these terms or engage in abusive behavior.</p>
+          
+          <h4>12. Modifications to Terms</h4>
+          <p>These terms may be updated periodically. Continued use of the system constitutes acceptance of any modifications.</p>
+          
+          <h4>13. Contact Information</h4>
+          <p>For questions about library policies or your account, please contact library staff or the system administrator.</p>
+        </div>
+      {% endif %}
+    </div>
+    <div class="modal-footer">
+      <div class="checkbox-wrapper">
+        <input type="checkbox" id="agreeCheckbox" onchange="toggleAcceptButton()">
+        <label for="agreeCheckbox">I have read and agree to the Terms and Conditions</label>
+      </div>
+      <div class="modal-buttons">
+        <button type="button" class="btn-accept" id="acceptBtn" disabled onclick="acceptTerms()">Accept & Continue</button>
+      </div>
+    </div>
+  </div>
+</div>

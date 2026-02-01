@@ -1,0 +1,52 @@
+<div class="table-card">
+	<table class="requisition-table">
+		<thead>
+			<tr>
+				<th>Request ID</th>
+				<th>Requested By</th>
+				<th>Items</th>
+				<th>Purpose</th>
+				<th>Status</th>
+				<th>Approved By</th>
+				<th>Submitted</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for requisition in requisitions %}
+			<tr>
+				<td><strong>{{ requisition.id|truncatechars:13 }}</strong></td>
+				<td>{{ requisition.requested_by.get_full_name|default:requisition.requested_by.username }}</td>
+				<td>{{ requisition.item_count|default:requisition.items.count }} items</td>
+				<td>{{ requisition.purpose|truncatechars:50 }}</td>
+				<td>
+					{% if requisition.status == 'PENDING' %}<span class="pill status-pending">Pending</span>
+					{% elif requisition.status == 'APPROVED' %}<span class="pill status-approved">Approved</span>
+					{% elif requisition.status == 'REJECTED' %}<span class="pill status-rejected">Rejected</span>
+					{% else %}<span class="pill status-issued">Issued</span>{% endif %}
+				</td>
+				<td>{% if requisition.approved_by %}{{ requisition.approved_by.get_full_name|default:requisition.approved_by.username }}{% else %}—{% endif %}</td>
+				<td>{{ requisition.created_at|date:"M d, Y" }}</td>
+				<td class="actions">
+					<a href="{% url 'inventorymanagement:view_requisition' requisition.id %}" class="icon-btn" title="View">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+					</a>
+					{% if is_admin %}
+						{% if requisition.status == 'PENDING' %}
+						<button class="icon-btn" onclick="openApproveRequisitionModal('{{ requisition.id }}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+						<button class="icon-btn danger" onclick="openRejectRequisitionModal('{{ requisition.id }}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+						{% elif requisition.status == 'APPROVED' %}
+						<button class="icon-btn" onclick="openIssueRequisitionModal('{{ requisition.id }}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg></button>
+						{% endif %}
+					{% endif %}
+					{% if requisition.status != 'ISSUED' %}
+					<button class="icon-btn danger" onclick="openDeleteRequisitionModal('{{ requisition.id }}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+					{% endif %}
+				</td>
+			</tr>
+			{% empty %}
+			<tr><td colspan="7" class="empty-state">No requisitions found.</td></tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>

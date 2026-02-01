@@ -1,0 +1,384 @@
+<!-- Edit Inventory Item Modal -->
+<div id="editItemModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Edit Item</h2>
+      <button class="close-btn" onclick="closeEditItemModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="editItemForm" method="post">
+        {% csrf_token %}
+        
+        <!-- Item Name -->
+        <div class="input-wrapper">
+          <label for="editItemName">Item Name *</label>
+          <input 
+            type="text" 
+            id="editItemName"
+            name="name" 
+            placeholder="Enter item name" 
+            required 
+          />
+        </div>
+
+        <!-- Category -->
+        <div class="input-wrapper">
+          <label for="editItemCategory">Category *</label>
+          <select id="editItemCategory" name="category" required>
+            <option value="">Select Category</option>
+          </select>
+        </div>
+
+        <!-- Unit -->
+        <div class="input-wrapper">
+          <label for="editItemUnit">Unit *</label>
+          <input 
+            type="text" 
+            id="editItemUnit"
+            name="unit" 
+            placeholder="e.g. pcs, box, liter" 
+            required 
+          />
+        </div>
+
+        <!-- Quantity -->
+        <div class="input-wrapper">
+          <label for="editItemQuantity">Quantity</label>
+          <input 
+            type="number" 
+            id="editItemQuantity"
+            name="quantity" 
+            placeholder="Enter quantity" 
+            min="0"
+          />
+        </div>
+
+        <!-- Low Stock Threshold -->
+        <div class="input-wrapper">
+          <label for="editLowStockThreshold">Low Stock Threshold</label>
+          <input 
+            type="number" 
+            id="editLowStockThreshold"
+            name="low_stock_threshold" 
+            placeholder="Enter threshold" 
+            min="0"
+          />
+        </div>
+
+        <!-- Description -->
+        <div class="input-wrapper">
+          <label for="editItemDescription">Description</label>
+          <textarea 
+            id="editItemDescription"
+            name="description" 
+            placeholder="Enter item description"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <!-- Status -->
+        <div class="input-wrapper">
+          <label for="editItemStatus">
+            <input 
+              type="checkbox" 
+              id="editItemStatus"
+              name="is_active"
+            />
+            Active
+          </label>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <div class="modal-buttons">
+        <button type="button" class="btn-cancel" onclick="closeEditItemModal()">Cancel</button>
+        <button type="submit" form="editItemForm" class="btn-accept">Update Item</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+#editItemModal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.3s ease;
+}
+
+#editItemModal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-header {
+  padding: 25px 30px;
+  border-bottom: 2px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 16px 16px 0 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 32px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: rgba(17, 24, 39, 0.1);
+  color: #111827;
+}
+
+.modal-body {
+  padding: 30px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.input-wrapper label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.input-wrapper input,
+.input-wrapper select,
+.input-wrapper textarea {
+  padding: 12px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.input-wrapper input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+}
+
+.input-wrapper input:focus,
+.input-wrapper select:focus,
+.input-wrapper textarea:focus {
+  border-color: #111827;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.1);
+}
+
+.modal-footer {
+  padding: 20px 30px;
+  border-top: 2px solid #e2e8f0;
+  background: #f8f9fa;
+  border-radius: 0 0 16px 16px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-cancel,
+.btn-accept {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.btn-cancel:hover {
+  background: #d1d5db;
+}
+
+.btn-accept {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.3);
+}
+
+.btn-accept:hover {
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
+
+<script>
+let currentItemId = null;
+let currentCategoryId = null;
+
+function openEditItemModal(itemId, itemName, categoryId, unit, quantity, threshold, description, isActive) {
+  currentItemId = itemId;
+  currentCategoryId = categoryId;
+  
+  // Set the form action
+  const form = document.getElementById('editItemForm');
+  form.action = `/inventorymanagement/inventory/edit/${itemId}/`;
+  
+  // Load categories first, then populate other fields
+  loadCategories().then(() => {
+    // Populate the form fields
+    document.getElementById('editItemName').value = itemName || '';
+    document.getElementById('editItemCategory').value = categoryId || '';
+    document.getElementById('editItemUnit').value = unit || '';
+    document.getElementById('editItemQuantity').value = quantity || 0;
+    document.getElementById('editLowStockThreshold').value = threshold || 5;
+    document.getElementById('editItemDescription').value = description || '';
+    document.getElementById('editItemStatus').checked = isActive === true || isActive === 'true';
+    
+    // Show modal
+    const modal = document.getElementById('editItemModal');
+    if (modal) {
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+  });
+}
+
+function loadCategories() {
+  return fetch('/inventorymanagement/api/categories/')
+    .then(response => response.json())
+    .then(data => {
+      const categorySelect = document.getElementById('editItemCategory');
+      
+      // Clear existing options except the first one
+      while (categorySelect.options.length > 1) {
+        categorySelect.remove(1);
+      }
+      
+      // Add categories
+      if (data.categories && data.categories.length > 0) {
+        data.categories.forEach(category => {
+          const option = document.createElement('option');
+          option.value = category.id;
+          option.textContent = category.name;
+          categorySelect.appendChild(option);
+        });
+      }
+      
+      return data;
+    })
+    .catch(error => {
+      console.error('Error loading categories:', error);
+    });
+}
+
+function closeEditItemModal() {
+  const modal = document.getElementById('editItemModal');
+  if (modal) {
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+    currentItemId = null;
+    currentCategoryId = null;
+  }
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', function(event) {
+  const modal = document.getElementById('editItemModal');
+  if (event.target === modal) {
+    closeEditItemModal();
+  }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    const modal = document.getElementById('editItemModal');
+    if (modal && modal.classList.contains('show')) {
+      closeEditItemModal();
+    }
+  }
+});
+
+// Handle form submission
+document.getElementById('editItemForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  
+  fetch(this.action, {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      closeEditItemModal();
+      location.reload();
+    } else {
+      alert('Error: ' + data.error);
+    }
+  })
+  .catch(error => {
+    alert('Error: ' + error);
+  });
+});
+</script>

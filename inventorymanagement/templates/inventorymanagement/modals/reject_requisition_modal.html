@@ -1,0 +1,37 @@
+<div id="rejectRequisitionModal" class="modal">
+	<div class="modal-content modal-small">
+		<div class="modal-header">
+			<h2>Reject Requisition</h2>
+			<button type="button" class="modal-close" onclick="closeModal('rejectRequisitionModal')">
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<line x1="18" y1="6" x2="6" y2="18"></line>
+					<line x1="6" y1="6" x2="18" y2="18"></line>
+				</svg>
+			</button>
+		</div>
+		<form id="rejectRequisitionForm" method="post">
+			{% csrf_token %}
+			
+			<div class="modal-body">
+				<div class="form-group">
+					<label>Reason for Rejection</label>
+					<textarea id="rejectionReason" name="reason" placeholder="Provide a reason for rejecting this requisition..." required style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; min-height: 80px;"></textarea>
+				</div>
+			</div>
+			
+			<div class="form-actions">
+				<button type="button" class="btn btn-secondary" onclick="closeModal('rejectRequisitionModal')">Cancel</button>
+				<button type="submit" class="btn btn-danger">Reject</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<script>
+function openRejectRequisitionModal(requisitionId) {
+	const form = document.getElementById('rejectRequisitionForm');
+	form.action = `{% url 'inventorymanagement:reject_requisition' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', requisitionId);
+	document.getElementById('rejectionReason').value = '';
+	document.getElementById('rejectRequisitionModal').style.display = 'flex';
+}
+</script>

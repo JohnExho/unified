@@ -1,0 +1,47 @@
+<div class="table-card">
+	<h3 class="table-title">Assets Report</h3>
+	<table class="reports-table">
+		<thead>
+			<tr>
+				<th>Asset Code</th>
+				<th>Asset Name</th>
+				<th>Category</th>
+				<th>Status</th>
+				<th>Assigned To</th>
+				<th>Created Date</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for item in assets_data %}
+			<tr>
+				<td>{{ item.asset.asset_code }}</td>
+				<td>{{ item.asset.name }}</td>
+				<td>{{ item.asset.category.name }}</td>
+				<td>
+					{% if item.asset.status == 'AVAILABLE' %}
+						<span class="pill status-available">Available</span>
+					{% elif item.asset.status == 'ASSIGNED' %}
+						<span class="pill status-assigned">Assigned</span>
+					{% elif item.asset.status == 'UNDER_REPAIR' %}
+						<span class="pill status-repair">Under Repair</span>
+					{% elif item.asset.status == 'RETIRED' %}
+						<span class="pill status-retired">Retired</span>
+					{% endif %}
+				</td>
+				<td>
+					{% if item.assigned_to %}
+						{{ item.assigned_to.get_full_name|default:item.assigned_to.username }}
+					{% else %}
+						—
+					{% endif %}
+				</td>
+				<td>{{ item.asset.created_at|date:"M d, Y" }}</td>
+			</tr>
+			{% empty %}
+			<tr>
+				<td colspan="6" class="empty-state">No assets found.</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
