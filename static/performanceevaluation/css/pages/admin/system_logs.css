@@ -1,0 +1,133 @@
+/* System Logs Styles */
+
+.main-content {
+    margin-left: 280px;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #faf9fc 0%, #f5f1f8 100%);
+}
+
+.top-bar {
+    background: linear-gradient(135deg, #ffffff 0%, #faf8f6 100%);
+    padding: 24px 32px;
+    border-bottom: 1px solid #e8dff5;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.page-header h1 {
+    font-size: 26px;
+    color: #1f1235;
+    margin: 4px 0 0;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #7a6c85;
+    margin: 0;
+}
+
+.breadcrumb {
+    font-size: 12px;
+    color: #9c8fb0;
+}
+
+.content-wrap {
+    padding: 24px 32px 32px;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #e8dff5;
+    border-radius: 10px;
+    padding: 8px 12px;
+    min-width: 260px;
+}
+
+.search-box input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    width: 100%;
+    color: #1f1235;
+}
+
+.content-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f9f5fc 100%);
+    border: 1px solid #e8dff5;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+th, td {
+    padding: 12px;
+    border-bottom: 1px solid #efe8f7;
+    text-align: left;
+}
+
+th {
+    font-weight: 600;
+    color: #4a3838;
+    background: #f5f1f8;
+}
+
+.empty {
+    text-align: center;
+    color: #7a6c85;
+    padding: 16px 0;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-info {
+    background: #BCD8EC;
+    color: #2a5a7a;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: #7a6c85;
+}
+
+.pagination a {
+    text-decoration: none;
+    color: #4a3838;
+    background: #fff;
+    border: 1px solid #e8dff5;
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+    }
+}

@@ -1,0 +1,62 @@
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for membership in memberships %}
+            <tr>
+                <td>
+                    {% if membership.user.first_name or membership.user.last_name %}
+                        {{ membership.user.first_name }} {{ membership.user.last_name }}
+                    {% else %}
+                        {{ membership.user.username }}
+                    {% endif %}
+                </td>
+                <td>{{ membership.user.email|default:"—" }}</td>
+                <td class="text-capitalize">{{ membership.system_role }}</td>
+                <td>
+                    {% if membership.user.is_active %}
+                        <span class="badge badge-active">Active</span>
+                    {% else %}
+                        <span class="badge badge-inactive">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <button
+                        type="button"
+                        class="btn-outline manage-access-btn"
+                        data-user-id="{{ membership.user.id }}"
+                        data-username="{{ membership.user.username }}"
+                        data-role="{{ membership.system_role }}"
+                    >
+                        Manage
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="empty">No users found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if memberships.has_other_pages %}
+<div class="pagination">
+    {% if memberships.has_previous %}
+        <a href="?page={{ memberships.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+    {% endif %}
+    <span>Page {{ memberships.number }} of {{ memberships.paginator.num_pages }}</span>
+    {% if memberships.has_next %}
+        <a href="?page={{ memberships.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+    {% endif %}
+</div>
+{% endif %}

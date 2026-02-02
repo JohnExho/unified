@@ -1,0 +1,21 @@
+<div class="modal" id="updateTosModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Update Terms of Service</h3>
+            <button type="button" class="modal-close" onclick="closeTosModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="tosForm" method="post" action="{% url 'performanceevaluation:update_tos' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="tosContent">Terms of Service</label>
+                    <textarea id="tosContent" name="tos_text" rows="10" placeholder="Enter updated terms of service...">{{ tos_text }}</textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-outline" onclick="closeTosModal()">Cancel</button>
+            <button type="button" class="btn-primary" onclick="saveTosChanges()">Save</button>
+        </div>
+    </div>
+</div>

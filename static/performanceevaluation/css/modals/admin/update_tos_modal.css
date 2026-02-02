@@ -1,0 +1,11 @@
+/* Update Terms of Service Modal */
+@import url('manage_user_access_modal.css');
+
+#updateTosModal .modal-content {
+    max-width: 720px;
+}
+
+#updateTosModal textarea {
+    min-height: 200px;
+    resize: vertical;
+}

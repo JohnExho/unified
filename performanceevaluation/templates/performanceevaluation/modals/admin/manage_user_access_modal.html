@@ -1,0 +1,26 @@
+<div class="modal" id="manageAccessModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Manage User Access</h3>
+            <button type="button" class="modal-close" onclick="closeManageAccessModal()">&times;</button>
+        </div>
+        <form id="manageAccessForm" method="post">
+            {% csrf_token %}
+            <div class="modal-body">
+                <label for="accessUsername">Username</label>
+                <input type="text" id="accessUsername" name="username" readonly />
+
+                <label for="systemRole">Role</label>
+                <select id="systemRole" name="system_role" required>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">Superadmin</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-outline" onclick="closeManageAccessModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
