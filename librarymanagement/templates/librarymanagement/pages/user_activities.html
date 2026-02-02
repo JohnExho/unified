@@ -27,28 +27,28 @@
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-card-header">
-                <div class="stat-icon view">👁</div>
+                <div class="stat-icon view">{% include "librarymanagement/components/icons/eye.svg" %}</div>
               </div>
               <div class="stat-value">{{ view_count }}</div>
               <div class="stat-label">Book Views</div>
             </div>
             <div class="stat-card">
               <div class="stat-card-header">
-                <div class="stat-icon info">🔍</div>
+                <div class="stat-icon info">{% include "librarymanagement/components/icons/search.svg" %}</div>
               </div>
               <div class="stat-value">{{ search_count }}</div>
               <div class="stat-label">Searches</div>
             </div>
             <div class="stat-card">
               <div class="stat-card-header">
-                <div class="stat-icon success">📚</div>
+                <div class="stat-icon success">{% include "librarymanagement/components/icons/books.svg" %}</div>
               </div>
               <div class="stat-value">{{ borrow_count }}</div>
               <div class="stat-label">Borrowed</div>
             </div>
             <div class="stat-card">
               <div class="stat-card-header">
-                <div class="stat-icon warning">📖</div>
+                <div class="stat-icon warning">{% include "librarymanagement/components/icons/bookmark.svg" %}</div>
               </div>
               <div class="stat-value">{{ reserve_count }}</div>
               <div class="stat-label">Reserved</div>
@@ -65,47 +65,22 @@
                   <option>Last 90 days</option>
                 </select>
               </div>
-              <div class="chart-placeholder">📊 Chart visualization would go here</div>
+              <div class="chart-placeholder">
+                {% include "librarymanagement/components/icons/chart-bar.svg" %}
+                Chart visualization would go here
+              </div>
             </div>
             <div class="chart-card">
               <div class="chart-header">
                 <h3 class="chart-title">Activity by Type</h3>
               </div>
-              <div class="chart-placeholder">🥧 Pie chart visualization would go here</div>
+              <div class="chart-placeholder">
+                {% include "librarymanagement/components/icons/chart-bar.svg" %}
+                Pie chart visualization would go here
+              </div>
             </div>
           </div>
-          <!-- Top Users -->
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Most Active Users</h3>
-            </div>
-            <ul class="top-list">
-              <li class="top-list-item">
-                <div class="top-list-rank gold">1</div>
-                <div class="top-list-info">
-                  <div class="top-list-name">John Doe</div>
-                  <div class="top-list-meta">Active member • Joined Jan 2025</div>
-                </div>
-                <div class="top-list-value">156</div>
-              </li>
-              <li class="top-list-item">
-                <div class="top-list-rank silver">2</div>
-                <div class="top-list-info">
-                  <div class="top-list-name">Jane Smith</div>
-                  <div class="top-list-meta">Active member • Joined Dec 2024</div>
-                </div>
-                <div class="top-list-value">142</div>
-              </li>
-              <li class="top-list-item">
-                <div class="top-list-rank bronze">3</div>
-                <div class="top-list-info">
-                  <div class="top-list-name">Bob Johnson</div>
-                  <div class="top-list-meta">Regular member • Joined Nov 2024</div>
-                </div>
-                <div class="top-list-value">128</div>
-              </li>
-            </ul>
-          </div>
+          <!-- Top Users (implement when user ranking is available) -->
           <!-- Activity Feed -->
           <div class="card">
             <div class="card-header">
@@ -120,13 +95,13 @@
                 <div class="activity-item">
                   <div class="activity-icon {{ activity.activity_type }}">
                     {% if activity.activity_type == 'view' %}
-                      👁
+                      {% include "librarymanagement/components/icons/eye.svg" %}
                     {% elif activity.activity_type == 'search' %}
-                      🔍
+                      {% include "librarymanagement/components/icons/search.svg" %}
                     {% elif activity.activity_type == 'borrow' %}
-                      📚
+                      {% include "librarymanagement/components/icons/books.svg" %}
                     {% else %}
-                      📖
+                      {% include "librarymanagement/components/icons/bookmark.svg" %}
                     {% endif %}
                   </div>
                   <div class="activity-content">

@@ -25,10 +25,26 @@
           </div>
           <!-- Period Selector -->
           <div class="period-tabs">
-            <button class="period-tab active">📅 Daily</button>
-            <button class="period-tab">📆 Weekly</button>
-            <button class="period-tab">🗓️ Monthly</button>
-            <button class="period-tab">📊 Yearly</button>
+            <button class="period-tab {% if period_type == 'daily' or not period_type %}active{% endif %}"
+                    onclick="filterByPeriod('daily')">
+              {% include "librarymanagement/components/icons/calendar.svg" %}
+              Daily
+            </button>
+            <button class="period-tab {% if period_type == 'weekly' %}active{% endif %}"
+                    onclick="filterByPeriod('weekly')">
+              {% include "librarymanagement/components/icons/calendar.svg" %}
+              Weekly
+            </button>
+            <button class="period-tab {% if period_type == 'monthly' %}active{% endif %}"
+                    onclick="filterByPeriod('monthly')">
+              {% include "librarymanagement/components/icons/calendar.svg" %}
+              Monthly
+            </button>
+            <button class="period-tab {% if period_type == 'yearly' %}active{% endif %}"
+                    onclick="filterByPeriod('yearly')">
+              {% include "librarymanagement/components/icons/chart-bar.svg" %}
+              Yearly
+            </button>
           </div>
           <!-- Trending Books Grid -->
           <div class="trending-grid">
@@ -37,9 +53,11 @@
                 <div class="trending-card">
                   <div class="trending-badge {% if item.popularity_score > 80 %}hot{% else %}rising{% endif %}">
                     {% if item.popularity_score > 80 %}
-                      🔥 HOT
+                      {% include "librarymanagement/components/icons/flame.svg" %}
+                      HOT
                     {% else %}
-                      📈 RISING
+                      {% include "librarymanagement/components/icons/chart-line.svg" %}
+                      RISING
                     {% endif %}
                   </div>
                   <div class="trending-cover">
@@ -97,60 +115,15 @@
               </div>
             {% endif %}
           </div>
-          <!-- Insights Card -->
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">📈 Trending Insights</h3>
-            </div>
-            <div class="grid-2">
-              <div>
-                <h4>Most Popular Categories</h4>
-                <ul class="top-list">
-                  <li class="top-list-item">
-                    <div class="top-list-rank">1</div>
-                    <div class="top-list-info">
-                      <div class="top-list-name">Fiction</div>
-                      <div class="top-list-meta">42% of all borrows</div>
-                    </div>
-                    <div class="top-list-value">156</div>
-                  </li>
-                  <li class="top-list-item">
-                    <div class="top-list-rank">2</div>
-                    <div class="top-list-info">
-                      <div class="top-list-name">Science</div>
-                      <div class="top-list-meta">28% of all borrows</div>
-                    </div>
-                    <div class="top-list-value">104</div>
-                  </li>
-                  <li class="top-list-item">
-                    <div class="top-list-rank">3</div>
-                    <div class="top-list-info">
-                      <div class="top-list-name">History</div>
-                      <div class="top-list-meta">18% of all borrows</div>
-                    </div>
-                    <div class="top-list-value">67</div>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4>Growth Trends</h4>
-                <div class="stat-card">
-                  <div class="stat-value text-success">+24%</div>
-                  <div class="stat-label">Increase in borrows this month</div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-value text-primary">+15%</div>
-                  <div class="stat-label">More unique book views</div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-value text-warning">+8%</div>
-                  <div class="stat-label">New user registrations</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Insights Card (implement when analytics data is available) -->
         </div>
       </main>
     </div>
+    <script>
+      function filterByPeriod(period) {
+        // Update URL with period parameter and reload
+        window.location.href = `?period=${period}`;
+      }
+    </script>
   </body>
 </html>

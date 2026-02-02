@@ -35,6 +35,23 @@
   justify-content: center;
   font-size: 1.125rem;
   flex-shrink: 0;
+  transition: all var(--transition-base);
+}
+
+/* SVG Icon Styling for Activities */
+.activity-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+  transition: transform var(--transition-base);
+}
+
+.activity-item:hover .activity-icon {
+  transform: scale(1.1);
+}
+
+.activity-item:hover .activity-icon svg {
+  transform: rotate(5deg);
 }
 
 .activity-icon.view {

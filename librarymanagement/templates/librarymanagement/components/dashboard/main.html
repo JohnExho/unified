@@ -3,18 +3,16 @@
   <main class="main-content">
     <div class="content-wrapper">
       {% block main-content %}
-      {% include 'librarymanagement/components/dashboard/header.html' %}
-      {% include 'librarymanagement/components/dashboard/stats-grid.html' %}
-
-      <div class="dashboard-cards-row">
-        {% include 'librarymanagement/components/dashboard/grid-cards.html' %}
-        {% include 'librarymanagement/components/dashboard/trends-section.html' %}
-      </div>
-
-      <div class="activity-overview-card">
-        {% include 'librarymanagement/components/dashboard/library-activities.html' %}
-      </div>
-      {% endblock %}
+        {% include "librarymanagement/components/dashboard/header.html" %}
+        {% include "librarymanagement/components/dashboard/stats-grid.html" %}
+        <div class="dashboard-cards-row">
+          {% include "librarymanagement/components/dashboard/grid-cards.html" %}
+          {% include "librarymanagement/components/dashboard/trends-section.html" %}
+        </div>
+        <div class="activity-overview-card">
+          {% include "librarymanagement/components/dashboard/library-activities.html" %}
+        </div>
+      {% endblock main-content %}
     </div>
   </main>
 </div>

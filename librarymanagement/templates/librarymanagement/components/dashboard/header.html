@@ -5,10 +5,10 @@
   </div>
   <div class="dashboard-actions">
     <button class="btn btn-outline" onclick="exportData()">
-      <span>📥</span> Export
+      <span>{% include "librarymanagement/components/icons/book-upload.svg" %}</span> Export
     </button>
     <a href="{% url 'librarymanagement:add_book' %}" class="btn btn-primary">
-      <span>➕</span> Add Book
+      <span>{% include "librarymanagement/components/icons/plus.svg" %}</span> Add Book
     </a>
   </div>
 </div>

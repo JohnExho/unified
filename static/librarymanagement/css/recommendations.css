@@ -143,6 +143,13 @@
   box-shadow: var(--shadow-md);
 }
 
+/* SVG Icon Styling for Trending Badge */
+.trending-badge svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5;
+}
+
 .trending-badge.hot {
   background: linear-gradient(135deg, #f59e0b, #dc2626);
 }
@@ -260,6 +267,16 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* SVG Icon Styling for Period Tabs */
+.period-tab svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
 }
 
 .period-tab:hover {

@@ -23,55 +23,60 @@
           <div class="page-header">
             <h1 class="page-title">Reports Dashboard</h1>
             <p class="page-description">Generate and view library analytics reports</p>
+            {% if report_stats %}
+              <div class="page-stats">
+                <span class="stat-badge">Total Reports: {{ report_stats.total_reports }}</span>
+              </div>
+            {% endif %}
           </div>
           <!-- Report Types Grid -->
           <div class="reports-grid">
             <div class="report-card" onclick="openReportGenerator('usage')">
-              <div class="report-card-icon usage">📊</div>
+              <div class="report-card-icon usage">{% include "librarymanagement/components/icons/chart-bar.svg" %}</div>
               <h3 class="report-card-title">Usage Report</h3>
               <p class="report-card-description">Analyze library resource usage patterns and statistics</p>
               <div class="report-card-meta">
-                <span>Last generated: 2 days ago</span>
+                <span>Last generated: {{ report_stats.last_generated.usage|default:"Never" }}</span>
               </div>
             </div>
             <div class="report-card" onclick="openReportGenerator('circulation')">
-              <div class="report-card-icon circulation">🔄</div>
+              <div class="report-card-icon circulation">{% include "librarymanagement/components/icons/refresh.svg" %}</div>
               <h3 class="report-card-title">Circulation Report</h3>
               <p class="report-card-description">Track book borrowing, returns, and circulation metrics</p>
               <div class="report-card-meta">
-                <span>Last generated: 5 days ago</span>
+                <span>Last generated: {{ report_stats.last_generated.circulation|default:"Never" }}</span>
               </div>
             </div>
             <div class="report-card" onclick="openReportGenerator('trending')">
-              <div class="report-card-icon trending">🔥</div>
+              <div class="report-card-icon trending">{% include "librarymanagement/components/icons/flame.svg" %}</div>
               <h3 class="report-card-title">Trending Analysis</h3>
               <p class="report-card-description">Identify popular books and trending topics</p>
               <div class="report-card-meta">
-                <span>Last generated: 1 week ago</span>
+                <span>Last generated: {{ report_stats.last_generated.trending|default:"Never" }}</span>
               </div>
             </div>
-            <div class="report-card" onclick="openReportGenerator('behavior')">
-              <div class="report-card-icon behavior">👥</div>
+            <div class="report-card" onclick="openReportGenerator('user_behavior')">
+              <div class="report-card-icon behavior">{% include "librarymanagement/components/icons/users.svg" %}</div>
               <h3 class="report-card-title">User Behavior</h3>
               <p class="report-card-description">Understand user patterns and engagement levels</p>
               <div class="report-card-meta">
-                <span>Last generated: 3 days ago</span>
+                <span>Last generated: {{ report_stats.last_generated.user_behavior|default:"Never" }}</span>
               </div>
             </div>
             <div class="report-card" onclick="openReportGenerator('inventory')">
-              <div class="report-card-icon inventory">📚</div>
+              <div class="report-card-icon inventory">{% include "librarymanagement/components/icons/books.svg" %}</div>
               <h3 class="report-card-title">Inventory Report</h3>
               <p class="report-card-description">Review collection status and availability</p>
               <div class="report-card-meta">
-                <span>Last generated: 1 day ago</span>
+                <span>Last generated: {{ report_stats.last_generated.inventory|default:"Never" }}</span>
               </div>
             </div>
             <div class="report-card" onclick="openReportGenerator('acquisition')">
-              <div class="report-card-icon acquisition">➕</div>
+              <div class="report-card-icon acquisition">{% include "librarymanagement/components/icons/plus.svg" %}</div>
               <h3 class="report-card-title">Acquisition Recommendation</h3>
               <p class="report-card-description">Suggestions for new books to acquire</p>
               <div class="report-card-meta">
-                <span>Last generated: 2 weeks ago</span>
+                <span>Last generated: {{ report_stats.last_generated.acquisition|default:"Never" }}</span>
               </div>
             </div>
           </div>
@@ -130,45 +135,89 @@
           <div class="report-history">
             <div class="report-history-header">
               <h3>Recent Reports</h3>
+              <span class="badge">{{ recent_reports|length }} reports</span>
             </div>
-            <div class="report-history-item">
-              <div class="report-history-icon">📊</div>
-              <div class="report-history-content">
-                <div class="report-history-title">Monthly Usage Report - January 2026</div>
-                <div class="report-history-meta">Generated on Jan 29, 2026 • 2.4 MB • PDF</div>
+            {% if recent_reports %}
+              {% for report in recent_reports %}
+                <div class="report-history-item">
+                  <div class="report-history-icon">
+                    {% if report.report_type == 'usage' %}
+                      📊
+                    {% elif report.report_type == 'circulation' %}
+                      🔄
+                    {% elif report.report_type == 'trending' %}
+                      🔥
+                    {% elif report.report_type == 'user_behavior' %}
+                      👥
+                    {% elif report.report_type == 'inventory' %}
+                      📚
+                    {% elif report.report_type == 'acquisition' %}
+                      ➕
+                    {% else %}
+                      📄
+                    {% endif %}
+                  </div>
+                  <div class="report-history-content">
+                    <div class="report-history-title">{{ report.title }}</div>
+                    <div class="report-history-meta">
+                      Generated on {{ report.generated_at|date:"M d, Y" }}
+                      {% if report.generated_by %}by {{ report.generated_by.username }}{% endif %}
+                      • {{ report.period_start|date:"M d" }} - {{ report.period_end|date:"M d, Y" }}
+                    </div>
+                    {% if report.summary %}<div class="report-history-summary">{{ report.summary|truncatewords:20 }}</div>{% endif %}
+                  </div>
+                  <div class="report-history-actions">
+                    <button class="btn btn-outline btn-sm"
+                            onclick="viewReport('{{ report.id }}')">👁 View</button>
+                    {% if report.file %}<a href="{{ report.file.url }}" download class="btn btn-primary btn-sm">⬇ Download</a>{% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty-state">
+                <p>Generate your first report using the form above.</p>
               </div>
-              <div class="report-history-actions">
-                <button class="btn btn-outline btn-sm">👁 View</button>
-                <button class="btn btn-primary btn-sm">⬇ Download</button>
-              </div>
-            </div>
-            <div class="report-history-item">
-              <div class="report-history-icon">🔄</div>
-              <div class="report-history-content">
-                <div class="report-history-title">Circulation Report - Q4 2025</div>
-                <div class="report-history-meta">Generated on Jan 24, 2026 • 1.8 MB • PDF</div>
-              </div>
-              <div class="report-history-actions">
-                <button class="btn btn-outline btn-sm">👁 View</button>
-                <button class="btn btn-primary btn-sm">⬇ Download</button>
-              </div>
-            </div>
-            <div class="report-history-item">
-              <div class="report-history-icon">🔥</div>
-              <div class="report-history-content">
-                <div class="report-history-title">Trending Books Analysis - January 2026</div>
-                <div class="report-history-meta">Generated on Jan 22, 2026 • 3.1 MB • PDF</div>
-              </div>
-              <div class="report-history-actions">
-                <button class="btn btn-outline btn-sm">👁 View</button>
-                <button class="btn btn-primary btn-sm">⬇ Download</button>
-              </div>
-            </div>
+            {% endif %}
           </div>
         </div>
       </main>
     </div>
     <script>
+      // Display Django messages
+      window.DJANGO_MESSAGES = [
+      {% for message in messages %}
+        {
+          level: "{{ message.tags }}",
+          text: "{{ message|escapejs }}"
+        }
+        {% if not forloop.last %},{% endif %}
+      {% endfor %}
+      ];
+      if (window.DJANGO_MESSAGES && window.DJANGO_MESSAGES.length > 0) {
+        window.DJANGO_MESSAGES.forEach(msg => {
+          Swal.fire({
+            icon: msg.level === 'error' ? 'error' : msg.level === 'warning' ? 'warning' : 'success',
+            title: msg.level.charAt(0).toUpperCase() + msg.level.slice(1),
+            text: msg.text,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 5000,
+            timerProgressBar: true
+          });
+        });
+      }
+
+      function viewReport(reportId) {
+        Swal.fire({
+          title: 'Report Details',
+          html: '<p>Report viewing feature coming soon.</p><p>Report ID: ' + reportId + '</p>',
+          icon: 'info',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#2563eb'
+        });
+      }
+
       function openReportGenerator(type) {
         document.querySelector('select[name="report_type"]').value = type;
         document

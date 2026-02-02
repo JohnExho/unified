@@ -403,6 +403,16 @@ body {
   font-size: 0.875rem;
   color: var(--text-secondary);
   transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* SVG Icon Styling for View Toggle */
+.view-toggle button svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
 }
 
 .view-toggle button.active {
@@ -444,6 +454,14 @@ body {
   font-size: 3rem;
   color: white;
   position: relative;
+}
+
+/* SVG Icon Styling for Book Covers */
+.book-cover svg {
+  width: 80px;
+  height: 80px;
+  stroke-width: 1.5;
+  opacity: 0.9;
 }
 
 .book-cover img {
@@ -504,6 +522,17 @@ body {
   border-radius: var(--radius-sm);
   object-fit: cover;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+/* SVG Icon Styling for Book Thumbnails */
+.book-thumbnail svg {
+  width: 28px;
+  height: 28px;
+  stroke-width: 1.5;
 }
 
 .book-details-cell {
