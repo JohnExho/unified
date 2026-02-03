@@ -1,0 +1,97 @@
+<!-- Reservations Grid -->
+<div class="reservations-grid">
+  {% if reservations %}
+    {% for reservation in reservations %}
+      <div class="reservation-card {% if reservation.status == 'ready' %}ready{% elif reservation.status == 'expired' %}expired{% endif %}">
+        <div class="reservation-card-header">
+          <div class="reservation-user">
+            <div class="avatar avatar-sm">{{ reservation.user.username|first|upper }}</div>
+            <div>
+              <div class="reservation-user-name">{{ reservation.user.username }}</div>
+            </div>
+          </div>
+          {% if reservation.status == 'pending' %}
+            <span class="badge badge-warning">{{ reservation.get_status_display }}</span>
+          {% elif reservation.status == 'ready' %}
+            <span class="badge badge-success">{{ reservation.get_status_display }}</span>
+          {% elif reservation.status == 'fulfilled' %}
+            <span class="badge badge-secondary">{{ reservation.get_status_display }}</span>
+          {% else %}
+            <span class="badge badge-destructive">{{ reservation.get_status_display }}</span>
+          {% endif %}
+        </div>
+        <div class="reservation-card-body">
+          {% if reservation.status == 'ready' %}
+            <div class="expiry-warning">
+              {% include "librarymanagement/components/icons/calendar.svg" %}
+              Expires soon - notify user
+            </div>
+          {% endif %}
+          <div class="reservation-book">
+            <div class="reservation-book-title">{{ reservation.book.title }}</div>
+            <div class="reservation-book-meta">
+              {{ reservation.book.accession_number }}
+              {% if reservation.book.authors.all %}• {{ reservation.book.authors.all.0.full_name }}{% endif %}
+            </div>
+          </div>
+          <div class="reservation-dates">
+            <div class="reservation-date-item">
+              <div class="reservation-date-label">Reserved On</div>
+              <div class="reservation-date-value">{{ reservation.reservation_date|date:"M d, Y" }}</div>
+            </div>
+            <div class="reservation-date-item">
+              <div class="reservation-date-label">Expires On</div>
+              <div class="reservation-date-value">{{ reservation.expiry_date|date:"M d, Y" }}</div>
+            </div>
+          </div>
+          {% if reservation.notified %}
+            <div class="notified-badge">
+              {% include "librarymanagement/components/icons/check.svg" %}
+              User Notified on {{ reservation.notified_at|date:"M d" }}
+            </div>
+          {% endif %}
+          {% if reservation.notes %}
+            <p class="text-sm text-secondary mt-md">
+              <strong>Notes:</strong> {{ reservation.notes }}
+            </p>
+          {% endif %}
+        </div>
+        <div class="reservation-card-footer">
+          {% if reservation.status == 'pending' %}
+            <button class="button button-default button-sm"
+                    onclick="markReady('{{ reservation.id }}')">
+              {% include "librarymanagement/components/icons/check.svg" %}
+              Mark Ready
+            </button>
+          {% elif reservation.status == 'ready' %}
+            <button class="button button-secondary button-sm"
+                    onclick="notifyUser('{{ reservation.id }}')">
+              {% include "librarymanagement/components/icons/mail.svg" %}
+              Notify User
+            </button>
+            <button class="button button-default button-sm"
+                    onclick="fulfillReservation('{{ reservation.id }}')">
+              {% include "librarymanagement/components/icons/check.svg" %}
+              Fulfill
+            </button>
+          {% endif %}
+          {% if reservation.status != 'fulfilled' and reservation.status != 'cancelled' %}
+            <button class="button button-destructive button-sm"
+                    onclick="cancelReservation('{{ reservation.id }}')">
+              {% include "librarymanagement/components/icons/x.svg" %}
+              Cancel
+            </button>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <div>
+        <div class="empty-state-icon">{% include "librarymanagement/components/icons/book.svg" %}</div>
+        <h3>No Reservations</h3>
+        <p>There are currently no book reservations to display.</p>
+      </div>
+    </div>
+  {% endif %}
+</div>

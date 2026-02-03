@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Book - Library Management{% endblock title %}
+
+{% block meta_description %}Edit book details in the Library Management System.{% endblock meta_description %}
+
+{% block meta_keywords %}library, edit book, management, books{% endblock meta_keywords %}
+
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet">
+{% endblock extra_head %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Edit Book: {{ book.title }}</h5>
+        </div>
+        <div class="card-body">
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+
+          <form method="post" enctype="multipart/form-data" id="editBookForm">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.library.id_for_label }}" class="form-label">
+                  Library {% if form.library.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ form.library }}
+                {% if form.library.errors %}
+                  <div class="invalid-feedback d-block">{{ form.library.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.accession_number.id_for_label }}" class="form-label">
+                  Accession Number {% if form.accession_number.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ form.accession_number }}
+                {% if form.accession_number.help_text %}
+                  <small class="form-text text-muted">{{ form.accession_number.help_text }}</small>
+                {% endif %}
+                {% if form.accession_number.errors %}
+                  <div class="invalid-feedback d-block">{{ form.accession_number.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-8 mb-3">
+                <label for="{{ form.title.id_for_label }}" class="form-label">
+                  Title {% if form.title.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                  <div class="invalid-feedback d-block">{{ form.title.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.isbn.id_for_label }}" class="form-label">
+                  ISBN {% if form.isbn.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ form.isbn }}
+                {% if form.isbn.errors %}
+                  <div class="invalid-feedback d-block">{{ form.isbn.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form.subtitle.id_for_label }}" class="form-label">Subtitle</label>
+              {{ form.subtitle }}
+              {% if form.subtitle.errors %}
+                <div class="invalid-feedback d-block">{{ form.subtitle.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="authors_tagify" class="form-label">
+                  Authors {% if form.authors.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                <input type="text" id="authors_tagify" name="authors_tagify" class="form-control">
+                {{ form.authors }}
+                {% if form.authors.errors %}
+                  <div class="invalid-feedback d-block">{{ form.authors.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.publisher.id_for_label }}" class="form-label">
+                  Publisher {% if form.publisher.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ form.publisher }}
+                {% if form.publisher.errors %}
+                  <div class="invalid-feedback d-block">{{ form.publisher.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.publication_year.id_for_label }}" class="form-label">Publication Year</label>
+                {{ form.publication_year }}
+                {% if form.publication_year.errors %}
+                  <div class="invalid-feedback d-block">{{ form.publication_year.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.edition.id_for_label }}" class="form-label">Edition</label>
+                {{ form.edition }}
+                {% if form.edition.errors %}
+                  <div class="invalid-feedback d-block">{{ form.edition.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.language.id_for_label }}" class="form-label">Language</label>
+                {{ form.language }}
+                {% if form.language.errors %}
+                  <div class="invalid-feedback d-block">{{ form.language.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="categories_tagify" class="form-label">
+                Categories {% if form.categories.field.required %}<span class="text-danger">*</span>{% endif %}
+              </label>
+              <input type="text" id="categories_tagify" name="categories_tagify" class="form-control">
+              {{ form.categories }}
+              {% if form.categories.errors %}
+                <div class="invalid-feedback d-block">{{ form.categories.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.subject.id_for_label }}" class="form-label">Subject</label>
+                {{ form.subject }}
+                {% if form.subject.errors %}
+                  <div class="invalid-feedback d-block">{{ form.subject.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.pages.id_for_label }}" class="form-label">Pages</label>
+                {{ form.pages }}
+                {% if form.pages.errors %}
+                  <div class="invalid-feedback d-block">{{ form.pages.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.resource_type.id_for_label }}" class="form-label">
+                  Resource Type {% if form.resource_type.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ form.resource_type }}
+                {% if form.resource_type.errors %}
+                  <div class="invalid-feedback d-block">{{ form.resource_type.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.status.id_for_label }}" class="form-label">
+                  Status {% if form.status.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ form.status }}
+                {% if form.status.errors %}
+                  <div class="invalid-feedback d-block">{{ form.status.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.shelf_location.id_for_label }}" class="form-label">Shelf Location</label>
+                {{ form.shelf_location }}
+                {% if form.shelf_location.errors %}
+                  <div class="invalid-feedback d-block">{{ form.shelf_location.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.total_copies.id_for_label }}" class="form-label">
+                  Total Copies {% if form.total_copies.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ form.total_copies }}
+                {% if form.total_copies.errors %}
+                  <div class="invalid-feedback d-block">{{ form.total_copies.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.available_copies.id_for_label }}" class="form-label">
+                  Available Copies {% if form.available_copies.field.required %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                {{ form.available_copies }}
+                {% if form.available_copies.errors %}
+                  <div class="invalid-feedback d-block">{{ form.available_copies.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+              {{ form.description }}
+              {% if form.description.errors %}
+                <div class="invalid-feedback d-block">{{ form.description.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.cover_image.id_for_label }}" class="form-label">Cover Image</label>
+                {{ form.cover_image }}
+                {% if book.cover_image %}
+                  <div class="mt-2">
+                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" style="max-width: 200px; max-height: 300px;">
+                    <p class="text-muted small">Current cover image (upload new to replace)</p>
+                  </div>
+                {% endif %}
+                {% if form.cover_image.errors %}
+                  <div class="invalid-feedback d-block">{{ form.cover_image.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.digital_file.id_for_label }}" class="form-label">Digital File</label>
+                {{ form.digital_file }}
+                {% if book.digital_file %}
+                  <p class="text-muted small mt-2">Current file: {{ book.digital_file.name }} (upload new to replace)</p>
+                {% endif %}
+                {% if form.digital_file.errors %}
+                  <div class="invalid-feedback d-block">{{ form.digital_file.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Save Changes
+              </button>
+              <a href="{% url 'librarymanagement:books_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times me-2"></i>Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Tagify for categories
+    const categoriesInput = document.getElementById('categories_tagify');
+    const categoriesSelect = document.getElementById('{{ form.categories.id_for_label }}');
+    
+    if (categoriesInput && categoriesSelect) {
+        // Get existing categories
+        const existingCategories = Array.from(categoriesSelect.selectedOptions).map(opt => ({
+            value: opt.text,
+            id: opt.value
+        }));
+        
+        const categoriesTagify = new Tagify(categoriesInput, {
+            whitelist: Array.from(categoriesSelect.options).map(opt => ({
+                value: opt.text,
+                id: opt.value
+            })),
+            enforceWhitelist: false,
+            dropdown: {
+                enabled: 0,
+                maxItems: 20
+            }
+        });
+        
+        // Set initial values
+        categoriesTagify.addTags(existingCategories);
+        
+        // Hide original select
+        categoriesSelect.style.display = 'none';
+    }
+    
+    // Initialize Tagify for authors
+    const authorsInput = document.getElementById('authors_tagify');
+    const authorsSelect = document.getElementById('{{ form.authors.id_for_label }}');
+    
+    if (authorsInput && authorsSelect) {
+        // Get existing authors
+        const existingAuthors = Array.from(authorsSelect.selectedOptions).map(opt => ({
+            value: opt.text,
+            id: opt.value
+        }));
+        
+        const authorsTagify = new Tagify(authorsInput, {
+            whitelist: Array.from(authorsSelect.options).map(opt => ({
+                value: opt.text,
+                id: opt.value
+            })),
+            enforceWhitelist: false,
+            dropdown: {
+                enabled: 0,
+                maxItems: 20
+            }
+        });
+        
+        // Set initial values
+        authorsTagify.addTags(existingAuthors);
+        
+        // Hide original select
+        authorsSelect.style.display = 'none';
+    }
+});
+</script>
+{% endblock extra_js %}

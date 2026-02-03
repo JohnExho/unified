@@ -1,0 +1,18 @@
+<div class="table-container">
+  <table class="table {% if table_hover %}table-hover{% endif %} {% if table_striped %}table-striped{% endif %} {% if table_bordered %}table-bordered{% endif %} {{ table_class|default:'' }}">
+    {% if table_caption %}<caption>{{ table_caption }}</caption>{% endif %}
+    <thead>
+      <tr class="table-row">
+        {% for header in table_headers %}<th class="table-head">{{ header }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% include table_rows %}
+    </tbody>
+    {% if table_footer %}
+      <tfoot>
+        {% include table_footer %}
+      </tfoot>
+    {% endif %}
+  </table>
+</div>

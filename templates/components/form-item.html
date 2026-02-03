@@ -1,0 +1,15 @@
+<div class="form-item {% if form_item_error %}form-item-error{% endif %} {% if form_item_success %}form-item-success{% endif %} {{ form_item_class|default:'' }}">
+  {% if form_item_label %}
+    {% include "components/label.html" with label_for=form_item_id label_text=form_item_label label_required=form_item_required label_error=form_item_error label_success=form_item_success %}
+  {% endif %}
+  <div class="form-control">
+    {% if form_item_html %}
+      {{ form_item_html|safe }}
+    {% else %}
+      {% include form_item_content %}
+    {% endif %}
+  </div>
+  {% if form_item_description %}<p class="form-description">{{ form_item_description }}</p>{% endif %}
+  {% if form_item_error %}<p class="form-message form-message-error">{{ form_item_error }}</p>{% endif %}
+  {% if form_item_success %}<p class="form-message form-message-success">{{ form_item_success }}</p>{% endif %}
+</div>

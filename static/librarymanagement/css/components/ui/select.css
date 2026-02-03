@@ -1,0 +1,73 @@
+/* =========================
+   Select Component (shadcn-ui style)
+========================= */
+
+.select {
+  display: flex;
+  width: 100%;
+  min-height: 2.5rem;
+
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-input);
+  background-color: var(--color-background);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--text-sm);
+  color: var(--color-foreground);
+  transition: all 150ms ease-in-out;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--spacing-sm) center;
+  padding-right: calc(var(--spacing-md) + 1.5rem);
+}
+
+.select:hover {
+  border-color: var(--color-border);
+}
+
+.select:focus {
+  border-color: var(--color-ring);
+  outline: 2px solid var(--color-ring);
+  outline-offset: 0;
+}
+
+.select:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background-color: var(--color-muted);
+}
+
+/* Select Sizes */
+.select-sm {
+  height: 1.5rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--text-xs);
+  padding-right: calc(var(--spacing-sm) + 1.5rem);
+}
+
+.select-lg {
+  height: 3rem;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--text-base);
+  padding-right: calc(var(--spacing-lg) + 1.5rem);
+}
+
+/* Error State */
+.select-error {
+  border-color: var(--destructive);
+}
+
+.select-error:focus {
+  outline-color: var(--destructive);
+}
+
+/* Success State */
+.select-success {
+  border-color: var(--success);
+}
+
+.select-success:focus {
+  outline-color: var(--success);
+}

@@ -1,0 +1,39 @@
+<!-- Filters -->
+<div class="transaction-filters">
+  <form method="get" class="transaction-filters-form">
+    <div class="form-group mb-0">
+      <label for="status" class="label">Status</label>
+      <select id="status" name="status" class="select">
+        <option value="">All Statuses</option>
+        <option value="active">Active</option>
+        <option value="overdue">Overdue</option>
+        <option value="returned">Returned</option>
+        <option value="lost">Lost</option>
+      </select>
+    </div>
+    <div class="form-group mb-0">
+      <label for="user" class="label">User</label>
+      <input type="text"
+             id="user"
+             name="user"
+             class="input input-sm"
+             placeholder="Search by user..." />
+    </div>
+    <div class="form-group mb-0">
+      <label for="book" class="label">Book</label>
+      <input type="text"
+             id="book"
+             name="book"
+             class="input input-sm"
+             placeholder="Search by book..." />
+    </div>
+    <div class="form-group mb-0">
+      <label class="label">&nbsp;</label>
+      <div class="button-group">
+        <button type="submit" class="button button-default">Filter</button>
+        <a href="{% url 'librarymanagement:transactions_list' %}"
+           class="button button-ghost">Reset</a>
+      </div>
+    </div>
+  </form>
+</div>

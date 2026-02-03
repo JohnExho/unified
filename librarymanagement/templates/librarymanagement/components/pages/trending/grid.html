@@ -1,0 +1,64 @@
+{% load static %}
+<div class="trending-grid">
+  {% if trending %}
+    {% for item in trending %}
+      <div class="trending-card">
+        {% if item.popularity_score > 80 %}
+          <span class="badge badge-destructive trending-badge hot">
+            {% include "librarymanagement/components/icons/flame.svg" %}
+            HOT
+          </span>
+        {% else %}
+          <span class="badge badge-default trending-badge rising">
+            {% include "librarymanagement/components/icons/chart-line.svg" %}
+            RISING
+          </span>
+        {% endif %}
+        <div class="trending-cover">
+          {% if item.book.cover_image %}
+            <img src="{{ item.book.cover_image.url }}"
+                 alt="{{ item.book.title }}"
+                 width="120"
+                 height="180" />
+          {% else %}
+            {% include "librarymanagement/components/icons/books.svg" %}
+          {% endif %}
+        </div>
+        <div class="trending-body">
+          <h3 class="trending-title">{{ item.book.title }}</h3>
+          <p class="trending-author">
+            {% if item.book.authors.all %}By {{ item.book.authors.all.0.full_name }}{% endif %}
+          </p>
+          <div class="trending-stats">
+            <div class="trending-stat">
+              <span class="trending-stat-value">{{ item.view_count }}</span>
+              <span class="trending-stat-label">Views</span>
+            </div>
+            <div class="trending-stat">
+              <span class="trending-stat-value">{{ item.borrow_count }}</span>
+              <span class="trending-stat-label">Borrows</span>
+            </div>
+            <div class="trending-stat">
+              <span class="trending-stat-value">{{ item.popularity_score }}</span>
+              <span class="trending-stat-label">Score</span>
+            </div>
+          </div>
+          <div class="trending-actions">
+            <button class="button button-default button-sm"
+                    onclick="viewBookDetails('{{ item.book.id }}')">View Book</button>
+            <button class="button button-outline button-sm"
+                    onclick="borrowBook('{{ item.book.id }}')">Borrow</button>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="card empty-state-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">{% include "librarymanagement/components/icons/chart-bar.svg" %}</div>
+        <h3>No Trending Books</h3>
+        <p>No trending data available for the selected period.</p>
+      </div>
+    </div>
+  {% endif %}
+</div>

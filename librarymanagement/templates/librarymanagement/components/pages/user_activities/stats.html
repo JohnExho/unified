@@ -1,0 +1,31 @@
+<!-- Activity Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="card-header">
+      <div class="stat-icon view">{% include "librarymanagement/components/icons/eye.svg" %}</div>
+    </div>
+    <div class="stat-value">{{ view_count }}</div>
+    <div class="stat-label">Book Views</div>
+  </div>
+  <div class="stat-card">
+    <div class="card-header">
+      <div class="stat-icon info">{% include "librarymanagement/components/icons/search.svg" %}</div>
+    </div>
+    <div class="stat-value">{{ search_count }}</div>
+    <div class="stat-label">Searches</div>
+  </div>
+  <div class="stat-card">
+    <div class="card-header">
+      <div class="stat-icon success">{% include "librarymanagement/components/icons/books.svg" %}</div>
+    </div>
+    <div class="stat-value">{{ borrow_count }}</div>
+    <div class="stat-label">Borrowed</div>
+  </div>
+  <div class="stat-card">
+    <div class="card-header">
+      <div class="stat-icon warning">{% include "librarymanagement/components/icons/bookmark.svg" %}</div>
+    </div>
+    <div class="stat-value">{{ reserve_count }}</div>
+    <div class="stat-label">Reserved</div>
+  </div>
+</div>

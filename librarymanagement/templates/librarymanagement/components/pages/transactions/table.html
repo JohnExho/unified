@@ -1,0 +1,103 @@
+<!-- Transactions Table -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">All Transactions</h3>
+    <div class="btn-group">
+      {% include "components/button.html" with button_text="Export" button_variant="outline" button_size="sm" %}
+    </div>
+  </div>
+  <div class="table-container">
+    <table class="table transaction-table">
+      <thead class="table-header">
+        <tr class="table-row">
+          <th class="table-head">User</th>
+          <th class="table-head">Book</th>
+          <th class="table-head">Borrowed Date</th>
+          <th class="table-head">Due Date</th>
+          <th class="table-head">Status</th>
+          <th class="table-head">Fine</th>
+          <th class="table-head">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="table-body">
+        {% for transaction in transactions %}
+          <tr class="table-row">
+            <td class="table-cell">
+              <div class="user-cell">
+                {% include "components/avatar.html" with avatar_fallback=transaction.user.username|first|upper avatar_size="xs" %}
+                <span>{{ transaction.user.username }}</span>
+              </div>
+            </td>
+            <td class="table-cell">
+              <div class="book-cell">
+                <div class="book-title">{{ transaction.book.title }}</div>
+                <div class="book-accession">{{ transaction.book.accession_number }}</div>
+              </div>
+            </td>
+            <td class="table-cell">
+              <div class="date-primary">{{ transaction.borrowed_date|date:"M d, Y" }}</div>
+              <div class="date-secondary">{{ transaction.borrowed_date|date:"h:i A" }}</div>
+            </td>
+            <td class="table-cell">
+              <div class="date-primary">{{ transaction.due_date|date:"M d, Y" }}</div>
+              {% if transaction.status == 'overdue' %}
+                <div class="date-secondary">
+                  <span class="overdue-indicator">⚠️ {{ transaction.days_overdue }} days overdue</span>
+                </div>
+              {% endif %}
+            </td>
+            <td class="table-cell">
+              {% if transaction.status == 'active' %}
+                {% include "components/badge.html" with badge_text=transaction.get_status_display badge_variant="success" badge_dot=False %}
+              {% elif transaction.status == 'overdue' %}
+                {% include "components/badge.html" with badge_text=transaction.get_status_display badge_variant="destructive" badge_dot=False %}
+              {% elif transaction.status == 'returned' %}
+                {% include "components/badge.html" with badge_text=transaction.get_status_display badge_variant="secondary" badge_dot=False %}
+              {% else %}
+                {% include "components/badge.html" with badge_text=transaction.get_status_display badge_variant="warning" badge_dot=False %}
+              {% endif %}
+              {% if transaction.renewal_count > 0 %}
+                <span class="renewal-badge">Renewed {{ transaction.renewal_count }}x</span>
+              {% endif %}
+            </td>
+            <td class="table-cell">
+              {% if transaction.fine_amount > 0 %}
+                <span class="fine-amount">₱{{ transaction.fine_amount }}</span>
+              {% else %}
+                <span class="text-tertiary">—</span>
+              {% endif %}
+            </td>
+            <td class="table-cell">
+              <div class="transaction-actions">
+                {% if transaction.status in 'active,overdue' %}
+                  <button class="button button-default"
+                          onclick="returnBook('{{ transaction.id }}')">
+                    {% include "librarymanagement/components/icons/check.svg" %}
+                  </button>
+                  <button class="button button-secondary"
+                          onclick="renewBook('{{ transaction.id }}')">
+                    {% include "librarymanagement/components/icons/refresh.svg" %}
+                  </button>
+                {% endif %}
+                <button class="button button-outline"
+                        onclick="viewDetails('{{ transaction.id }}')">
+                  {% include "librarymanagement/components/icons/eye.svg" %}
+                </button>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <div class="empty-state-icon">{% include "librarymanagement/components/icons/folder-off.svg" %}</div>
+                <h3>No Transactions Found</h3>
+                <p>There are currently no borrowing transactions to display.</p>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

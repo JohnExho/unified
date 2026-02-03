@@ -1,0 +1,51 @@
+<div class="settings-card">
+  <div class="settings-card-header">
+    <h2 class="settings-card-title">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="16" x2="12" y2="12" />
+        <line x1="12" y1="8" x2="12.01" y2="8" />
+      </svg>
+      Account Information
+    </h2>
+    <p class="settings-card-description">Account details and status</p>
+  </div>
+  <div class="settings-card-body">
+    <div class="info-list">
+      <div class="info-item">
+        <span class="info-label">Member Since</span>
+        <span class="info-value">{{ user.date_joined|date:"F d, Y" }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Last Login</span>
+        <span class="info-value">{{ user.last_login|date:"F d, Y g:i A" }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Account Status</span>
+        <span class="info-value">
+          {% if user.is_active %}
+            {% include "components/badge.html" with variant="default" text="Active" class="badge-success" %}
+          {% else %}
+            {% include "components/badge.html" with variant="destructive" text="Inactive" class="badge-danger" %}
+          {% endif %}
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Email Verified</span>
+        <span class="info-value">
+          {% if user.is_email_verified %}
+            {% include "components/badge.html" with variant="default" text="Yes" class="badge-success" %}
+          {% else %}
+            {% include "components/badge.html" with variant="secondary" text="No" class="badge-warning" %}
+          {% endif %}
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">User ID</span>
+        <span class="info-value">
+          <code>{{ user.id }}</code>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

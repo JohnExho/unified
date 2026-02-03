@@ -1,320 +1,35 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description"
-          content="View, manage, and fulfill book reservation requests in the Library Management system." />
-    <meta name="keywords"
-          content="library, book reservations, manage reservations, library management, books, users" />
-    <title>Book Reservations - Library Management</title>
-    <link rel="stylesheet"
-          href="{% static "librarymanagement/css/library-base.css" %}" />
-    <link rel="stylesheet"
-          href="{% static "librarymanagement/css/reservations.css" %}" />
-    <style>
-      .hidden-form {
-        display: none;
-      }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  </head>
-  <body>
-    <div class="dashboard-container">
-      {% include "librarymanagement/components/sidebar.html" %}
-      <main class="main-content">
-        <div class="content-wrapper">
-          <!-- Page Header -->
-          <div class="page-header">
-            <h1 class="page-title">Book Reservations</h1>
-            <p class="page-description">Manage and fulfill book reservation requests</p>
-          </div>
-          <!-- Reservation Stats -->
-          <div class="reservation-stats">
-            <div class="reservation-stat pending">
-              <div class="reservation-stat-number">{{ pending_count }}</div>
-              <div class="reservation-stat-label">Pending</div>
-            </div>
-            <div class="reservation-stat ready">
-              <div class="reservation-stat-number">{{ ready_count }}</div>
-              <div class="reservation-stat-label">Ready</div>
-            </div>
-            <div class="reservation-stat">
-              <div class="reservation-stat-number">{{ fulfilled_count }}</div>
-              <div class="reservation-stat-label">Fulfilled</div>
-            </div>
-            <div class="reservation-stat expired">
-              <div class="reservation-stat-number">{{ expired_count }}</div>
-              <div class="reservation-stat-label">Expired</div>
-            </div>
-          </div>
-          <!-- Reservations Grid -->
-          <div class="reservations-grid">
-            {% if reservations %}
-              {% for reservation in reservations %}
-                <div class="reservation-card {% if reservation.status == 'ready' %}ready{% elif reservation.status == 'expired' %}expired{% endif %}">
-                  <div class="reservation-card-header">
-                    <div class="reservation-user">
-                      <div class="reservation-avatar">{{ reservation.user.username|first|upper }}</div>
-                      <div>
-                        <div class="reservation-user-name">{{ reservation.user.username }}</div>
-                      </div>
-                    </div>
-                    <span class="badge {% if reservation.status == 'pending' %}badge-warning {% elif reservation.status == 'ready' %}badge-success {% elif reservation.status == 'fulfilled' %}badge-info {% elif reservation.status == 'cancelled' %}badge-danger {% else %}badge-danger{% endif %}">
-                      {{ reservation.get_status_display }}
-                    </span>
-                  </div>
-                  <div class="reservation-card-body">
-                    <!-- Expiry Warning if near expiry -->
-                    {% if reservation.status == 'ready' %}<div class="expiry-warning">⏰ Expires soon - notify user</div>{% endif %}
-                    <div class="reservation-book">
-                      <div class="reservation-book-title">{{ reservation.book.title }}</div>
-                      <div class="reservation-book-meta">
-                        {{ reservation.book.accession_number }}
-                        {% if reservation.book.authors.all %}• {{ reservation.book.authors.all.0.full_name }}{% endif %}
-                      </div>
-                    </div>
-                    <div class="reservation-dates">
-                      <div class="reservation-date-item">
-                        <div class="reservation-date-label">Reserved On</div>
-                        <div class="reservation-date-value">{{ reservation.reservation_date|date:"M d, Y" }}</div>
-                      </div>
-                      <div class="reservation-date-item">
-                        <div class="reservation-date-label">Expires On</div>
-                        <div class="reservation-date-value">{{ reservation.expiry_date|date:"M d, Y" }}</div>
-                      </div>
-                    </div>
-                    {% if reservation.notified %}
-                      <div class="notified-badge">✓ User Notified on {{ reservation.notified_at|date:"M d" }}</div>
-                    {% endif %}
-                    {% if reservation.notes %}
-                      <p class="text-sm text-secondary mt-md">
-                        <strong>Notes:</strong> {{ reservation.notes }}
-                      </p>
-                    {% endif %}
-                  </div>
-                  <div class="reservation-card-footer">
-                    {% if reservation.status == 'pending' %}
-                      <button class="quick-action-btn fulfill"
-                              onclick="markReady('{{ reservation.id }}')">✓ Mark Ready</button>
-                    {% elif reservation.status == 'ready' %}
-                      <button class="quick-action-btn notify"
-                              onclick="notifyUser('{{ reservation.id }}')">🔔 Notify User</button>
-                      <button class="quick-action-btn fulfill"
-                              onclick="fulfillReservation('{{ reservation.id }}')">✓ Fulfill</button>
-                    {% endif %}
-                    {% if reservation.status != 'fulfilled' and reservation.status != 'cancelled' %}
-                      <button class="quick-action-btn cancel"
-                              onclick="cancelReservation('{{ reservation.id }}')">✕ Cancel</button>
-                    {% endif %}
-                  </div>
-                </div>
-              {% endfor %}
-            {% else %}
-              <div class="card">
-                <div class="empty-state">
-                  <div class="empty-state-icon">📖</div>
-                  <h3>No Reservations</h3>
-                  <p>There are currently no book reservations to display.</p>
-                </div>
-              </div>
-            {% endif %}
-          </div>
-          <!-- Recent Activity Timeline -->
-          {% if reservations %}
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">Reservation Timeline</h3>
-              </div>
-              <div class="reservation-timeline">
-                {% for reservation in reservations|slice:":5" %}
-                  <div class="timeline-item">
-                    <div class="timeline-marker {{ reservation.status }}">
-                      {% if reservation.status == 'pending' %}
-                        ⏳
-                      {% elif
-                        reservation.status == 'ready' %}
-                        ✓
-                      {% elif reservation.status
-                        == 'fulfilled' %}
-                        📖
-                      {% elif reservation.status == 'cancelled'
-                        %}
-                        ✕
-                      {% else %}
-                        ⌛
-                      {% endif %}
-                    </div>
-                    <div class="timeline-content">
-                      <div class="timeline-header">
-                        <div>
-                          <h4 class="timeline-title">{{ reservation.book.title }}</h4>
-                          <div class="timeline-meta">
-                            <span>Reserved by
-                              <strong>{{ reservation.user.username }}</strong></span>
-                            <span>•</span>
-                            <span>{{ reservation.reservation_date|date:"M d, Y h:i A"
-                            }}</span>
-                          </div>
-                        </div>
-                        <span class="badge {% if reservation.status == 'pending' %}badge-warning {% elif reservation.status == 'ready' %}badge-success {% elif reservation.status == 'fulfilled' %}badge-info {% else %}badge-danger{% endif %}">
-                          {{ reservation.get_status_display }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                {% endfor %}
-              </div>
-            </div>
-          {% endif %}
-        </div>
-      </main>
+{% block title %}
+  Book Reservations - Library Management
+{% endblock title %}
+{% block meta_description %}
+  View, manage, and fulfill book reservation requests in the Library Management system.
+{% endblock meta_description %}
+{% block meta_keywords %}
+  library, book reservations, manage reservations, library management, books, users
+{% endblock meta_keywords %}
+{% block extra_head %}
+  <link rel="stylesheet"
+        href="{% static 'librarymanagement/css/pages/reservations_list.css' %}" />
+{% endblock extra_head %}
+{% block content %}
+  <main class="main-container">
+    {% include "librarymanagement/components/pages/reservations/header.html" %}
+    <div class="reservation-container">
+      {% include "librarymanagement/components/pages/reservations/stats.html" %}
+      <div class="reservation-body">
+        {% include "librarymanagement/components/pages/reservations/grid.html" %}
+        {% include "librarymanagement/components/pages/reservations/timeline.html" %}
+      </div>
     </div>
-    <script>
-      function getCsrfToken() {
-        return document.querySelector('[name=csrfmiddlewaretoken]').value;
-      }
-
-      function markReady(id) {
-        Swal.fire({
-          title: "Mark as Ready?",
-          text: "This will notify the user that their book is ready for pickup.",
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonText: "Yes, mark as ready",
-          confirmButtonColor: "#10b981",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            fetch(`/library/reservations/${id}/ready/`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': getCsrfToken(),
-              },
-              body: 'notify=true'
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                Swal.fire("Success!", "Reservation marked as ready.", "success")
-                  .then(() => window.location.reload());
-              } else {
-                Swal.fire("Error!", data.message, "error");
-              }
-            })
-            .catch(error => {
-              Swal.fire("Error!", "Failed to mark reservation as ready.", "error");
-            });
-          }
-        });
-      }
-
-      function notifyUser(id) {
-        Swal.fire({
-          title: "Notify User?",
-          text: "Send a notification to the user about their reservation.",
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonText: "Yes, send notification",
-          confirmButtonColor: "#3b82f6",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            fetch(`/library/reservations/${id}/notify/`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': getCsrfToken(),
-              }
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                Swal.fire("Sent!", "User has been notified.", "success")
-                  .then(() => window.location.reload());
-              } else {
-                Swal.fire("Error!", data.message, "error");
-              }
-            })
-            .catch(error => {
-              Swal.fire("Error!", "Failed to send notification.", "error");
-            });
-          }
-        });
-      }
-
-      function fulfillReservation(id) {
-        Swal.fire({
-          title: "Fulfill Reservation?",
-          text: "Mark this reservation as fulfilled and proceed with checkout.",
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonText: "Yes, fulfill it",
-          confirmButtonColor: "#10b981",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            fetch(`/library/reservations/${id}/fulfill/`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': getCsrfToken(),
-              }
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                Swal.fire("Success!", "Reservation has been fulfilled.", "success")
-                  .then(() => window.location.reload());
-              } else {
-                Swal.fire("Error!", data.message, "error");
-              }
-            })
-            .catch(error => {
-              Swal.fire("Error!", "Failed to fulfill reservation.", "error");
-            });
-          }
-        });
-      }
-
-      function cancelReservation(id) {
-        Swal.fire({
-          title: "Cancel Reservation?",
-          text: "This action cannot be undone.",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Yes, cancel it",
-          confirmButtonColor: "#ef4444",
-          input: 'textarea',
-          inputPlaceholder: 'Reason for cancellation (optional)',
-        }).then((result) => {
-          if (result.isConfirmed) {
-            fetch(`/library/reservations/${id}/cancel/`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': getCsrfToken(),
-              },
-              body: `reason=${encodeURIComponent(result.value || '')}`
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                Swal.fire("Cancelled!", "Reservation has been cancelled.", "success")
-                  .then(() => window.location.reload());
-              } else {
-                Swal.fire("Error!", data.message, "error");
-              }
-            })
-            .catch(error => {
-              Swal.fire("Error!", "Failed to cancel reservation.", "error");
-            });
-          }
-        });
-      }
-    </script>
-    <!-- Hidden CSRF token for JavaScript -->
-    <form class="hidden-form">
-      {% csrf_token %}
-    </form>
-  </body>
-</html>
+  </main>
+{% endblock content %}
+{% block extra_scripts %}
+  <script src="{% static 'librarymanagement/js/utils.js' %}"></script>
+  <script src="{% static 'librarymanagement/js/reservation_operations.js' %}"></script>
+  <!-- Hidden CSRF token for JavaScript -->
+  <form class="hidden-form">
+    {% csrf_token %}
+  </form>
+{% endblock extra_scripts %}

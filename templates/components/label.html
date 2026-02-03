@@ -1,0 +1,5 @@
+<label for="{{ label_for }}"
+       class="label {% if label_required %}label-required{% endif %} {% if label_disabled %}label-disabled{% endif %} {% if label_error %}label-error{% endif %} {% if label_success %}label-success{% endif %} {{ label_class|default:'' }}">
+  {{ label_text }}
+  {% if label_required %}<span class="required">*</span>{% endif %}
+</label>

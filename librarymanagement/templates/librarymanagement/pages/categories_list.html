@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+  Categories - Library Management
+{% endblock title %}
+{% block meta_description %}
+  Manage book categories in the Library Management System.
+{% endblock meta_description %}
+{% block meta_keywords %}
+  library, categories, management, books
+{% endblock meta_keywords %}
+{% block content %}
+  <div class="container-fluid py-4">
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Book Categories</h5>
+            <a href="{% url 'librarymanagement:add_category' %}"
+               class="btn btn-primary btn-sm">
+              <i class="fas fa-plus me-2"></i>Add Category
+            </a>
+          </div>
+          <div class="card-body">
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                     role="alert">
+                  {{ message }}
+                  <button type="button"
+                          class="btn-close"
+                          data-bs-dismiss="alert"
+                          aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            {% endif %}
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Parent Category</th>
+                    <th>Books Count</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for category in categories %}
+                    <tr>
+                      <td>{{ category.name }}</td>
+                      <td>{{ category.description|truncatewords:10 }}</td>
+                      <td>
+                        {% if category.parent_category %}
+                          {{ category.parent_category.name }}
+                        {% else %}
+                          <span class="text-muted">None</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ category.books.count }}</td>
+                      <td>
+                        <a href="{% url 'librarymanagement:edit_category' category.id %}"
+                           class="btn btn-sm btn-info"
+                           title="Edit">
+                          <i class="fas fa-edit"></i>
+                        </a>
+                        <button type="button"
+                                class="btn btn-sm btn-danger delete-category"
+                                data-category-id="{{ category.id }}"
+                                data-category-name="{{ category.name }}"
+                                title="Delete">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="5" class="text-center text-muted py-4">No categories found. Create your first category!</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade"
+       id="deleteCategoryModal"
+       tabindex="-1"
+       aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Delete</h5>
+          <button type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete the category "<span id="categoryNameToDelete"></span>"?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteCategory">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+{% block extra_js %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let categoryIdToDelete = null;
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteCategoryModal'));
+        
+        // Handle delete button clicks
+        document.querySelectorAll('.delete-category').forEach(btn => {
+            btn.addEventListener('click', function() {
+                categoryIdToDelete = this.dataset.categoryId;
+                document.getElementById('categoryNameToDelete').textContent = this.dataset.categoryName;
+                deleteModal.show();
+            });
+        });
+        
+        // Handle confirm delete
+        document.getElementById('confirmDeleteCategory').addEventListener('click', function() {
+            if (categoryIdToDelete) {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                
+                fetch(`/librarymanagement/categories/${categoryIdToDelete}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        deleteModal.hide();
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error deleting category: ' + error);
+                });
+            }
+        });
+    });
+  </script>
+{% endblock extra_js %}

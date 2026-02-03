@@ -1,0 +1,17 @@
+{% if spinner_type == 'dots' %}
+  {# Dots Spinner #}
+  <div class="spinner-dots {% if spinner_size %}spinner-{{ spinner_size }}{% endif %} {% if spinner_variant %}spinner-{{ spinner_variant }}{% endif %} {{ spinner_class|default:'' }}">
+    <div class="spinner-dot"></div>
+    <div class="spinner-dot"></div>
+    <div class="spinner-dot"></div>
+  </div>
+{% elif spinner_type == 'pulse' %}
+  {# Pulse Spinner #}
+  <div class="spinner-pulse {% if spinner_size %}spinner-{{ spinner_size }}{% endif %} {% if spinner_variant %}spinner-{{ spinner_variant }}{% endif %} {{ spinner_class|default:'' }}">
+  </div>
+{% else %}
+  {# Circle Spinner (default) #}
+  <div class="spinner {% if spinner_size %}spinner-{{ spinner_size }}{% endif %} {% if spinner_variant %}spinner-{{ spinner_variant }}{% endif %} {{ spinner_class|default:'' }}">
+  </div>
+{% endif %}
+{% if spinner_text %}<span class="spinner-text">{{ spinner_text }}</span>{% endif %}

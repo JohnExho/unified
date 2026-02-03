@@ -1,0 +1,48 @@
+<div class="recommendations-grid">
+  {% if recommendations %}
+    {% for recommendation in recommendations %}
+      <div class="recommendation-card">
+        <div class="recommendation-cover">
+          {% if recommendation.book.cover_image %}
+            <img src="{{ recommendation.book.cover_image.url }}"
+                 alt="{{ recommendation.book.title }}"
+                 width="120"
+                 height="180" />
+          {% else %}
+            {% include "librarymanagement/components/icons/books.svg" %}
+          {% endif %}
+          <span class="badge badge-default recommendation-score">
+            {% include "librarymanagement/components/icons/star.svg" %}
+            {{ recommendation.score }}
+          </span>
+        </div>
+        <div class="recommendation-body">
+          <h3 class="recommendation-title">{{ recommendation.book.title }}</h3>
+          {% if recommendation.reason %}
+            <div class="recommendation-reason">
+              {% include "librarymanagement/components/icons/robot-face.svg" %}
+              {{ recommendation.reason }}
+            </div>
+          {% endif %}
+          <div class="recommendation-meta">
+            <span>For {{ recommendation.user.username }}</span>
+            <span>{{ recommendation.created_at|timesince }} ago</span>
+          </div>
+          <div class="recommendation-actions">
+            <button class="button button-default button-sm">View Book</button>
+            <button class="button button-outline button-sm">Dismiss</button>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="card empty-state-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">{% include "librarymanagement/components/icons/robot-face.svg" %}</div>
+        <h3>No Recommendations Yet</h3>
+        <p>Book recommendations will be generated based on user behavior and preferences.</p>
+        <button class="button button-default button-md mt-lg">Generate Recommendations</button>
+      </div>
+    </div>
+  {% endif %}
+</div>

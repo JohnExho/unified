@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Reservation History - Library Management{% endblock title %}
+
+{% block meta_description %}View your book reservation history.{% endblock meta_description %}
+
+{% block meta_keywords %}library, reservation history, books, user{% endblock meta_keywords %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">My Reservation History</h5>
+        </div>
+        <div class="card-body">
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+
+          <div class="mb-3">
+            <form method="get" class="row g-3">
+              <div class="col-auto">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                  <option value="">All Status</option>
+                  <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                  <option value="ready" {% if request.GET.status == 'ready' %}selected{% endif %}>Ready</option>
+                  <option value="fulfilled" {% if request.GET.status == 'fulfilled' %}selected{% endif %}>Fulfilled</option>
+                  <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                  <option value="expired" {% if request.GET.status == 'expired' %}selected{% endif %}>Expired</option>
+                </select>
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{% url 'librarymanagement:user_reservation_history' %}" class="btn btn-secondary">Reset</a>
+              </div>
+            </form>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Book</th>
+                  <th>Reservation Date</th>
+                  <th>Status</th>
+                  <th>Expiry Date</th>
+                  <th>Fulfilled Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for reservation in reservations %}
+                  <tr {% if reservation.status == 'expired' %}class="table-danger"{% elif reservation.status == 'ready' %}class="table-success"{% endif %}>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        {% if reservation.book.cover_image %}
+                          <img src="{{ reservation.book.cover_image.url }}" 
+                               alt="{{ reservation.book.title }}" 
+                               style="width: 40px; height: 60px; object-fit: cover; margin-right: 10px;">
+                        {% else %}
+                          <div style="width: 40px; height: 60px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; margin-right: 10px;">
+                            <i class="fas fa-book"></i>
+                          </div>
+                        {% endif %}
+                        <div>
+                          <strong>{{ reservation.book.title }}</strong>
+                          {% if reservation.book.subtitle %}<br><small class="text-muted">{{ reservation.book.subtitle }}</small>{% endif %}
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{ reservation.reservation_date|date:"M d, Y" }}</td>
+                    <td>
+                      {% if reservation.status == 'pending' %}
+                        <span class="badge bg-warning">Pending</span>
+                      {% elif reservation.status == 'ready' %}
+                        <span class="badge bg-success">Ready</span>
+                      {% elif reservation.status == 'fulfilled' %}
+                        <span class="badge bg-primary">Fulfilled</span>
+                      {% elif reservation.status == 'cancelled' %}
+                        <span class="badge bg-secondary">Cancelled</span>
+                      {% elif reservation.status == 'expired' %}
+                        <span class="badge bg-danger">Expired</span>
+                      {% else %}
+                        <span class="badge bg-secondary">{{ reservation.get_status_display }}</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if reservation.expiry_date %}
+                        {{ reservation.expiry_date|date:"M d, Y" }}
+                        {% if reservation.status == 'ready' %}
+                          {% now "Y-m-d" as today %}
+                          {% if reservation.expiry_date|date:"Y-m-d" <= today %}
+                            <span class="badge bg-danger">Expiring Soon</span>
+                          {% endif %}
+                        {% endif %}
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if reservation.fulfilled_date %}
+                        {{ reservation.fulfilled_date|date:"M d, Y" }}
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if reservation.status == 'pending' %}
+                        <button type="button" 
+                                class="btn btn-sm btn-danger cancel-reservation" 
+                                data-reservation-id="{{ reservation.id }}"
+                                data-book-title="{{ reservation.book.title }}">
+                          <i class="fas fa-times"></i> Cancel
+                        </button>
+                      {% else %}
+                        <span class="text-muted">-</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                      No reservation records found.
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<form id="csrfForm" class="d-none">
+  {% csrf_token %}
+</form>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.cancel-reservation').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const reservationId = this.dataset.reservationId;
+            const bookTitle = this.dataset.bookTitle;
+            
+            if (confirm(`Are you sure you want to cancel your reservation for "${bookTitle}"?`)) {
+                const csrfToken = document.querySelector('#csrfForm [name=csrfmiddlewaretoken]').value;
+                
+                fetch(`/librarymanagement/reservations/${reservationId}/cancel/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error cancelling reservation: ' + error);
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock extra_js %}

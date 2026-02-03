@@ -1,32 +1,19 @@
 # views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
+from django.views.decorators.http import require_POST
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from core.decorators import require_system_role
+
 from librarymanagement.services import (
-    CategoryServices,
     BookServices,
-    AuthorServices,
-    PublisherServices,
     TransactionServices,
     ReservationServices,
     NotificationServices,
     DashboardServices,
-)
-from django.db import transaction
-from django.contrib import messages
-from django.views.decorators.http import require_POST, require_http_methods
-import uuid
-from datetime import timedelta
-from django.utils import timezone
-
-from librarymanagement.forms import (
-    BookForm,
-    AuthorForm,
-    PublisherForm,
-    BorrowingTransactionForm,
-    ReturnBookForm,
-    RenewBookForm,
-    ReservationForm,
+    ReportServices,
 )
 from .models import (
     Library,
@@ -46,12 +33,23 @@ def authors_publishers_management(request):
     """Manage authors and publishers"""
     authors = Author.objects.all()
     publishers = Publisher.objects.all()
+
+    # Calculate statistics
+    total_authors = authors.count()
+    active_authors = authors.filter(active=True).count()
+    total_publishers = publishers.count()
+    active_publishers = publishers.filter(active=True).count()
+
     return render(
         request,
         "librarymanagement/pages/authors_publishers.html",
         {
             "authors": authors,
             "publishers": publishers,
+            "total_authors": total_authors,
+            "active_authors": active_authors,
+            "total_publishers": total_publishers,
+            "active_publishers": active_publishers,
         },
     )
 
@@ -74,7 +72,7 @@ def dashboard(request):
 
     return render(
         request,
-        "librarymanagement/dashboard.html",
+        "librarymanagement/pages/dashboard.html",
         {
             "libraries": libraries,
             "systems": systems,
@@ -130,7 +128,6 @@ def books_list(request):
 def transactions_list(request):
     """List borrowing transactions"""
     from django.utils import timezone
-    from django.db.models import Q
 
     transactions = (
         BorrowingTransaction.objects.all()
@@ -299,7 +296,47 @@ def reports_dashboard(request):
     return render(request, "librarymanagement/pages/reports_dashboard.html", context)
 
 
+@login_required
+@require_system_role(['admin', 'superadmin'])
+def download_report(request, report_id):
+    """Download generated report in the requested format."""
+    from librarymanagement.models import LibraryReport
+
+    report = get_object_or_404(LibraryReport, id=report_id)
+    export_format = request.GET.get("format", "csv")
+
+    try:
+        content, content_type, filename = ReportServices.export_report(
+            report, export_format
+        )
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("librarymanagement:reports_dashboard")
+
+    response = HttpResponse(content, content_type=content_type)
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
 def library_settings(request):
+    """Library configuration settings page"""
+    # TODO: Create LibrarySettings model
+    # For now, just render the page without settings
+
+    if request.method == "POST":
+        # Handle library settings updates
+        # TODO: Implement library settings form handling
+        messages.info(request, "Library settings update functionality coming soon!")
+        return redirect("librarymanagement:library_settings")
+
+    context = {
+        "library_config": None,
+    }
+
+    return render(request, "librarymanagement/pages/library_settings.html", context)
+
+
+def user_settings(request):
     """User profile and settings page"""
     from django.contrib.auth import update_session_auth_hash
     from django.contrib.auth.password_validation import validate_password
@@ -339,19 +376,19 @@ def library_settings(request):
                 # Verify current password
                 if not user.check_password(current_password):
                     messages.error(request, "Current password is incorrect.")
-                    return redirect("librarymanagement:library_settings")
+                    return redirect("librarymanagement:user_settings")
 
                 # Check if new passwords match
                 if new_password != confirm_password:
                     messages.error(request, "New passwords do not match.")
-                    return redirect("librarymanagement:library_settings")
+                    return redirect("librarymanagement:user_settings")
 
                 # Validate new password
                 try:
                     validate_password(new_password, user)
                 except ValidationError as e:
                     messages.error(request, " ".join(e.messages))
-                    return redirect("librarymanagement:library_settings")
+                    return redirect("librarymanagement:user_settings")
 
                 # Set new password
                 user.set_password(new_password)
@@ -364,7 +401,7 @@ def library_settings(request):
             except Exception as e:
                 messages.error(request, f"Error changing password: {str(e)}")
 
-        return redirect("librarymanagement:library_settings")
+        return redirect("librarymanagement:user_settings")
 
     # GET request - display settings page
     # Get user statistics
@@ -438,7 +475,11 @@ def add_book(request):
             messages.error(request, error)
         return redirect("librarymanagement:books_list")
 
-    messages.success(request, f"Book '{book.title}' has been added successfully!")
+    if book:
+        messages.success(request, f"Book '{book.title}' has been added successfully!")
+    else:
+        messages.error(request, "Failed to create book. Please try again.")
+
     return redirect("librarymanagement:books_list")
 
 
@@ -452,13 +493,13 @@ def create_transaction(request):
     if form.is_valid():
         try:
             # Use service layer for business logic
-            transaction = TransactionServices.create_transaction(
+            transaction_obj = TransactionServices.create_transaction(
                 form=form, user=request.user, issued_by=request.user
             )
 
             messages.success(
                 request,
-                f"Book '{transaction.book.title}' has been borrowed successfully! Due date: {transaction.due_date.strftime('%B %d, %Y')}",
+                f"Book '{transaction_obj.book.title}' has been borrowed successfully! Due date: {transaction_obj.due_date.strftime('%B %d, %Y')}",
             )
             return redirect("librarymanagement:transactions_list")
 
@@ -473,10 +514,10 @@ def create_transaction(request):
                 if field == "__all__":
                     messages.error(request, str(error))
                 else:
-                    field_name = (
-                        form.fields.get(field).label if field in form.fields else field
+                    field_label = (
+                        form.fields[field].label if field in form.fields else field
                     )
-                    messages.error(request, f"{field_name}: {error}")
+                    messages.error(request, f"{field_label}: {error}")
 
     return redirect("librarymanagement:books_list")
 
@@ -702,9 +743,7 @@ def notify_user_reservation(request, reservation_id):
         reservation = get_object_or_404(Reservation, id=reservation_id)
 
         # Create notification
-        notification = NotificationServices.create_reservation_ready_notification(
-            reservation
-        )
+        NotificationServices.create_reservation_ready_notification(reservation)
 
         # Update reservation
         reservation.notified = True
@@ -727,3 +766,652 @@ def transaction_detail(request, transaction_id):
     }
 
     return render(request, "librarymanagement/pages/transaction_detail.html", context)
+
+
+# Book Management Views
+import csv
+from librarymanagement.services import (
+    LibrarySettingsServices,
+    AdvancedSearchServices,
+    UserActivityServices,
+    UserProfileServices,
+    TrendingServices,
+    CategoryServices,
+    AuthorServices,
+    PublisherServices,
+)
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+def edit_book(request, book_id):
+    """Edit book details"""
+    book = get_object_or_404(Book, id=book_id)
+
+    if request.method == "POST":
+        try:
+            files = request.FILES
+            data = request.POST.dict()
+
+            updated_book = BookServices.update_book(book_id, data, files)
+
+            messages.success(request, f"Book '{updated_book.title}' updated successfully!")
+            return redirect("librarymanagement:books_list")
+
+        except Exception as e:
+            messages.error(request, f"Error updating book: {str(e)}")
+
+    # GET request - render edit form
+    from librarymanagement.forms import BookForm
+
+    form = BookForm(instance=book)
+
+    return render(
+        request,
+        "librarymanagement/pages/edit_book.html",
+        {"form": form, "book": book},
+    )
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+@require_POST
+def delete_book(request, book_id):
+    """Delete a book"""
+    try:
+        BookServices.delete_book(book_id)
+        messages.success(request, "Book deleted successfully!")
+        return JsonResponse({"success": True, "message": "Book deleted"})
+    except ValueError as e:
+        messages.error(request, str(e))
+        return JsonResponse({"success": False, "message": str(e)}, status=400)
+    except Exception as e:
+        messages.error(request, f"Error deleting book: {str(e)}")
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+@require_POST
+def toggle_book_status(request, book_id):
+    """Toggle book status"""
+    try:
+        new_status = request.POST.get("status")
+        book = BookServices.toggle_book_status(book_id, new_status)
+
+        messages.success(request, f"Book status updated to {new_status}!")
+        return JsonResponse(
+            {"success": True, "message": "Status updated", "new_status": book.status}
+        )
+    except Exception as e:
+        messages.error(request, f"Error updating status: {str(e)}")
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+def bulk_import_books(request):
+    """Bulk import books from CSV"""
+    if request.method == "POST":
+        from librarymanagement.forms import BulkBookImportForm
+
+        form = BulkBookImportForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            try:
+                file = request.FILES["file"]
+                library = form.cleaned_data["library"]
+
+                # Save uploaded file temporarily
+                import tempfile
+                import os
+
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
+                    for chunk in file.chunks():
+                        tmp.write(chunk)
+                    tmp_path = tmp.name
+
+                # Import books
+                books_created, errors = BookServices.bulk_import_books(
+                    tmp_path, library, request.user
+                )
+
+                # Clean up temp file
+                os.unlink(tmp_path)
+
+                if errors:
+                    messages.warning(
+                        request,
+                        f"Imported {len(books_created)} books with {len(errors)} errors.",
+                    )
+                else:
+                    messages.success(
+                        request, f"Successfully imported {len(books_created)} books!"
+                    )
+
+                return redirect("librarymanagement:books_list")
+
+            except Exception as e:
+                messages.error(request, f"Error importing books: {str(e)}")
+    else:
+        from librarymanagement.forms import BulkBookImportForm
+
+        form = BulkBookImportForm()
+
+    return render(
+        request, "librarymanagement/pages/bulk_import_books.html", {"form": form}
+    )
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+def export_books(request):
+    """Export books to the requested format"""
+    try:
+        library_id = request.GET.get("library_id")
+        export_format = request.GET.get("format", "csv")
+        content, content_type, filename = BookServices.export_books(
+            library_id, export_format
+        )
+
+        response = HttpResponse(content, content_type=content_type)
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+        return response
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("librarymanagement:books_list")
+    except Exception as e:
+        messages.error(request, f"Error exporting books: {str(e)}")
+        return redirect("librarymanagement:books_list")
+
+
+# Category Management Views
+@login_required
+@require_system_role(['admin', 'superadmin'])
+def categories_list(request):
+    """List all categories"""
+    categories = Category.objects.all().prefetch_related("subcategories")
+
+    return render(
+        request,
+        "librarymanagement/pages/categories_list.html",
+        {"categories": categories},
+    )
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+def add_category(request):
+    """Add new category"""
+    if request.method == "POST":
+        from librarymanagement.forms import CategoryForm
+
+        form = CategoryForm(request.POST)
+
+        if form.is_valid():
+            try:
+                category = form.save()
+                messages.success(request, f"Category '{category.name}' created successfully!")
+                return redirect("librarymanagement:categories_list")
+            except Exception as e:
+                messages.error(request, f"Error creating category: {str(e)}")
+    else:
+        from librarymanagement.forms import CategoryForm
+
+        form = CategoryForm()
+
+    return render(
+        request, "librarymanagement/pages/add_category.html", {"form": form}
+    )
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+def edit_category(request, category_id):
+    """Edit category"""
+    category = get_object_or_404(Category, id=category_id)
+
+    if request.method == "POST":
+        from librarymanagement.forms import CategoryForm
+
+        form = CategoryForm(request.POST, instance=category)
+
+        if form.is_valid():
+            try:
+                category = form.save()
+                messages.success(request, f"Category '{category.name}' updated successfully!")
+                return redirect("librarymanagement:categories_list")
+            except Exception as e:
+                messages.error(request, f"Error updating category: {str(e)}")
+    else:
+        from librarymanagement.forms import CategoryForm
+
+        form = CategoryForm(instance=category)
+
+    return render(
+        request,
+        "librarymanagement/pages/edit_category.html",
+        {"form": form, "category": category},
+    )
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+@require_POST
+def delete_category(request, category_id):
+    """Delete category"""
+    try:
+        CategoryServices.delete_category(category_id)
+        messages.success(request, "Category deleted successfully!")
+        return JsonResponse({"success": True, "message": "Category deleted"})
+    except ValueError as e:
+        messages.error(request, str(e))
+        return JsonResponse({"success": False, "message": str(e)}, status=400)
+    except Exception as e:
+        messages.error(request, f"Error deleting category: {str(e)}")
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+# Author Management Views
+@login_required
+@require_system_role(['admin', 'superadmin'])
+def edit_author(request, author_id):
+    """Edit author"""
+    author = get_object_or_404(Author, id=author_id)
+
+    if request.method == "POST":
+        from librarymanagement.forms import AuthorForm
+
+        form = AuthorForm(request.POST, instance=author)
+
+        if form.is_valid():
+            try:
+                author = AuthorServices.update_author(author, form)
+                messages.success(request, f"Author '{author.full_name}' updated successfully!")
+                return redirect("librarymanagement:authors_publishers_management")
+            except Exception as e:
+                messages.error(request, f"Error updating author: {str(e)}")
+    else:
+        from librarymanagement.forms import AuthorForm
+
+        form = AuthorForm(instance=author)
+
+    return render(
+        request,
+        "librarymanagement/pages/edit_author.html",
+        {"form": form, "author": author},
+    )
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+@require_POST
+def delete_author(request, author_id):
+    """Delete author"""
+    try:
+        AuthorServices.delete_author(author_id)
+        messages.success(request, "Author deleted successfully!")
+        return JsonResponse({"success": True, "message": "Author deleted"})
+    except ValueError as e:
+        messages.error(request, str(e))
+        return JsonResponse({"success": False, "message": str(e)}, status=400)
+    except Exception as e:
+        messages.error(request, f"Error deleting author: {str(e)}")
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+@require_POST
+def toggle_author_status(request, author_id):
+    """Toggle author status"""
+    try:
+        author = AuthorServices.toggle_author_status(author_id)
+        messages.success(request, f"Author status updated!")
+        return JsonResponse(
+            {"success": True, "message": "Status toggled", "active": author.active}
+        )
+    except Exception as e:
+        messages.error(request, f"Error toggling status: {str(e)}")
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+# Publisher Management Views
+@login_required
+@require_system_role(['admin', 'superadmin'])
+def edit_publisher(request, publisher_id):
+    """Edit publisher"""
+    publisher = get_object_or_404(Publisher, id=publisher_id)
+
+    if request.method == "POST":
+        from librarymanagement.forms import PublisherForm
+
+        form = PublisherForm(request.POST, instance=publisher)
+
+        if form.is_valid():
+            try:
+                publisher = PublisherServices.update_publisher(publisher, form)
+                messages.success(request, f"Publisher '{publisher.name}' updated successfully!")
+                return redirect("librarymanagement:authors_publishers_management")
+            except Exception as e:
+                messages.error(request, f"Error updating publisher: {str(e)}")
+    else:
+        from librarymanagement.forms import PublisherForm
+
+        form = PublisherForm(instance=publisher)
+
+    return render(
+        request,
+        "librarymanagement/pages/edit_publisher.html",
+        {"form": form, "publisher": publisher},
+    )
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+@require_POST
+def delete_publisher(request, publisher_id):
+    """Delete publisher"""
+    try:
+        PublisherServices.delete_publisher(publisher_id)
+        messages.success(request, "Publisher deleted successfully!")
+        return JsonResponse({"success": True, "message": "Publisher deleted"})
+    except ValueError as e:
+        messages.error(request, str(e))
+        return JsonResponse({"success": False, "message": str(e)}, status=400)
+    except Exception as e:
+        messages.error(request, f"Error deleting publisher: {str(e)}")
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+@require_POST
+def toggle_publisher_status(request, publisher_id):
+    """Toggle publisher status"""
+    try:
+        publisher = PublisherServices.toggle_publisher_status(publisher_id)
+        messages.success(request, "Publisher status updated!")
+        return JsonResponse(
+            {"success": True, "message": "Status toggled", "active": publisher.active}
+        )
+    except Exception as e:
+        messages.error(request, f"Error toggling status: {str(e)}")
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+# Transaction Management Views
+@login_required
+@require_system_role(['admin', 'superadmin'])
+@require_POST
+def mark_book_lost(request, transaction_id):
+    """Mark book as lost"""
+    try:
+        notes = request.POST.get("notes", "")
+        trans = TransactionServices.mark_book_lost(transaction_id, notes)
+
+        messages.success(request, "Transaction marked as lost!")
+        return JsonResponse({"success": True, "message": "Book marked as lost"})
+    except Exception as e:
+        messages.error(request, f"Error marking book as lost: {str(e)}")
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+@require_POST
+def waive_fine(request, transaction_id):
+    """Waive fine"""
+    try:
+        from librarymanagement.forms import WaiveFineForm
+
+        form = WaiveFineForm(request.POST)
+
+        if form.is_valid():
+            waive_amount = form.cleaned_data.get("waive_amount")
+            reason = form.cleaned_data["reason"]
+
+            trans = TransactionServices.waive_fine(transaction_id, waive_amount, reason)
+
+            messages.success(request, "Fine waived successfully!")
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": "Fine waived",
+                    "remaining_fine": str(trans.fine_amount),
+                }
+            )
+        else:
+            return JsonResponse(
+                {"success": False, "message": "Invalid form data"}, status=400
+            )
+    except Exception as e:
+        messages.error(request, f"Error waiving fine: {str(e)}")
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+@require_POST
+def pay_fine(request, transaction_id):
+    """Record fine payment"""
+    try:
+        from librarymanagement.forms import FinePaymentForm
+
+        form = FinePaymentForm(request.POST)
+
+        if form.is_valid():
+            amount_paid = form.cleaned_data["amount_paid"]
+            payment_method = form.cleaned_data["payment_method"]
+
+            trans = TransactionServices.pay_fine(
+                transaction_id, amount_paid, payment_method
+            )
+
+            messages.success(request, "Payment recorded successfully!")
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": "Payment recorded",
+                    "remaining_fine": str(trans.fine_amount),
+                }
+            )
+        else:
+            return JsonResponse(
+                {"success": False, "message": "Invalid form data"}, status=400
+            )
+    except Exception as e:
+        messages.error(request, f"Error recording payment: {str(e)}")
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+@require_POST
+def extend_due_date(request, transaction_id):
+    """Extend due date"""
+    try:
+        additional_days = int(request.POST.get("additional_days", 7))
+
+        trans = TransactionServices.extend_due_date(transaction_id, additional_days)
+
+        messages.success(request, "Due date extended successfully!")
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Due date extended",
+                "new_due_date": trans.due_date.isoformat(),
+            }
+        )
+    except Exception as e:
+        messages.error(request, f"Error extending due date: {str(e)}")
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+@require_POST
+def bulk_return_books(request):
+    """Bulk return books"""
+    try:
+        transaction_ids = request.POST.get("transaction_ids", "").split(",")
+        transaction_ids = [tid.strip() for tid in transaction_ids if tid.strip()]
+
+        results = TransactionServices.bulk_return_books(transaction_ids)
+
+        messages.success(
+            request,
+            f"Returned {len(results['success'])} books successfully! {len(results['errors'])} errors.",
+        )
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Bulk return completed",
+                "results": {
+                    "success_count": len(results["success"]),
+                    "error_count": len(results["errors"]),
+                },
+            }
+        )
+    except Exception as e:
+        messages.error(request, f"Error bulk returning books: {str(e)}")
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+# Library Settings Views
+@login_required
+@require_system_role(['admin', 'superadmin'])
+def manage_library_settings(request):
+    """Manage library settings"""
+    library = Library.objects.first()  # Get first library or handle multiple
+    settings = LibrarySettingsServices.get_or_create_settings(library)
+
+    if request.method == "POST":
+        from librarymanagement.forms import LibrarySettingsForm
+
+        form = LibrarySettingsForm(request.POST, instance=settings)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Library settings updated successfully!")
+            return redirect("librarymanagement:manage_library_settings")
+    else:
+        from librarymanagement.forms import LibrarySettingsForm
+
+        form = LibrarySettingsForm(instance=settings)
+
+    return render(
+        request,
+        "librarymanagement/pages/library_settings.html",
+        {"form": form, "settings": settings},
+    )
+
+
+# Advanced Search Views
+@login_required
+def advanced_search(request):
+    """Advanced book search"""
+    from librarymanagement.forms import AdvancedSearchForm
+
+    form = AdvancedSearchForm(request.GET or None)
+    books = []
+
+    if form.is_valid():
+        books = AdvancedSearchServices.search_books(
+            query=form.cleaned_data.get("query"),
+            category_ids=[c.id for c in form.cleaned_data.get("categories", [])],
+            author_ids=[a.id for a in form.cleaned_data.get("authors", [])],
+            publisher_id=form.cleaned_data.get("publisher").id
+            if form.cleaned_data.get("publisher")
+            else None,
+            status=form.cleaned_data.get("status"),
+            resource_type=form.cleaned_data.get("resource_type"),
+            year_from=form.cleaned_data.get("year_from"),
+            year_to=form.cleaned_data.get("year_to"),
+            language=form.cleaned_data.get("language"),
+        )
+
+    return render(
+        request,
+        "librarymanagement/pages/advanced_search.html",
+        {"form": form, "books": books},
+    )
+
+
+# User Profile Views
+@login_required
+def user_borrowing_history(request):
+    """View user's borrowing history"""
+    transactions = UserProfileServices.get_borrowing_history(request.user)
+
+    return render(
+        request,
+        "librarymanagement/pages/user_borrowing_history.html",
+        {"transactions": transactions},
+    )
+
+
+@login_required
+def user_reservation_history(request):
+    """View user's reservation history"""
+    reservations = UserProfileServices.get_reservation_history(request.user)
+
+    return render(
+        request,
+        "librarymanagement/pages/user_reservation_history.html",
+        {"reservations": reservations},
+    )
+
+
+@login_required
+def export_user_data(request):
+    """Export user's library data"""
+    try:
+        json_data = UserProfileServices.export_user_data(request.user)
+
+        response = HttpResponse(json_data, content_type="application/json")
+        response["Content-Disposition"] = (
+            f'attachment; filename="user_data_{request.user.username}.json"'
+        )
+
+        return response
+    except Exception as e:
+        messages.error(request, f"Error exporting data: {str(e)}")
+        return redirect("librarymanagement:user_settings")
+
+
+# Notification Views
+@login_required
+@require_POST
+def mark_notification_read(request, notification_id):
+    """Mark notification as read"""
+    try:
+        NotificationServices.mark_notification_read(notification_id)
+        return JsonResponse({"success": True, "message": "Notification marked as read"})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def delete_notification(request, notification_id):
+    """Delete notification"""
+    try:
+        NotificationServices.delete_notification(notification_id)
+        return JsonResponse({"success": True, "message": "Notification deleted"})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required
+def user_notifications(request):
+    """View user's notifications"""
+    notifications = NotificationServices.get_user_notifications(request.user, limit=50)
+    unread_count = NotificationServices.get_unread_count(request.user)
+
+    return render(
+        request,
+        "librarymanagement/pages/user_notifications.html",
+        {"notifications": notifications, "unread_count": unread_count},
+    )

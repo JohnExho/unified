@@ -1,143 +1,24 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description"
-          content="Track and analyze library user behavior patterns, including book views, searches, borrows, and reservations." />
-    <meta name="keywords"
-          content="library, user activities, analytics, book views, searches, borrows, reservations, library management" />
-    <title>User Activities - Library Management</title>
-    <link rel="stylesheet"
-          href="{% static "librarymanagement/css/library-base.css" %}" />
-    <link rel="stylesheet"
-          href="{% static "librarymanagement/css/activities.css" %}" />
-  </head>
-  <body>
-    <div class="dashboard-container">
-      {% include "librarymanagement/components/sidebar.html" %}
-      <main class="main-content">
-        <div class="content-wrapper">
-          <div class="page-header">
-            <h1 class="page-title">User Activities</h1>
-            <p class="page-description">Track and analyze library user behavior patterns</p>
-          </div>
-          <!-- Activity Stats -->
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-card-header">
-                <div class="stat-icon view">{% include "librarymanagement/components/icons/eye.svg" %}</div>
-              </div>
-              <div class="stat-value">{{ view_count }}</div>
-              <div class="stat-label">Book Views</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-card-header">
-                <div class="stat-icon info">{% include "librarymanagement/components/icons/search.svg" %}</div>
-              </div>
-              <div class="stat-value">{{ search_count }}</div>
-              <div class="stat-label">Searches</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-card-header">
-                <div class="stat-icon success">{% include "librarymanagement/components/icons/books.svg" %}</div>
-              </div>
-              <div class="stat-value">{{ borrow_count }}</div>
-              <div class="stat-label">Borrowed</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-card-header">
-                <div class="stat-icon warning">{% include "librarymanagement/components/icons/bookmark.svg" %}</div>
-              </div>
-              <div class="stat-value">{{ reserve_count }}</div>
-              <div class="stat-label">Reserved</div>
-            </div>
-          </div>
-          <!-- Charts Grid -->
-          <div class="charts-grid">
-            <div class="chart-card">
-              <div class="chart-header">
-                <h3 class="chart-title">Activity Trends</h3>
-                <select class="chart-filter">
-                  <option>Last 7 days</option>
-                  <option>Last 30 days</option>
-                  <option>Last 90 days</option>
-                </select>
-              </div>
-              <div class="chart-placeholder">
-                {% include "librarymanagement/components/icons/chart-bar.svg" %}
-                Chart visualization would go here
-              </div>
-            </div>
-            <div class="chart-card">
-              <div class="chart-header">
-                <h3 class="chart-title">Activity by Type</h3>
-              </div>
-              <div class="chart-placeholder">
-                {% include "librarymanagement/components/icons/chart-bar.svg" %}
-                Pie chart visualization would go here
-              </div>
-            </div>
-          </div>
-          <!-- Top Users (implement when user ranking is available) -->
-          <!-- Activity Feed -->
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Recent Activities</h3>
-              <div class="btn-group">
-                <button class="btn btn-outline btn-sm">Filter</button>
-                <button class="btn btn-outline btn-sm">Export</button>
-              </div>
-            </div>
-            <div class="activity-feed">
-              {% for activity in activities|slice:":20" %}
-                <div class="activity-item">
-                  <div class="activity-icon {{ activity.activity_type }}">
-                    {% if activity.activity_type == 'view' %}
-                      {% include "librarymanagement/components/icons/eye.svg" %}
-                    {% elif activity.activity_type == 'search' %}
-                      {% include "librarymanagement/components/icons/search.svg" %}
-                    {% elif activity.activity_type == 'borrow' %}
-                      {% include "librarymanagement/components/icons/books.svg" %}
-                    {% else %}
-                      {% include "librarymanagement/components/icons/bookmark.svg" %}
-                    {% endif %}
-                  </div>
-                  <div class="activity-content">
-                    <p class="activity-action">
-                      <span class="activity-user">{{ activity.user.username }}</span>
-                      {% if activity.activity_type == 'view' %}
-                        viewed
-                      {% elif activity.activity_type == 'search' %}
-                        searched for "{{ activity.search_query }}"
-                      {% elif activity.activity_type == 'borrow' %}
-                        borrowed
-                      {% elif activity.activity_type == 'reserve' %}
-                        reserved
-                      {% endif %}
-                      {% if activity.book %}<span class="activity-book">{{ activity.book.title }}</span>{% endif %}
-                    </p>
-                    <div class="activity-meta">
-                      <span class="activity-timestamp">🕒 {{ activity.timestamp|timesince }} ago</span>
-                      {% if activity.session_id %}<span>Session: {{ activity.session_id|truncatechars:8 }}</span>{% endif %}
-                    </div>
-                  </div>
-                </div>
-              {% empty %}
-                <div class="empty-state">
-                  <div class="empty-state-icon">📊</div>
-                  <h3>No Activities Yet</h3>
-                  <p>
-                    User activities will appear here once users start interacting
-                    with the library.
-                  </p>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-      </main>
+{% block title %}
+  User Activities - Library Management
+{% endblock title %}
+{% block meta_description %}
+  Track and analyze library user behavior patterns, including book views, searches, borrows, and reservations.
+{% endblock meta_description %}
+{% block meta_keywords %}
+  library, user activities, analytics, book views, searches, borrows, reservations, library management
+{% endblock meta_keywords %}
+{% block extra_head %}
+  <link rel="stylesheet"
+        href="{% static 'librarymanagement/css/pages/user_activities.css' %}" />
+{% endblock extra_head %}
+{% block content %}
+  <main class="main-container">
+    {% include "librarymanagement/components/pages/user_activities/header.html" %}
+    <div class="reservation-container">
+      {% include "librarymanagement/components/pages/user_activities/stats.html" %}
+      {% include "librarymanagement/components/pages/user_activities/feed.html" %}
     </div>
-  </body>
-</html>
+  </main>
+{% endblock content %}

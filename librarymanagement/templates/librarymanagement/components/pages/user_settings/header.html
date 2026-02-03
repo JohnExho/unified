@@ -1,0 +1,17 @@
+<div class="page-header">
+  <h1 class="page-title">Settings</h1>
+  <p class="page-description">Configure system and manage your profile</p>
+</div>
+<!-- Tab Navigation -->
+<div class="period-tabs" style="margin-bottom: 2rem;">
+  <button class="period-tab"
+          onclick="window.location.href='{% url 'librarymanagement:library_settings' %}'">
+    {% include "librarymanagement/components/icons/settings.svg" %}
+    Library Settings
+  </button>
+  <button class="period-tab active"
+          onclick="window.location.href='{% url 'librarymanagement:user_settings' %}'">
+    {% include "librarymanagement/components/icons/users.svg" %}
+    User Profile
+  </button>
+</div>

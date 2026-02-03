@@ -1,0 +1,17 @@
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon info">{% include "librarymanagement/components/icons/robot-face.svg" %}</div>
+    <div class="stat-value">{{ recommendations|length }}</div>
+    <div class="stat-label">Active Recommendations</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon success">{% include "librarymanagement/components/icons/check.svg" %}</div>
+    <div class="stat-value">{{ actioned_count }}</div>
+    <div class="stat-label">Actioned</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon warning">{% include "librarymanagement/components/icons/chart-bar.svg" %}</div>
+    <div class="stat-value">{{ success_rate }}%</div>
+    <div class="stat-label">Success Rate</div>
+  </div>
+</div>

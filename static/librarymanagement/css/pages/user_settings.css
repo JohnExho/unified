@@ -1,0 +1,423 @@
+/* User Settings Page Styles */
+/* Uses global.css design tokens */
+
+/* Main Container */
+
+.period-tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--spacing-xl);
+  margin-bottom: 2rem;
+}
+
+.period-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.period-tab:hover {
+  color: var(--foreground);
+  background: var(--accent);
+}
+
+.period-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.period-tab svg {
+  width: 16px;
+  height: 16px;
+}
+
+.reservation-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+/* Settings Grid */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-xl);
+}
+
+/* Settings Cards */
+.settings-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.settings-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.settings-card-header {
+  padding: var(--spacing-xl);
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--foreground);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.settings-card-title .icon {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+}
+
+.settings-card-description {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
+.settings-card-body {
+  padding: var(--spacing-xl);
+}
+
+.settings-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* Profile Avatar Section */
+.profile-avatar-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  border-bottom: 1px solid var(--border);
+}
+
+.current-avatar {
+  flex-shrink: 0;
+}
+
+.current-avatar img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--border);
+}
+
+.avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-4xl);
+  font-weight: var(--font-semibold);
+  border: 3px solid var(--border);
+}
+
+.avatar-upload {
+  flex: 1;
+}
+
+.text-muted {
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+  margin-top: var(--spacing-xs);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Form Rows */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.form-group label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--foreground);
+}
+
+.form-group .form-control {
+  width: 100%;
+}
+
+.form-text {
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+  margin-top: var(--spacing-xs);
+}
+
+.form-text.text-success {
+  color: var(--success);
+}
+
+.form-text.text-warning {
+  color: var(--warning);
+}
+
+/* Form Actions */
+.form-actions {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.form-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.icon-sm {
+  width: 16px;
+  height: 16px;
+}
+
+/* Compact Stats Grid */
+.stats-grid-compact {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--muted);
+  border-radius: var(--radius-md);
+}
+
+.stat-icon {
+  font-size: var(--text-3xl);
+  flex-shrink: 0;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--foreground);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+  margin-top: var(--spacing-xs);
+}
+
+/* Info List */
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--accent);
+  border-radius: var(--radius-md);
+}
+
+.info-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--foreground);
+}
+
+.info-value {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.info-value code {
+  background: var(--muted);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-family: monospace;
+}
+
+/* Badge Variants */
+.badge-success {
+  background: var(--success);
+  color: var(--success-foreground);
+}
+
+.badge-danger {
+  background: var(--destructive);
+  color: white;
+}
+
+.badge-warning {
+  background: var(--warning);
+  color: var(--warning-foreground);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-avatar-section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid-compact {
+    grid-template-columns: 1fr;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.stat-card-header {
+  align-items: center;
+  flex-direction: row !important;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  width: auto;
+}
+.stat-card-body {
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.05rem;
+  font-size: var(--text-lg);
+}
+
+.stat-change {
+  font-size: var(--text-sm);
+  margin-top: var(--spacing-xs);
+  color: var(--muted-foreground);
+}
+
+.stat-icon {
+  width: 3rem;
+  height: 3rem;
+  color: var(--icon-fg, var(--foreground));
+  background: linear-gradient(
+    to top,
+    var(--icon-bg, oklch(from var(--success) calc(l * 0.2) c h)),
+    var(--icon-bg)
+  );
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+}
+
+.stat-item {
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.stat-icon.books {
+  --icon-bg: oklch(from var(--chart-1) calc(l * 1) c h / 0.3);
+  --icon-fg: oklch(from var(--chart-1) calc(l * 0.9) c h);
+}
+
+.stat-icon.reading {
+  --icon-bg: oklch(from var(--chart-2) calc(l * 1) c h / 0.3);
+  --icon-fg: oklch(from var(--chart-2) calc(l * 0.9) c h);
+}
+
+.stat-icon.bookmarks {
+  --icon-bg: oklch(from var(--chart-3) calc(l * 1) c h / 0.3);
+  --icon-fg: oklch(from var(--chart-3) calc(l * 0.9) c h);
+}
+
+.stat-icon.overdue {
+  --icon-bg: oklch(from var(--chart-4) calc(l * 1) c h / 0.3);
+  --icon-fg: oklch(from var(--chart-4) calc(l * 0.9) c h);
+}
+
+.stat-value {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--foreground);
+}
+
+.stat-label {
+  font-size: var(--text-xs);
+  color: var(--foreground);
+  margin-top: var(--spacing-xs);
+}

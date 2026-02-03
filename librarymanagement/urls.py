@@ -72,5 +72,113 @@ urlpatterns = [
     ),
     path("trending/", views.trending_books, name="trending_books"),
     path("reports/", views.reports_dashboard, name="reports_dashboard"),
+    path(
+        "reports/<uuid:report_id>/download/",
+        views.download_report,
+        name="download_report",
+    ),
     path("settings/", views.library_settings, name="library_settings"),
+    path("settings/user/", views.user_settings, name="user_settings"),
+    path(
+        "settings/manage/",
+        views.manage_library_settings,
+        name="manage_library_settings",
+    ),
+    # Book Management
+    path("books/<uuid:book_id>/edit/", views.edit_book, name="edit_book"),
+    path("books/<uuid:book_id>/delete/", views.delete_book, name="delete_book"),
+    path(
+        "books/<uuid:book_id>/toggle-status/",
+        views.toggle_book_status,
+        name="toggle_book_status",
+    ),
+    path("books/import/", views.bulk_import_books, name="bulk_import_books"),
+    path("books/export/", views.export_books, name="export_books"),
+    # Category Management
+    path("categories/", views.categories_list, name="categories_list"),
+    path("categories/add/", views.add_category, name="add_category"),
+    path(
+        "categories/<uuid:category_id>/edit/",
+        views.edit_category,
+        name="edit_category",
+    ),
+    path(
+        "categories/<uuid:category_id>/delete/",
+        views.delete_category,
+        name="delete_category",
+    ),
+    # Author Management
+    path("authors/<uuid:author_id>/edit/", views.edit_author, name="edit_author"),
+    path(
+        "authors/<uuid:author_id>/delete/", views.delete_author, name="delete_author"
+    ),
+    path(
+        "authors/<uuid:author_id>/toggle-status/",
+        views.toggle_author_status,
+        name="toggle_author_status",
+    ),
+    # Publisher Management
+    path(
+        "publishers/<uuid:publisher_id>/edit/",
+        views.edit_publisher,
+        name="edit_publisher",
+    ),
+    path(
+        "publishers/<uuid:publisher_id>/delete/",
+        views.delete_publisher,
+        name="delete_publisher",
+    ),
+    path(
+        "publishers/<uuid:publisher_id>/toggle-status/",
+        views.toggle_publisher_status,
+        name="toggle_publisher_status",
+    ),
+    # Transaction Management
+    path(
+        "transactions/<uuid:transaction_id>/mark-lost/",
+        views.mark_book_lost,
+        name="mark_book_lost",
+    ),
+    path(
+        "transactions/<uuid:transaction_id>/waive-fine/",
+        views.waive_fine,
+        name="waive_fine",
+    ),
+    path(
+        "transactions/<uuid:transaction_id>/pay-fine/",
+        views.pay_fine,
+        name="pay_fine",
+    ),
+    path(
+        "transactions/<uuid:transaction_id>/extend-due-date/",
+        views.extend_due_date,
+        name="extend_due_date",
+    ),
+    path("transactions/bulk-return/", views.bulk_return_books, name="bulk_return_books"),
+    # Advanced Search
+    path("search/advanced/", views.advanced_search, name="advanced_search"),
+    # User Profile
+    path(
+        "profile/borrowing-history/",
+        views.user_borrowing_history,
+        name="user_borrowing_history",
+    ),
+    path(
+        "profile/reservation-history/",
+        views.user_reservation_history,
+        name="user_reservation_history",
+    ),
+    path("profile/export-data/", views.export_user_data, name="export_user_data"),
+    # Notifications
+    path(
+        "notifications/<uuid:notification_id>/read/",
+        views.mark_notification_read,
+        name="mark_notification_read",
+    ),
+    path(
+        "notifications/<uuid:notification_id>/delete/",
+        views.delete_notification,
+        name="delete_notification",
+    ),
+    path("notifications/", views.user_notifications, name="user_notifications"),
 ]

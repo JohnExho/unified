@@ -1,0 +1,99 @@
+.button {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-medium);
+  border: var(--btn-border, 1px solid var(--color-border));
+  background-color: var(--btn-bg, var(--color-primary));
+  color: var(--btn-text, var(--color-primary-foreground));
+  box-shadow: var(--btn-shadow, var(--shadow-md));
+  text-decoration: none;
+  text-decoration-line: none;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  transition: all 150ms ease-in-out;
+  width: fit-content;
+  height: fit-content;
+  font-size: var(--text-sm);
+  letter-spacing: 0.025em;
+}
+
+.button:hover {
+  background-color: var(--btn-bg-hover, var(--color-primary));
+  color: var(--btn-text-hover, var(--color-primary-foreground));
+  opacity: var(--btn-hover-opacity, 0.9);
+  box-shadow: var(--btn-shadow-hover, var(--shadow-lg));
+}
+
+.button:active {
+  transform: scale(0.98);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.button-default {
+  --btn-border: none;
+  --btn-bg: var(--color-primary);
+  --btn-text: var(--color-primary-foreground);
+  --btn-bg-hover: var(--color-primary);
+  --btn-text-hover: var(--color-primary-foreground);
+  --btn-hover-opacity: 0.9;
+  --btn-shadow: var(--shadow-sm);
+  --btn-shadow-hover: var(--shadow-md);
+}
+
+.button-secondary {
+  --btn-border: none;
+  --btn-bg: var(--color-secondary);
+  --btn-text: var(--color-secondary-foreground);
+  --btn-bg-hover: var(--color-secondary);
+  --btn-text-hover: var(--color-secondary-foreground);
+  --btn-hover-opacity: 0.8;
+  --btn-shadow: none;
+  --btn-shadow-hover: var(--shadow-sm);
+}
+
+.button-destructive {
+  --btn-border: none;
+  --btn-bg: var(--destructive);
+  --btn-text: var(--color-primary-foreground);
+  --btn-bg-hover: var(--destructive);
+  --btn-text-hover: var(--color-primary-foreground);
+  --btn-hover-opacity: 0.9;
+  --btn-shadow: var(--shadow-sm);
+  --btn-shadow-hover: var(--shadow-md);
+}
+
+.button-outline {
+  --btn-border: 1px solid var(--color-input);
+  --btn-bg: transparent;
+  --btn-text: var(--color-foreground);
+  --btn-bg-hover: var(--color-accent);
+  --btn-text-hover: var(--color-accent-foreground);
+  --btn-hover-opacity: 1;
+  --btn-shadow: none;
+  --btn-shadow-hover: none;
+}
+
+.button-ghost {
+  --btn-border: none;
+  --btn-bg: transparent;
+  --btn-text: var(--color-foreground);
+  --btn-bg-hover: var(--color-accent);
+  --btn-text-hover: var(--color-accent-foreground);
+  --btn-hover-opacity: 1;
+  --btn-shadow: none;
+  --btn-shadow-hover: none;
+}

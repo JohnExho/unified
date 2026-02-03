@@ -1,129 +1,26 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description"
-          content="Discover the most popular and trending books in the library. Stay updated with the latest reading trends and insights." />
-    <meta name="keywords"
-          content="library, trending books, popular books, book trends, reading, borrows, library management" />
-    <title>Trending Books - Library Management</title>
-    <link rel="stylesheet"
-          href="{% static 'librarymanagement/css/library-base.css' %}" />
-    <link rel="stylesheet"
-          href="{% static 'librarymanagement/css/recommendations.css' %}" />
-  </head>
-  <body>
-    <div class="dashboard-container">
-      {% include "librarymanagement/components/sidebar.html" %}
-      <main class="main-content">
-        <div class="content-wrapper">
-          <div class="page-header">
-            <h1 class="page-title">Trending Books</h1>
-            <p class="page-description">Discover the most popular books in the library</p>
-          </div>
-          <!-- Period Selector -->
-          <div class="period-tabs">
-            <button class="period-tab {% if period_type == 'daily' or not period_type %}active{% endif %}"
-                    onclick="filterByPeriod('daily')">
-              {% include "librarymanagement/components/icons/calendar.svg" %}
-              Daily
-            </button>
-            <button class="period-tab {% if period_type == 'weekly' %}active{% endif %}"
-                    onclick="filterByPeriod('weekly')">
-              {% include "librarymanagement/components/icons/calendar.svg" %}
-              Weekly
-            </button>
-            <button class="period-tab {% if period_type == 'monthly' %}active{% endif %}"
-                    onclick="filterByPeriod('monthly')">
-              {% include "librarymanagement/components/icons/calendar.svg" %}
-              Monthly
-            </button>
-            <button class="period-tab {% if period_type == 'yearly' %}active{% endif %}"
-                    onclick="filterByPeriod('yearly')">
-              {% include "librarymanagement/components/icons/chart-bar.svg" %}
-              Yearly
-            </button>
-          </div>
-          <!-- Trending Books Grid -->
-          <div class="trending-grid">
-            {% if trending %}
-              {% for item in trending %}
-                <div class="trending-card">
-                  <div class="trending-badge {% if item.popularity_score > 80 %}hot{% else %}rising{% endif %}">
-                    {% if item.popularity_score > 80 %}
-                      {% include "librarymanagement/components/icons/flame.svg" %}
-                      HOT
-                    {% else %}
-                      {% include "librarymanagement/components/icons/chart-line.svg" %}
-                      RISING
-                    {% endif %}
-                  </div>
-                  <div class="trending-cover">
-                    {% if item.book.cover_image %}
-                      <img src="{{ item.book.cover_image.url }}"
-                           alt="{{ item.book.title }}"
-                           width="120"
-                           height="180" />
-                    {% else %}
-                      📚
-                    {% endif %}
-                  </div>
-                  <div class="trending-body">
-                    <h3 class="trending-title">{{ item.book.title }}</h3>
-                    <p class="trending-author">
-                      {% if item.book.authors.all %}
-                        By {{
-                        item.book.authors.all.0.full_name }}
-                      {% endif %}
-                    </p>
-                    <div class="trending-stats">
-                      <div class="trending-stat">
-                        <span class="trending-stat-value">{{ item.view_count }}</span>
-                        <span class="trending-stat-label">Views</span>
-                      </div>
-                      <div class="trending-stat">
-                        <span class="trending-stat-value">{{ item.borrow_count }}</span>
-                        <span class="trending-stat-label">Borrows</span>
-                      </div>
-                      <div class="trending-stat">
-                        <span class="trending-stat-value">{{ item.reservation_count }}</span>
-                        <span class="trending-stat-label">Reserves</span>
-                      </div>
-                    </div>
-                    <div class="trending-score">
-                      <div>
-                        <div class="trending-score-value">{{ item.popularity_score }}</div>
-                        <div class="trending-score-label">Popularity Score</div>
-                      </div>
-                    </div>
-                    <button class="btn btn-primary btn-block">View Details</button>
-                  </div>
-                </div>
-              {% endfor %}
-            {% else %}
-              <div class="card full-width-card">
-                <div class="empty-state">
-                  <div class="empty-state-icon">📊</div>
-                  <h3>No Trending Data</h3>
-                  <p>
-                    Trending information will appear once there is enough user
-                    activity.
-                  </p>
-                </div>
-              </div>
-            {% endif %}
-          </div>
-          <!-- Insights Card (implement when analytics data is available) -->
-        </div>
-      </main>
-    </div>
-    <script>
-      function filterByPeriod(period) {
-        // Update URL with period parameter and reload
-        window.location.href = `?period=${period}`;
-      }
-    </script>
-  </body>
-</html>
+{% block title %}
+  Trending Books - Library Management
+{% endblock title %}
+{% block meta_description %}
+  Discover the most popular and trending books in the library. Stay updated with the latest reading trends and insights.
+{% endblock meta_description %}
+{% block meta_keywords %}
+  library, trending books, popular books, book trends, reading, borrows, library management
+{% endblock meta_keywords %}
+{% block extra_head %}
+  <link rel="stylesheet"
+        href="{% static 'librarymanagement/css/pages/trending_books.css' %}" />
+{% endblock extra_head %}
+{% block content %}
+  <div class="main-container">
+    {% include "librarymanagement/components/pages/trending/header.html" %}
+    {% include "librarymanagement/components/pages/trending/grid.html" %}
+  </div>
+{% endblock content %}
+{% block extra_scripts %}
+  <script src="{% static 'librarymanagement/js/utils.js' %}"></script>
+  <script src="{% static 'librarymanagement/js/filters.js' %}"></script>
+  <script src="{% static 'librarymanagement/js/book_operations.js' %}"></script>
+{% endblock extra_scripts %}

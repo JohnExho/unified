@@ -1,0 +1,13 @@
+<button type="{{ button_type|default:'button' }}"
+        class="button button-{{ button_variant|default:'default' }} {{ button_class|default:'' }}"
+        {% if button_id %}id="{{ button_id }}"{% endif %}
+        {% if button_name %}name="{{ button_name }}"{% endif %}
+        {% if button_value %}value="{{ button_value }}"{% endif %}
+        {% if button_onclick %}onclick="{{ button_onclick }}"{% endif %}
+        {% if button_disabled %}disabled{% endif %}>
+  {% if button_content %}
+    {{ button_content|safe }}
+  {% else %}
+    {{ button_text|default:"Button" }}
+  {% endif %}
+</button>

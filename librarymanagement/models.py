@@ -4,8 +4,6 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 import uuid
-from django.utils import timezone
-import datetime
 
 
 def manila_now():
@@ -38,6 +36,64 @@ class Library(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class LibrarySettings(models.Model):
+    """Library configuration and settings"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    library = models.OneToOneField(
+        Library, on_delete=models.CASCADE, related_name="settings"
+    )
+
+    # General settings
+    library_name = models.CharField(max_length=200)
+    default_loan_period_days = models.IntegerField(
+        default=14, help_text="Default loan period in days"
+    )
+    maximum_renewals = models.IntegerField(default=2)
+    maximum_books_per_user = models.IntegerField(default=5)
+
+    # Fine settings
+    enable_fines = models.BooleanField(default=True)
+    daily_fine_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("1.00")
+    )
+    maximum_fine_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("50.00")
+    )
+    grace_period_days = models.IntegerField(default=0)
+
+    # Notification preferences
+    enable_email_notifications = models.BooleanField(default=True)
+    enable_sms_notifications = models.BooleanField(default=False)
+    notify_due_dates = models.BooleanField(default=True)
+    notify_overdue = models.BooleanField(default=True)
+    notify_reservation_ready = models.BooleanField(default=True)
+    days_before_due_notification = models.IntegerField(
+        default=3, help_text="Days before due date to send reminder"
+    )
+
+    # Feature toggles
+    enable_book_recommendations = models.BooleanField(default=True)
+    enable_trending_analysis = models.BooleanField(default=True)
+    enable_user_analytics = models.BooleanField(default=True)
+    enable_digital_resources = models.BooleanField(default=True)
+
+    # Additional settings
+    reservation_expiry_days = models.IntegerField(
+        default=3, help_text="Days until reservation expires after ready"
+    )
+    auto_extend_on_no_reservation = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Library Settings"
+
+    def __str__(self):
+        return f"Settings for {self.library_name}"
 
 
 class Category(models.Model):
@@ -74,6 +130,7 @@ class Author(models.Model):
     birth_date = models.DateField(null=True, blank=True)
     nationality = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["last_name", "first_name"]
@@ -97,6 +154,7 @@ class Publisher(models.Model):
     website = models.URLField(blank=True)
     email = models.EmailField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["name"]

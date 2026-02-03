@@ -1,0 +1,11 @@
+<select id="{{ select_id }}"
+        name="{{ select_name }}"
+        class="select {% if select_size %}select-{{ select_size }}{% endif %} {% if select_error %}select-error{% endif %} {% if select_success %}select-success{% endif %} {{ select_class|default:'' }}"
+        {% if select_required %}required{% endif %}
+        {% if select_disabled %}disabled{% endif %}>
+  {% if select_placeholder %}<option value="">{{ select_placeholder }}</option>{% endif %}
+  {% for option in select_options %}
+    <option value="{{ option.value }}"
+            {% if select_value == option.value %}selected{% endif %}>{{ option.text }}</option>
+  {% endfor %}
+</select>

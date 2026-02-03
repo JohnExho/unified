@@ -1,0 +1,50 @@
+<div class="reports-grid">
+  <div class="report-card" onclick="openReportGenerator('usage')">
+    <div class="report-card-icon usage">{% include "librarymanagement/components/icons/chart-bar.svg" %}</div>
+    <h3 class="report-card-title">Usage Report</h3>
+    <p class="report-card-description">Analyze library resource usage patterns and statistics</p>
+    <div class="report-card-meta">
+      <span>Last generated: {{ report_stats.last_generated.usage|default:"Never" }}</span>
+    </div>
+  </div>
+  <div class="report-card" onclick="openReportGenerator('circulation')">
+    <div class="report-card-icon circulation">{% include "librarymanagement/components/icons/refresh.svg" %}</div>
+    <h3 class="report-card-title">Circulation Report</h3>
+    <p class="report-card-description">Track book borrowing, returns, and circulation metrics</p>
+    <div class="report-card-meta">
+      <span>Last generated: {{ report_stats.last_generated.circulation|default:"Never" }}</span>
+    </div>
+  </div>
+  <div class="report-card" onclick="openReportGenerator('trending')">
+    <div class="report-card-icon trending">{% include "librarymanagement/components/icons/flame.svg" %}</div>
+    <h3 class="report-card-title">Trending Analysis</h3>
+    <p class="report-card-description">Identify popular books and trending topics</p>
+    <div class="report-card-meta">
+      <span>Last generated: {{ report_stats.last_generated.trending|default:"Never" }}</span>
+    </div>
+  </div>
+  <div class="report-card" onclick="openReportGenerator('user_behavior')">
+    <div class="report-card-icon behavior">{% include "librarymanagement/components/icons/users.svg" %}</div>
+    <h3 class="report-card-title">User Behavior</h3>
+    <p class="report-card-description">Understand user patterns and engagement levels</p>
+    <div class="report-card-meta">
+      <span>Last generated: {{ report_stats.last_generated.user_behavior|default:"Never" }}</span>
+    </div>
+  </div>
+  <div class="report-card" onclick="openReportGenerator('inventory')">
+    <div class="report-card-icon inventory">{% include "librarymanagement/components/icons/books.svg" %}</div>
+    <h3 class="report-card-title">Inventory Report</h3>
+    <p class="report-card-description">Review collection status and availability</p>
+    <div class="report-card-meta">
+      <span>Last generated: {{ report_stats.last_generated.inventory|default:"Never" }}</span>
+    </div>
+  </div>
+  <div class="report-card" onclick="openReportGenerator('acquisition')">
+    <div class="report-card-icon acquisition">{% include "librarymanagement/components/icons/plus.svg" %}</div>
+    <h3 class="report-card-title">Acquisition Recommendation</h3>
+    <p class="report-card-description">Suggestions for new books to acquire</p>
+    <div class="report-card-meta">
+      <span>Last generated: {{ report_stats.last_generated.acquisition|default:"Never" }}</span>
+    </div>
+  </div>
+</div>

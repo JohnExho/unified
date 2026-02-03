@@ -6,19 +6,20 @@ from librarymanagement.models import (
     Publisher,
     BorrowingTransaction,
     Reservation,
+    Reservation,
     Notification,
     Library,
     Category,
     TrendingBook,
     UserActivity,
+    BookRecommendation,
 )  # Import here to avoid circular imports
 from django.db import transaction
 from django.utils import timezone
 from librarymanagement.utils import BookUtils
-from datetime import timedelta, datetime
+from datetime import timedelta
 from decimal import Decimal
-from django.db.models import Count, Q, Sum, Avg, F
-from django.db.models.functions import TruncDate
+from django.db.models import Count, Avg, F
 
 
 class ReportServices:
@@ -75,6 +76,77 @@ class ReportServices:
         )
 
         return report
+
+    @staticmethod
+    def export_report(report, export_format="csv"):
+        """Export report data to the requested format."""
+        import csv
+        import io
+        import json
+        import html
+
+        export_format = (export_format or "csv").lower()
+        if export_format not in {"csv", "html", "xls"}:
+            raise ValueError("Unsupported export format.")
+
+        metadata = {
+            "title": report.title,
+            "report_type": report.report_type,
+            "period_start": report.period_start,
+            "period_end": report.period_end,
+            "generated_at": report.generated_at,
+            "generated_by": (
+                report.generated_by.username if report.generated_by else "System"
+            ),
+        }
+
+        def normalize_value(value):
+            if isinstance(value, (dict, list)):
+                return json.dumps(value, default=str)
+            return str(value)
+
+        report_data = report.data or {}
+
+        if export_format == "csv":
+            output = io.StringIO()
+            writer = csv.writer(output)
+            writer.writerow(["field", "value"])
+            for key, value in metadata.items():
+                writer.writerow([key, normalize_value(value)])
+            writer.writerow([])
+            writer.writerow(["data_key", "data_value"])
+            for key, value in report_data.items():
+                writer.writerow([key, normalize_value(value)])
+
+            filename = f"report_{report.id}.csv"
+            return output.getvalue(), "text/csv", filename
+
+        def render_rows(source):
+            return "".join(
+                f"<tr><th>{html.escape(str(key))}</th><td>{html.escape(normalize_value(value))}</td></tr>"
+                for key, value in source.items()
+            )
+
+        html_content = (
+            "<html><head><meta charset='utf-8'></head><body>"
+            "<h1>Library Report</h1>"
+            "<h2>Metadata</h2>"
+            "<table border='1'>"
+            f"{render_rows(metadata)}"
+            "</table>"
+            "<h2>Data</h2>"
+            "<table border='1'>"
+            f"{render_rows(report_data)}"
+            "</table>"
+            "</body></html>"
+        )
+
+        if export_format == "html":
+            filename = f"report_{report.id}.html"
+            return html_content, "text/html", filename
+
+        filename = f"report_{report.id}.xls"
+        return html_content, "application/vnd.ms-excel", filename
 
     @staticmethod
     def _generate_usage_report(period_start, period_end):
@@ -445,9 +517,10 @@ class BookServices:
                     if field == "__all__":
                         error_messages.append(str(error))
                     else:
+                        field_obj = form.fields.get(field)
                         field_name = (
-                            form.fields.get(field).label
-                            if field in form.fields
+                            field_obj.label
+                            if field_obj and hasattr(field_obj, "label")
                             else field
                         )
                         error_messages.append(f"{field_name}: {error}")
@@ -515,6 +588,266 @@ class BookServices:
                 book.save()
 
         return book
+
+
+    @staticmethod
+    def update_book(book_id, data, files=None):
+        """Update existing book"""
+        book = Book.objects.get(id=book_id)
+
+        # Update basic fields
+        for field in [
+            "title",
+            "subtitle",
+            "isbn",
+            "publication_year",
+            "edition",
+            "language",
+            "pages",
+            "resource_type",
+            "total_copies",
+            "available_copies",
+            "description",
+            "shelf_location",
+            "accession_number",
+            "subject",
+        ]:
+            if field in data:
+                setattr(book, field, data[field])
+
+        # Update publisher
+        if "publisher" in data and data["publisher"]:
+            book.publisher_id = data["publisher"]
+
+        # Handle file uploads
+        if files:
+            if "cover_image" in files:
+                book.cover_image = files["cover_image"]
+            if "digital_file" in files:
+                book.digital_file = files["digital_file"]
+
+        book.save()
+
+        # Update M2M relations
+        if "categories" in data:
+            category_names = BookServices.process_tagify_data(data.get("categories", ""))
+            if category_names:
+                categories = CategoryServices.get_or_create_categories_from_strings(
+                    category_names
+                )
+                book.categories.set(categories)
+
+        if "authors" in data:
+            author_names = BookServices.process_tagify_data(data.get("authors", ""))
+            if author_names:
+                authors = AuthorServices.get_or_create_authors_from_strings(author_names)
+                book.authors.set(authors)
+
+        return book
+
+    @staticmethod
+    def delete_book(book_id):
+        """Delete a book"""
+        book = Book.objects.get(id=book_id)
+        # Check if book has active transactions
+        active_transactions = BorrowingTransaction.objects.filter(
+            book=book, status__in=["active", "overdue"]
+        ).exists()
+
+        if active_transactions:
+            raise ValueError("Cannot delete book with active borrowing transactions")
+
+        book.delete()
+        return True
+
+    @staticmethod
+    def toggle_book_status(book_id, new_status):
+        """Toggle book status"""
+        book = Book.objects.get(id=book_id)
+        book.status = new_status
+        book.save()
+        return book
+
+    @staticmethod
+    def upload_cover_image(book_id, image_file):
+        """Upload book cover image"""
+        book = Book.objects.get(id=book_id)
+        book.cover_image = image_file
+        book.save()
+        return book
+
+    @staticmethod
+    def upload_digital_file(book_id, digital_file):
+        """Upload digital book file"""
+        book = Book.objects.get(id=book_id)
+        book.digital_file = digital_file
+        book.save()
+        return book
+
+    @staticmethod
+    def bulk_import_books(file_path, library, user):
+        """Import books from CSV file"""
+        import csv
+
+        books_created = []
+        errors = []
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as csvfile:
+                reader = csv.DictReader(csvfile)
+
+                for row in reader:
+                    try:
+                        # Create book
+                        book = Book.objects.create(
+                            library=library,
+                            title=row.get("title", ""),
+                            isbn=row.get("isbn", ""),
+                            publication_year=(
+                                int(row.get("publication_year"))
+                                if row.get("publication_year")
+                                else None
+                            ),
+                            edition=row.get("edition", ""),
+                            language=row.get("language", "English"),
+                            pages=(
+                                int(row.get("pages")) if row.get("pages") else None
+                            ),
+                            resource_type=row.get("resource_type", "physical"),
+                            total_copies=(
+                                int(row.get("total_copies", 1))
+                                if row.get("total_copies")
+                                else 1
+                            ),
+                            available_copies=(
+                                int(row.get("available_copies", 1))
+                                if row.get("available_copies")
+                                else 1
+                            ),
+                            description=row.get("description", ""),
+                            shelf_location=row.get("shelf_location", ""),
+                            accession_number=row.get("accession_number")
+                            or BookUtils.generate_accession_number(),
+                            created_by=user,
+                        )
+
+                        # Handle authors
+                        if row.get("authors"):
+                            author_names = [
+                                name.strip() for name in row["authors"].split(";")
+                            ]
+                            authors = (
+                                AuthorServices.get_or_create_authors_from_strings(
+                                    author_names
+                                )
+                            )
+                            book.authors.set(authors)
+
+                        # Handle categories
+                        if row.get("categories"):
+                            category_names = [
+                                name.strip() for name in row["categories"].split(";")
+                            ]
+                            categories = (
+                                CategoryServices.get_or_create_categories_from_strings(
+                                    category_names
+                                )
+                            )
+                            book.categories.set(categories)
+
+                        books_created.append(book)
+
+                    except Exception as e:
+                        errors.append(f"Row error: {str(e)}")
+
+        except Exception as e:
+            errors.append(f"File error: {str(e)}")
+
+        return books_created, errors
+
+    @staticmethod
+    def export_books(library_id=None, export_format="csv"):
+        """Export books to the requested format"""
+        import csv
+        import io
+        import html
+
+        export_format = (export_format or "csv").lower()
+        if export_format not in {"csv", "html", "xls"}:
+            raise ValueError("Unsupported export format.")
+
+        books = Book.objects.all()
+        if library_id:
+            books = books.filter(library_id=library_id)
+
+        headers = [
+            "accession_number",
+            "title",
+            "isbn",
+            "authors",
+            "publisher",
+            "publication_year",
+            "categories",
+            "language",
+            "pages",
+            "resource_type",
+            "status",
+            "total_copies",
+            "available_copies",
+            "shelf_location",
+        ]
+
+        rows = []
+        for book in books.select_related("publisher").prefetch_related(
+            "authors", "categories"
+        ):
+            rows.append(
+                [
+                    book.accession_number or "",
+                    book.title,
+                    book.isbn or "",
+                    "; ".join([str(author) for author in book.authors.all()]),
+                    str(book.publisher) if book.publisher else "",
+                    book.publication_year or "",
+                    "; ".join([cat.name for cat in book.categories.all()]),
+                    book.language,
+                    book.pages or "",
+                    book.resource_type,
+                    book.status,
+                    book.total_copies,
+                    book.available_copies,
+                    book.shelf_location or "",
+                ]
+            )
+
+        if export_format == "csv":
+            output = io.StringIO()
+            writer = csv.writer(output)
+            writer.writerow(headers)
+            writer.writerows(rows)
+            return output.getvalue(), "text/csv", "books_export.csv"
+
+        header_html = "".join(f"<th>{html.escape(header)}</th>" for header in headers)
+        body_rows = "".join(
+            "<tr>"
+            + "".join(f"<td>{html.escape(str(value))}</td>" for value in row)
+            + "</tr>"
+            for row in rows
+        )
+        html_content = (
+            "<html><head><meta charset='utf-8'></head><body>"
+            "<table border='1'>"
+            f"<thead><tr>{header_html}</tr></thead>"
+            f"<tbody>{body_rows}</tbody>"
+            "</table>"
+            "</body></html>"
+        )
+
+        if export_format == "html":
+            return html_content, "text/html", "books_export.html"
+
+        return html_content, "application/vnd.ms-excel", "books_export.xls"
+
 
 
 class LibraryServices:
@@ -693,6 +1026,107 @@ class TransactionServices:
 
         return updated_count
 
+    @staticmethod
+    def update_transaction(transaction_id, **kwargs):
+        """Update transaction details"""
+        trans = BorrowingTransaction.objects.get(id=transaction_id)
+
+        for key, value in kwargs.items():
+            if hasattr(trans, key):
+                setattr(trans, key, value)
+
+        trans.save()
+        return trans
+
+    @staticmethod
+    def mark_book_lost(transaction_id, notes=""):
+        """Mark a transaction/book as lost"""
+        with transaction.atomic():
+            trans = BorrowingTransaction.objects.select_for_update().get(
+                id=transaction_id
+            )
+
+            trans.status = "lost"
+            if notes:
+                trans.notes += f"\n[Lost] {notes}"
+            trans.save()
+
+            # Update book status
+            book = trans.book
+            book.status = "lost"
+            book.total_copies -= 1
+            if book.available_copies > 0:
+                book.available_copies -= 1
+            book.save()
+
+        return trans
+
+    @staticmethod
+    def waive_fine(transaction_id, waive_amount=None, reason=""):
+        """Waive or reduce fine amount"""
+        trans = BorrowingTransaction.objects.get(id=transaction_id)
+
+        if waive_amount is None:
+            # Waive entire fine
+            trans.fine_amount = Decimal("0.00")
+        else:
+            # Reduce fine by specified amount
+            trans.fine_amount = max(
+                Decimal("0.00"), trans.fine_amount - Decimal(str(waive_amount))
+            )
+
+        if reason:
+            trans.notes += f"\n[Fine Waived] {reason}"
+
+        trans.save()
+        return trans
+
+    @staticmethod
+    def pay_fine(transaction_id, amount_paid, payment_method="cash"):
+        """Record fine payment"""
+        trans = BorrowingTransaction.objects.get(id=transaction_id)
+
+        # Deduct payment from fine
+        trans.fine_amount = max(Decimal("0.00"), trans.fine_amount - Decimal(str(amount_paid)))
+
+        trans.notes += f"\n[Payment] {payment_method}: ₱{amount_paid}"
+        trans.save()
+
+        return trans
+
+    @staticmethod
+    def extend_due_date(transaction_id, additional_days):
+        """Manually extend due date"""
+        trans = BorrowingTransaction.objects.get(id=transaction_id)
+
+        trans.due_date = trans.due_date + timedelta(days=additional_days)
+
+        # Reset overdue status if applicable
+        if trans.status == "overdue" and trans.due_date > timezone.now():
+            trans.status = "active"
+            trans.days_overdue = 0
+
+        trans.notes += f"\n[Due Date Extended] +{additional_days} days"
+        trans.save()
+
+        return trans
+
+    @staticmethod
+    def bulk_return_books(transaction_ids, return_date=None):
+        """Return multiple books at once"""
+        results = {"success": [], "errors": []}
+
+        for trans_id in transaction_ids:
+            try:
+                trans = TransactionServices.return_book(
+                    trans_id, return_date=return_date
+                )
+                results["success"].append(trans)
+            except Exception as e:
+                results["errors"].append({"transaction_id": trans_id, "error": str(e)})
+
+        return results
+
 
 class ReservationServices:
 
@@ -847,6 +1281,34 @@ class ReservationServices:
 
         return expired_count
 
+    @staticmethod
+    def update_reservation(reservation_id, **kwargs):
+        """Update reservation details"""
+        reservation = Reservation.objects.get(id=reservation_id)
+
+        for key, value in kwargs.items():
+            if hasattr(reservation, key):
+                setattr(reservation, key, value)
+
+        reservation.save()
+        return reservation
+
+    @staticmethod
+    def extend_reservation_expiry(reservation_id, additional_days):
+        """Extend reservation pickup deadline"""
+        reservation = Reservation.objects.get(id=reservation_id)
+
+        if reservation.status != "ready":
+            raise ValueError("Only ready reservations can be extended")
+
+        reservation.expiry_date = reservation.expiry_date + timedelta(
+            days=additional_days
+        )
+        reservation.notes += f"\n[Expiry Extended] +{additional_days} days"
+        reservation.save()
+
+        return reservation
+
 
 class NotificationServices:
 
@@ -905,6 +1367,119 @@ class NotificationServices:
             related_reservation=reservation,
         )
         return notification
+
+    @staticmethod
+    def send_due_soon_notifications():
+        """Scheduled task to send due soon notifications"""
+        from datetime import timedelta
+
+        # Get transactions due in 3 days
+        target_date = timezone.now() + timedelta(days=3)
+        transactions = BorrowingTransaction.objects.filter(
+            status="active",
+            due_date__date=target_date.date(),
+        )
+
+        count = 0
+        for trans in transactions:
+            # Check if notification already exists
+            existing = Notification.objects.filter(
+                user=trans.user,
+                notification_type="due_soon",
+                related_transaction=trans,
+            ).exists()
+
+            if not existing:
+                NotificationServices.create_due_soon_notification(trans)
+                count += 1
+
+        return count
+
+    @staticmethod
+    def send_overdue_notifications():
+        """Scheduled task to send overdue notifications"""
+        transactions = BorrowingTransaction.objects.filter(status="overdue")
+
+        count = 0
+        for trans in transactions:
+            # Send notification only if not sent today
+            today = timezone.now().date()
+            existing_today = Notification.objects.filter(
+                user=trans.user,
+                notification_type="overdue",
+                related_transaction=trans,
+                created_at__date=today,
+            ).exists()
+
+            if not existing_today:
+                NotificationServices.create_overdue_notification(trans)
+                count += 1
+
+        return count
+
+    @staticmethod
+    def send_reservation_expiring_notifications():
+        """Scheduled task to send reservation expiring notifications"""
+        from datetime import timedelta
+
+        # Get reservations expiring in 1 day
+        target_date = timezone.now() + timedelta(days=1)
+        reservations = Reservation.objects.filter(
+            status="ready", expiry_date__date=target_date.date()
+        )
+
+        count = 0
+        for reservation in reservations:
+            # Check if notification already exists
+            existing = Notification.objects.filter(
+                user=reservation.user,
+                notification_type="reservation_expiring",
+                related_reservation=reservation,
+            ).exists()
+
+            if not existing:
+                NotificationServices.create_reservation_expiring_notification(
+                    reservation
+                )
+                count += 1
+
+        return count
+
+    @staticmethod
+    def mark_notification_read(notification_id):
+        """Mark notification as read"""
+        notification = Notification.objects.get(id=notification_id)
+        notification.is_read = True
+        notification.read_at = timezone.now()
+        notification.save()
+        return notification
+
+    @staticmethod
+    def delete_notification(notification_id):
+        """Delete a notification"""
+        notification = Notification.objects.get(id=notification_id)
+        notification.delete()
+        return True
+
+    @staticmethod
+    def get_unread_count(user):
+        """Get count of unread notifications for user"""
+        return Notification.objects.filter(user=user, is_read=False).count()
+
+    @staticmethod
+    def get_user_notifications(user, unread_only=False, limit=None):
+        """Get user notifications"""
+        notifications = Notification.objects.filter(user=user)
+
+        if unread_only:
+            notifications = notifications.filter(is_read=False)
+
+        notifications = notifications.order_by("-created_at")
+
+        if limit:
+            notifications = notifications[:limit]
+
+        return notifications
 
 
 class AuthorServices:
@@ -997,6 +1572,28 @@ class AuthorServices:
 
         return authors
 
+    @staticmethod
+    def delete_author(author_id):
+        """Delete an author"""
+        author = Author.objects.get(id=author_id)
+
+        # Check if author has books
+        if author.books.exists():
+            raise ValueError(
+                "Cannot delete author with associated books. Remove books first."
+            )
+
+        author.delete()
+        return True
+
+    @staticmethod
+    def toggle_author_status(author_id):
+        """Toggle author active status"""
+        author = Author.objects.get(id=author_id)
+        author.active = not author.active
+        author.save()
+        return author
+
 
 class CategoryServices:
     @staticmethod
@@ -1016,6 +1613,49 @@ class CategoryServices:
             category, _ = Category.objects.get_or_create(name=name.strip())
             categories.append(category)
         return categories
+
+    @staticmethod
+    def create_category(data):
+        """Create a new category"""
+        category = Category.objects.create(
+            name=data["name"],
+            description=data.get("description", ""),
+            parent_category_id=data.get("parent_category"),
+        )
+        return category
+
+    @staticmethod
+    def update_category(category_id, data):
+        """Update existing category"""
+        category = Category.objects.get(id=category_id)
+        category.name = data.get("name", category.name)
+        category.description = data.get("description", category.description)
+
+        if "parent_category" in data:
+            category.parent_category_id = data["parent_category"]
+
+        category.save()
+        return category
+
+    @staticmethod
+    def delete_category(category_id):
+        """Delete a category"""
+        category = Category.objects.get(id=category_id)
+
+        # Check if category has books
+        if category.books.exists():
+            raise ValueError(
+                "Cannot delete category with associated books. Remove books first."
+            )
+
+        # Check if category has subcategories
+        if category.subcategories.exists():
+            raise ValueError(
+                "Cannot delete category with subcategories. Remove subcategories first."
+            )
+
+        category.delete()
+        return True
 
 
 class PublisherServices:
@@ -1066,3 +1706,882 @@ class PublisherServices:
             },
         )
         return publisher
+
+    @staticmethod
+    def delete_publisher(publisher_id):
+        """Delete a publisher"""
+        publisher = Publisher.objects.get(id=publisher_id)
+
+        # Check if publisher has books
+        if publisher.books.exists():
+            raise ValueError(
+                "Cannot delete publisher with associated books. Remove books first."
+            )
+
+        publisher.delete()
+        return True
+
+    @staticmethod
+    def toggle_publisher_status(publisher_id):
+        """Toggle publisher active status"""
+        publisher = Publisher.objects.get(id=publisher_id)
+        publisher.active = not publisher.active
+        publisher.save()
+        return publisher
+
+
+class RecommendationServices:
+    """Services for generating personalized book recommendations"""
+
+    @staticmethod
+    def generate_recommendations_for_user(user, limit=10):
+        """
+        Generate personalized book recommendations based on user's borrowing history
+        Uses collaborative filtering approach
+        """
+        from librarymanagement.models import BookRecommendation
+
+        # Get user's borrowing history
+        user_books = (
+            BorrowingTransaction.objects.filter(user=user)
+            .values_list("book_id", flat=True)
+            .distinct()
+        )
+
+        if not user_books:
+            # New user - recommend trending books
+            return RecommendationServices._recommend_trending_books(user, limit)
+
+        # Get categories user has borrowed from
+        from django.db.models import Count
+
+        user_categories = (
+            Book.objects.filter(id__in=user_books)
+            .values_list("categories", flat=True)
+            .distinct()
+        )
+
+        # Find books in same categories that user hasn't borrowed
+        recommended_books = (
+            Book.objects.filter(categories__in=user_categories, status="available")
+            .exclude(id__in=user_books)
+            .annotate(category_match_count=Count("categories"))
+            .order_by("-category_match_count")[:limit]
+        )
+
+        # Create recommendation records
+        recommendations = []
+        for book in recommended_books:
+            score = min(100.0, book.category_match_count * 25.0)
+            recommendation, created = BookRecommendation.objects.get_or_create(
+                user=user,
+                book=book,
+                defaults={"score": score, "reason": "Based on your reading history"},
+            )
+            recommendations.append(recommendation)
+
+        return recommendations
+
+    @staticmethod
+    def _recommend_trending_books(user, limit=10):
+        """Recommend trending books for new users"""
+        from librarymanagement.models import BookRecommendation
+
+        trending = (
+            TrendingBook.objects.filter(period_type="weekly", book__status="available")
+            .select_related("book")
+            .order_by("-popularity_score")[:limit]
+        )
+
+        recommendations = []
+        for trend in trending:
+            recommendation, created = BookRecommendation.objects.get_or_create(
+                user=user,
+                book=trend.book,
+                defaults={
+                    "score": min(100.0, float(trend.popularity_score)),
+                    "reason": "Currently trending",
+                },
+            )
+            recommendations.append(recommendation)
+
+        return recommendations
+
+    @staticmethod
+    def update_all_recommendations():
+        """Update recommendations for all active users"""
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+
+        active_users = User.objects.filter(is_active=True)
+        count = 0
+
+        for user in active_users:
+            RecommendationServices.generate_recommendations_for_user(user)
+            count += 1
+
+        return count
+
+    @staticmethod
+    def refresh_recommendations(user):
+        """Regenerate recommendations for a specific user"""
+        # Delete existing recommendations
+        BookRecommendation.objects.filter(user=user).delete()
+
+        # Generate new recommendations
+        return RecommendationServices.generate_recommendations_for_user(user)
+
+    @staticmethod
+    def dismiss_recommendation(recommendation_id):
+        """Remove a recommendation"""
+        recommendation = BookRecommendation.objects.get(id=recommendation_id)
+        recommendation.delete()
+        return True
+
+    @staticmethod
+    def mark_recommendation_viewed(recommendation_id):
+        """Mark recommendation as viewed"""
+        recommendation = BookRecommendation.objects.get(id=recommendation_id)
+        recommendation.viewed = True
+        recommendation.save()
+        return recommendation
+
+
+class DataMiningServices:
+    """Services for data mining and analytics"""
+
+    @staticmethod
+    def analyze_user_patterns():
+        """
+        Analyze user borrowing patterns and create user clusters
+        Groups users based on their reading preferences
+        """
+        from librarymanagement.models import UserCluster
+        from django.contrib.auth import get_user_model
+        from collections import defaultdict
+
+        User = get_user_model()
+        users = User.objects.filter(is_active=True)
+
+        # Gather user borrowing patterns
+        user_patterns = defaultdict(
+            lambda: {
+                "categories": defaultdict(int),
+                "total_borrows": 0,
+                "avg_duration": 0,
+            }
+        )
+
+        for user in users:
+            transactions = BorrowingTransaction.objects.filter(user=user)
+
+            if not transactions.exists():
+                continue
+
+            user_patterns[user.id]["total_borrows"] = transactions.count()
+
+            # Analyze categories
+            for trans in transactions:
+                for category in trans.book.categories.all():
+                    user_patterns[user.id]["categories"][category.name] += 1
+
+        # Simple clustering based on dominant category
+        clusters = defaultdict(list)
+
+        for user_id, pattern in user_patterns.items():
+            if not pattern["categories"]:
+                clusters[0].append(user_id)  # Cluster 0 for users with no clear pattern
+                continue
+
+            # Find dominant category
+            dominant_category = max(pattern["categories"].items(), key=lambda x: x[1])[
+                0
+            ]
+
+            # Assign cluster based on category
+            cluster_mapping = {
+                "Fiction": 1,
+                "Science": 2,
+                "History": 3,
+                "Technology": 4,
+                "Arts": 5,
+            }
+            cluster_id = cluster_mapping.get(dominant_category, 6)
+            clusters[cluster_id].append(user_id)
+
+        # Save cluster assignments
+        for cluster_id, user_ids in clusters.items():
+            cluster_name = f"Cluster {cluster_id}"
+            if cluster_id == 1:
+                cluster_name = "Fiction Enthusiasts"
+            elif cluster_id == 2:
+                cluster_name = "Science Readers"
+            elif cluster_id == 3:
+                cluster_name = "History Buffs"
+            elif cluster_id == 4:
+                cluster_name = "Tech Readers"
+            elif cluster_id == 5:
+                cluster_name = "Arts & Culture"
+            elif cluster_id == 0:
+                cluster_name = "Diverse Readers"
+            else:
+                cluster_name = "General Readers"
+
+            for user_id in user_ids:
+                try:
+                    user = User.objects.get(id=user_id)
+                    UserCluster.objects.update_or_create(
+                        user=user,
+                        defaults={
+                            "cluster_id": cluster_id,
+                            "cluster_name": cluster_name,
+                            "characteristics": user_patterns[user_id],
+                        },
+                    )
+                except User.DoesNotExist:
+                    continue
+
+        return len(clusters)
+
+    @staticmethod
+    def analyze_trending_books(period_type="weekly"):
+        """
+        Analyze and update trending books based on recent activity
+        Considers views, borrows, and reservations
+        """
+        from datetime import timedelta
+
+        # Define period ranges
+        period_ranges = {"daily": 1, "weekly": 7, "monthly": 30, "yearly": 365}
+
+        days = period_ranges.get(period_type, 7)
+        period_start = timezone.now().date() - timedelta(days=days)
+        period_end = timezone.now().date()
+
+        # Analyze activity for each book
+        books = Book.objects.all()
+
+        for book in books:
+            # Count activities
+            views = UserActivity.objects.filter(
+                book=book,
+                activity_type="view",
+                timestamp__date__gte=period_start,
+                timestamp__date__lte=period_end,
+            ).count()
+
+            borrows = BorrowingTransaction.objects.filter(
+                book=book,
+                borrowed_date__date__gte=period_start,
+                borrowed_date__date__lte=period_end,
+            ).count()
+
+            reservations = Reservation.objects.filter(
+                book=book,
+                reservation_date__date__gte=period_start,
+                reservation_date__date__lte=period_end,
+            ).count()
+
+            # Calculate popularity score
+            # Weighted: borrows (5x), reservations (3x), views (1x)
+            popularity_score = (borrows * 5) + (reservations * 3) + views
+
+            if popularity_score > 0:
+                TrendingBook.objects.update_or_create(
+                    book=book,
+                    period_type=period_type,
+                    period_start=period_start,
+                    defaults={
+                        "period_end": period_end,
+                        "view_count": views,
+                        "borrow_count": borrows,
+                        "reservation_count": reservations,
+                        "popularity_score": popularity_score,
+                    },
+                )
+
+        return TrendingBook.objects.filter(
+            period_type=period_type, period_start=period_start
+        ).count()
+
+    @staticmethod
+    def predict_demand(book_id=None):
+        """
+        Predict future demand for books based on historical trends
+        Returns books that might need additional copies
+        """
+        from datetime import timedelta
+
+        # Analyze past 3 months
+        period_start = timezone.now().date() - timedelta(days=90)
+
+        if book_id:
+            books = Book.objects.filter(id=book_id)
+        else:
+            books = Book.objects.all()
+
+        high_demand_books = []
+
+        for book in books:
+            # Count recent activity
+            recent_borrows = BorrowingTransaction.objects.filter(
+                book=book, borrowed_date__date__gte=period_start
+            ).count()
+
+            recent_reservations = Reservation.objects.filter(
+                book=book, reservation_date__date__gte=period_start
+            ).count()
+
+            # Calculate demand ratio
+            total_demand = recent_borrows + recent_reservations
+            if total_demand > 0 and book.total_copies > 0:
+                demand_ratio = total_demand / book.total_copies
+
+                # If demand ratio > 3, book is in high demand
+                if demand_ratio > 3:
+                    high_demand_books.append(
+                        {
+                            "book": book,
+                            "demand_ratio": round(demand_ratio, 2),
+                            "recent_borrows": recent_borrows,
+                            "recent_reservations": recent_reservations,
+                            "recommended_copies": max(1, int(demand_ratio / 2)),
+                        }
+                    )
+
+        return sorted(high_demand_books, key=lambda x: x["demand_ratio"], reverse=True)
+
+    @staticmethod
+    def generate_usage_insights(days=30):
+        """
+        Generate insights about library usage patterns
+        Returns dictionary with key metrics and insights
+        """
+        from datetime import timedelta
+
+        period_start = timezone.now().date() - timedelta(days=days)
+
+        # Activity metrics
+        total_activities = UserActivity.objects.filter(
+            timestamp__date__gte=period_start
+        ).count()
+
+        activity_breakdown = (
+            UserActivity.objects.filter(timestamp__date__gte=period_start)
+            .values("activity_type")
+            .annotate(count=Count("id"))
+        )
+
+        # Borrowing metrics
+        total_borrows = BorrowingTransaction.objects.filter(
+            borrowed_date__date__gte=period_start
+        ).count()
+
+        overdue_rate = 0
+        if total_borrows > 0:
+            overdue_count = BorrowingTransaction.objects.filter(
+                borrowed_date__date__gte=period_start, status="overdue"
+            ).count()
+            overdue_rate = round((overdue_count / total_borrows) * 100, 2)
+
+        # Popular categories
+        popular_categories = (
+            Category.objects.filter(
+                books__borrowing_transactions__borrowed_date__date__gte=period_start
+            )
+            .annotate(borrow_count=Count("books__borrowing_transactions"))
+            .order_by("-borrow_count")[:5]
+        )
+
+        # Peak usage hours (simplified - would need more complex analysis)
+        peak_hours = (
+            UserActivity.objects.filter(timestamp__date__gte=period_start)
+            .extra(select={"hour": "EXTRACT(hour FROM timestamp)"})
+            .values("hour")
+            .annotate(count=Count("id"))
+            .order_by("-count")[:3]
+        )
+
+        insights = {
+            "period_days": days,
+            "total_activities": total_activities,
+            "activity_breakdown": list(activity_breakdown),
+            "total_borrows": total_borrows,
+            "overdue_rate": overdue_rate,
+            "popular_categories": [
+                {"name": cat.name, "count": cat.borrow_count}
+                for cat in popular_categories
+            ],
+            "peak_hours": list(peak_hours),
+            "insights": [],
+        }
+
+        # Generate textual insights
+        if overdue_rate > 20:
+            insights["insights"].append(
+                f"High overdue rate ({overdue_rate}%) - consider reminder notifications"
+            )
+
+        if popular_categories:
+            top_cat = popular_categories[0]
+            insights["insights"].append(
+                f"{top_cat.name} is the most popular category with {top_cat.borrow_count} borrows"
+            )
+
+        return insights
+
+
+class LibrarySettingsServices:
+    """Services for managing library settings"""
+
+    @staticmethod
+    def get_or_create_settings(library):
+        """Get or create library settings"""
+        from librarymanagement.models import LibrarySettings
+
+        settings, created = LibrarySettings.objects.get_or_create(
+            library=library,
+            defaults={
+                "library_name": library.name,
+                "default_loan_period_days": 14,
+                "maximum_renewals": 2,
+                "maximum_books_per_user": 5,
+                "enable_fines": True,
+                "daily_fine_amount": Decimal("1.00"),
+                "maximum_fine_amount": Decimal("50.00"),
+                "grace_period_days": 0,
+                "enable_email_notifications": True,
+                "enable_sms_notifications": False,
+                "notify_due_dates": True,
+                "notify_overdue": True,
+                "notify_reservation_ready": True,
+                "days_before_due_notification": 3,
+                "enable_book_recommendations": True,
+                "enable_trending_analysis": True,
+                "enable_user_analytics": True,
+                "enable_digital_resources": True,
+                "reservation_expiry_days": 3,
+                "auto_extend_on_no_reservation": False,
+            },
+        )
+        return settings
+
+    @staticmethod
+    def update_general_settings(library, **kwargs):
+        """Update general library settings"""
+        settings = LibrarySettingsServices.get_or_create_settings(library)
+
+        for key, value in kwargs.items():
+            if hasattr(settings, key):
+                setattr(settings, key, value)
+
+        settings.save()
+        return settings
+
+    @staticmethod
+    def update_fine_settings(library, **kwargs):
+        """Update fine-related settings"""
+        settings = LibrarySettingsServices.get_or_create_settings(library)
+
+        fine_fields = [
+            "enable_fines",
+            "daily_fine_amount",
+            "maximum_fine_amount",
+            "grace_period_days",
+        ]
+
+        for key, value in kwargs.items():
+            if key in fine_fields and hasattr(settings, key):
+                setattr(settings, key, value)
+
+        settings.save()
+        return settings
+
+    @staticmethod
+    def update_notification_settings(library, **kwargs):
+        """Update notification preferences"""
+        settings = LibrarySettingsServices.get_or_create_settings(library)
+
+        notification_fields = [
+            "enable_email_notifications",
+            "enable_sms_notifications",
+            "notify_due_dates",
+            "notify_overdue",
+            "notify_reservation_ready",
+            "days_before_due_notification",
+        ]
+
+        for key, value in kwargs.items():
+            if key in notification_fields and hasattr(settings, key):
+                setattr(settings, key, value)
+
+        settings.save()
+        return settings
+
+    @staticmethod
+    def update_feature_settings(library, **kwargs):
+        """Update feature toggles"""
+        settings = LibrarySettingsServices.get_or_create_settings(library)
+
+        feature_fields = [
+            "enable_book_recommendations",
+            "enable_trending_analysis",
+            "enable_user_analytics",
+            "enable_digital_resources",
+        ]
+
+        for key, value in kwargs.items():
+            if key in feature_fields and hasattr(settings, key):
+                setattr(settings, key, value)
+
+        settings.save()
+        return settings
+
+    @staticmethod
+    def export_library_data(library):
+        """Export library data as JSON"""
+        import json
+
+        data = {
+            "library": {
+                "name": library.name,
+                "description": library.description,
+                "location": library.location,
+            },
+            "books_count": library.books.count(),
+            "active_transactions": BorrowingTransaction.objects.filter(
+                book__library=library, status="active"
+            ).count(),
+            "total_users": (
+                BorrowingTransaction.objects.filter(book__library=library)
+                .values("user")
+                .distinct()
+                .count()
+            ),
+        }
+
+        return json.dumps(data, indent=2)
+
+
+class AdvancedSearchServices:
+    """Services for advanced search and filtering"""
+
+    @staticmethod
+    def search_books(
+        query=None,
+        category_ids=None,
+        author_ids=None,
+        publisher_id=None,
+        status=None,
+        resource_type=None,
+        year_from=None,
+        year_to=None,
+        language=None,
+    ):
+        """Advanced book search with multiple criteria"""
+        books = Book.objects.all()
+
+        if query:
+            from django.db.models import Q
+
+            books = books.filter(
+                Q(title__icontains=query)
+                | Q(subtitle__icontains=query)
+                | Q(isbn__icontains=query)
+                | Q(subject__icontains=query)
+                | Q(description__icontains=query)
+            )
+
+        if category_ids:
+            books = books.filter(categories__id__in=category_ids).distinct()
+
+        if author_ids:
+            books = books.filter(authors__id__in=author_ids).distinct()
+
+        if publisher_id:
+            books = books.filter(publisher_id=publisher_id)
+
+        if status:
+            books = books.filter(status=status)
+
+        if resource_type:
+            books = books.filter(resource_type=resource_type)
+
+        if year_from:
+            books = books.filter(publication_year__gte=year_from)
+
+        if year_to:
+            books = books.filter(publication_year__lte=year_to)
+
+        if language:
+            books = books.filter(language__iexact=language)
+
+        return books.select_related("library", "publisher").prefetch_related(
+            "authors", "categories"
+        )
+
+    @staticmethod
+    def filter_transactions(
+        user_id=None,
+        book_id=None,
+        status=None,
+        date_from=None,
+        date_to=None,
+        overdue_only=False,
+    ):
+        """Filter borrowing transactions"""
+        transactions = BorrowingTransaction.objects.all()
+
+        if user_id:
+            transactions = transactions.filter(user_id=user_id)
+
+        if book_id:
+            transactions = transactions.filter(book_id=book_id)
+
+        if status:
+            transactions = transactions.filter(status=status)
+
+        if date_from:
+            transactions = transactions.filter(borrowed_date__date__gte=date_from)
+
+        if date_to:
+            transactions = transactions.filter(borrowed_date__date__lte=date_to)
+
+        if overdue_only:
+            transactions = transactions.filter(status="overdue")
+
+        return transactions.select_related("user", "book", "issued_by")
+
+    @staticmethod
+    def filter_reservations(
+        user_id=None, book_id=None, status=None, date_from=None, date_to=None
+    ):
+        """Filter reservations"""
+        reservations = Reservation.objects.all()
+
+        if user_id:
+            reservations = reservations.filter(user_id=user_id)
+
+        if book_id:
+            reservations = reservations.filter(book_id=book_id)
+
+        if status:
+            reservations = reservations.filter(status=status)
+
+        if date_from:
+            reservations = reservations.filter(reservation_date__date__gte=date_from)
+
+        if date_to:
+            reservations = reservations.filter(reservation_date__date__lte=date_to)
+
+        return reservations.select_related("user", "book")
+
+
+class UserActivityServices:
+    """Services for tracking and managing user activities"""
+
+    @staticmethod
+    def track_book_view(user, book, session_id=None):
+        """Track when a user views a book"""
+        if not user.is_authenticated:
+            return None
+
+        activity = UserActivity.objects.create(
+            user=user,
+            book=book,
+            activity_type="view",
+            session_id=session_id or "",
+        )
+        return activity
+
+    @staticmethod
+    def track_search(user, search_query, session_id=None):
+        """Track user search queries"""
+        if not user.is_authenticated:
+            return None
+
+        activity = UserActivity.objects.create(
+            user=user,
+            activity_type="search",
+            search_query=search_query,
+            session_id=session_id or "",
+        )
+        return activity
+
+    @staticmethod
+    def get_user_activities(user, activity_type=None, days=30):
+        """Get user's activity history"""
+        from datetime import timedelta
+
+        period_start = timezone.now() - timedelta(days=days)
+        activities = UserActivity.objects.filter(
+            user=user, timestamp__gte=period_start
+        )
+
+        if activity_type:
+            activities = activities.filter(activity_type=activity_type)
+
+        return activities.select_related("book")
+
+    @staticmethod
+    def delete_old_activities(days=90):
+        """Delete activities older than specified days"""
+        from datetime import timedelta
+
+        cutoff_date = timezone.now() - timedelta(days=days)
+        deleted_count = UserActivity.objects.filter(
+            timestamp__lt=cutoff_date
+        ).delete()[0]
+        return deleted_count
+
+    @staticmethod
+    def export_user_activity(user):
+        """Export user's activity data (GDPR compliance)"""
+        import json
+
+        activities = UserActivity.objects.filter(user=user).select_related("book")
+
+        data = {
+            "user": user.username,
+            "total_activities": activities.count(),
+            "activities": [
+                {
+                    "type": activity.activity_type,
+                    "book": activity.book.title if activity.book else None,
+                    "search_query": activity.search_query,
+                    "timestamp": activity.timestamp.isoformat(),
+                }
+                for activity in activities
+            ],
+        }
+
+        return json.dumps(data, indent=2)
+
+
+class UserProfileServices:
+    """Services for user profile management"""
+
+    @staticmethod
+    def get_borrowing_history(user, limit=None):
+        """Get user's complete borrowing history"""
+        transactions = BorrowingTransaction.objects.filter(user=user).select_related(
+            "book", "issued_by"
+        )
+
+        if limit:
+            transactions = transactions[:limit]
+
+        return transactions
+
+    @staticmethod
+    def get_reservation_history(user, limit=None):
+        """Get user's reservation history"""
+        reservations = Reservation.objects.filter(user=user).select_related("book")
+
+        if limit:
+            reservations = reservations[:limit]
+
+        return reservations
+
+    @staticmethod
+    def export_user_data(user):
+        """Export user's library data (GDPR compliance)"""
+        import json
+
+        transactions = BorrowingTransaction.objects.filter(user=user)
+        reservations = Reservation.objects.filter(user=user)
+        recommendations = BookRecommendation.objects.filter(user=user)
+
+        data = {
+            "user": {
+                "username": user.username,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+            },
+            "borrowing_history": [
+                {
+                    "book": trans.book.title,
+                    "borrowed_date": trans.borrowed_date.isoformat(),
+                    "due_date": trans.due_date.isoformat(),
+                    "return_date": (
+                        trans.return_date.isoformat() if trans.return_date else None
+                    ),
+                    "status": trans.status,
+                }
+                for trans in transactions
+            ],
+            "reservations": [
+                {
+                    "book": res.book.title,
+                    "reservation_date": res.reservation_date.isoformat(),
+                    "status": res.status,
+                }
+                for res in reservations
+            ],
+            "recommendations_count": recommendations.count(),
+        }
+
+        return json.dumps(data, indent=2)
+
+
+class TrendingServices:
+    """Services for trending and popular books"""
+
+    @staticmethod
+    def get_trending_by_category(category_id, period_type="weekly", limit=10):
+        """Get trending books filtered by category"""
+        from datetime import timedelta
+
+        period_ranges = {"daily": 1, "weekly": 7, "monthly": 30, "yearly": 365}
+        days = period_ranges.get(period_type, 7)
+        period_start = timezone.now().date() - timedelta(days=days)
+
+        trending_books = (
+            TrendingBook.objects.filter(
+                period_type=period_type,
+                period_start=period_start,
+                book__categories__id=category_id,
+            )
+            .select_related("book")
+            .order_by("-popularity_score")[:limit]
+        )
+
+        return trending_books
+
+    @staticmethod
+    def update_trending_metrics(period_type="weekly"):
+        """Calculate and update trending scores - for scheduled job"""
+        return DataMiningServices.analyze_trending_books(period_type)
+
+    @staticmethod
+    def export_trending_report(period_type="weekly"):
+        """Export trending data as JSON"""
+        import json
+        from datetime import timedelta
+
+        period_ranges = {"daily": 1, "weekly": 7, "monthly": 30, "yearly": 365}
+        days = period_ranges.get(period_type, 7)
+        period_start = timezone.now().date() - timedelta(days=days)
+
+        trending_books = TrendingBook.objects.filter(
+            period_type=period_type, period_start=period_start
+        ).select_related("book")[:20]
+
+        data = {
+            "period_type": period_type,
+            "period_start": str(period_start),
+            "trending_books": [
+                {
+                    "title": tb.book.title,
+                    "popularity_score": str(tb.popularity_score),
+                    "view_count": tb.view_count,
+                    "borrow_count": tb.borrow_count,
+                    "reservation_count": tb.reservation_count,
+                }
+                for tb in trending_books
+            ],
+        }
+
+        return json.dumps(data, indent=2)

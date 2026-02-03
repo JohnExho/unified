@@ -1,0 +1,12 @@
+<input type="{{ input_type|default:'text' }}"
+       id="{{ input_id }}"
+       name="{{ input_name }}"
+       class="input {% if input_size %}input-{{ input_size }}{% endif %} {% if input_error %}input-error{% endif %} {% if input_success %}input-success{% endif %} {{ input_class|default:'' }}"
+       {% if input_value %}value="{{ input_value }}"{% endif %}
+       {% if input_placeholder %}placeholder="{{ input_placeholder }}"{% endif %}
+       {% if input_required %}required{% endif %}
+       {% if input_disabled %}disabled{% endif %}
+       {% if input_readonly %}readonly{% endif %}
+       {% if input_min %}min="{{ input_min }}"{% endif %}
+       {% if input_max %}max="{{ input_max }}"{% endif %}
+       {% if input_step %}step="{{ input_step }}"{% endif %} />

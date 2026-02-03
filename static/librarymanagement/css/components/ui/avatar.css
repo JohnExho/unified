@@ -1,0 +1,158 @@
+/* =========================
+   Avatar Component (shadcn-ui style)
+========================= */
+
+/* Avatar Container */
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background-color: var(--color-muted);
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: 1/1;
+}
+
+/* Avatar Fallback */
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+}
+
+/* Avatar Sizes */
+.avatar-xs {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.avatar-xs .avatar-fallback {
+  font-size: var(--text-xs);
+}
+
+.avatar-sm {
+  width: 2rem;
+  height: 2rem;
+}
+
+.avatar-sm .avatar-fallback {
+  font-size: var(--text-xs);
+}
+
+.avatar-lg {
+  width: 3rem;
+  height: 3rem;
+}
+
+.avatar-lg .avatar-fallback {
+  font-size: var(--text-base);
+}
+
+.avatar-xl {
+  width: 4rem;
+  height: 4rem;
+}
+
+.avatar-xl .avatar-fallback {
+  font-size: var(--text-lg);
+}
+
+/* Avatar Shapes */
+.avatar-square {
+  border-radius: var(--radius-md);
+}
+
+.avatar-rounded {
+  border-radius: var(--radius-lg);
+}
+
+/* Avatar with Border */
+.avatar-bordered {
+  border: 2px solid var(--color-background);
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+
+/* Avatar Status Indicator */
+.avatar-status {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  border: 2px solid var(--color-background);
+}
+
+.avatar-status-online {
+  background-color: var(--success);
+}
+
+.avatar-status-offline {
+  background-color: var(--color-muted);
+}
+
+.avatar-status-busy {
+  background-color: var(--destructive);
+}
+
+.avatar-status-away {
+  background-color: var(--warning);
+}
+
+/* Avatar Group */
+.avatar-group {
+  display: inline-flex;
+  flex-direction: row-reverse;
+}
+
+.avatar-group .avatar {
+  margin-left: -0.5rem;
+  border: 2px solid var(--color-background);
+}
+
+.avatar-group .avatar:first-child {
+  margin-left: 0;
+}
+
+/* Avatar with Text */
+.avatar-with-text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.avatar-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.avatar-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-foreground);
+  line-height: 1.2;
+}
+
+.avatar-description {
+  font-size: var(--text-xs);
+  color: var(--color-muted-foreground);
+  line-height: 1.2;
+}

@@ -1,0 +1,17 @@
+<div class="page-header">
+  <h1 class="page-title">Recommendations & Trends</h1>
+  <p class="page-description">AI-powered book suggestions and trending insights</p>
+</div>
+<!-- Tab Navigation -->
+<div class="period-tabs">
+  <button class="period-tab {% if not view_type or view_type == 'recommendations' %}active{% endif %}"
+          onclick="window.location.href='{% url 'librarymanagement:recommendations_dashboard' %}'">
+    {% include "librarymanagement/components/icons/star.svg" %}
+    Recommendations
+  </button>
+  <button class="period-tab {% if view_type == 'trending' %}active{% endif %}"
+          onclick="window.location.href='{% url 'librarymanagement:trending_books' %}'">
+    {% include "librarymanagement/components/icons/chart-line.svg" %}
+    Trending Books
+  </button>
+</div>

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+  Transaction Details - Library Management
+{% endblock title %}
+{% block meta_description %}
+  View detailed information about this borrowing transaction.
+{% endblock meta_description %}
+{% block meta_keywords %}
+  library, transaction, borrowing, details
+{% endblock meta_keywords %}
+{% block extra_head %}
+  <link rel="stylesheet"
+        href="{% static 'librarymanagement/css/pages/transaction_detail.css' %}" />
+{% endblock extra_head %}
+{% block content %}
+  <div class="page-header">
+    <a href="{% url 'librarymanagement:transactions_list' %}"
+       class="btn btn-ghost">← Back to Transactions</a>
+    <h1 class="page-title">Transaction Details</h1>
+    <p class="page-description">Detailed information about this borrowing transaction</p>
+  </div>
+  <div class="card transaction-detail-card">
+    <div class="card-header transaction-card-header">
+      <h3 class="card-title">Transaction #{{ transaction.id|slice:":8" }}</h3>
+      <span class="badge transaction-status-{{ transaction.status }}">{{ transaction.get_status_display }}</span>
+    </div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">User</label>
+          <div class="user-detail-cell">
+            <div class="user-avatar-detail">{{ transaction.user.username|first|upper }}</div>
+            <div class="user-detail-info">
+              <div class="user-detail-name">{{ transaction.user.get_full_name|default:transaction.user.username }}</div>
+              <div class="user-detail-email">{{ transaction.user.email }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Book</label>
+          <div class="book-detail-info">
+            <div class="book-detail-title">{{ transaction.book.title }}</div>
+            <div class="book-detail-accession">{{ transaction.book.accession_number }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Borrowed Date</label>
+          <div class="date-detail">
+            {{ transaction.borrowed_date|date:"F d, Y" }}
+            <span class="date-detail-time">at {{ transaction.borrowed_date|date:"h:i A" }}</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Due Date</label>
+          <div class="date-detail">
+            {{ transaction.due_date|date:"F d, Y" }}
+            {% if transaction.status == 'overdue' %}
+              <span class="overdue-warning">⚠️ {{ transaction.days_overdue }} days overdue</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% if transaction.status == 'returned' %}
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Returned Date</label>
+            <div class="date-detail">
+              {{ transaction.return_date|date:"F d, Y" }}
+              <span class="date-detail-time">at {{ transaction.return_date|date:"h:i A" }}</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Returned To</label>
+            <div>{{ transaction.returned_to|default:"—" }}</div>
+          </div>
+        </div>
+      {% endif %}
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Issued By</label>
+          <div>{{ transaction.issued_by.get_full_name|default:transaction.issued_by.username }}</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fine Amount</label>
+          <div class="{% if transaction.fine_amount > 0 %}fine-amount{% else %}fine-amount-zero{% endif %}">
+            {% if transaction.fine_amount > 0 %}
+              ₱{{ transaction.fine_amount }}
+            {% else %}
+              —
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% if transaction.renewal_count > 0 %}
+        <div class="form-group">
+          <label class="form-label">Renewals</label>
+          <div>
+            <span class="renewal-badge">Renewed {{ transaction.renewal_count }} time{{ transaction.renewal_count|pluralize }}</span>
+          </div>
+        </div>
+      {% endif %}
+      {% if transaction.notes %}
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <div class="transaction-notes">{{ transaction.notes }}</div>
+        </div>
+      {% endif %}
+    </div>
+    <div class="card-footer transaction-detail-actions">
+      {% if transaction.status == 'active' or transaction.status == 'overdue' %}
+        <button class="btn btn-primary" onclick="renewBook('{{ transaction.id }}')">Renew Book</button>
+        <button class="btn btn-success" onclick="returnBook('{{ transaction.id }}')">Return Book</button>
+      {% endif %}
+      <a href="{% url 'librarymanagement:transactions_list' %}"
+         class="btn btn-outline">Back to List</a>
+    </div>
+  </div>
+{% endblock content %}
+{% block extra_scripts %}
+  <script src="{% static 'librarymanagement/js/utils.js' %}"></script>
+  <script src="{% static 'librarymanagement/js/transaction_operations.js' %}"></script>
+{% endblock extra_scripts %}

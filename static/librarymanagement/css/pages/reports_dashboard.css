@@ -1,0 +1,302 @@
+/* Reports Dashboard Page Styles */
+/* Uses global.css design tokens */
+/* Main Container */
+.reservation-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+/* Report Cards Grid */
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  margin-bottom: var(--spacing-xl);
+}
+
+.report-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.report-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+  border-color: var(--ring);
+}
+
+.report-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.report-card-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.report-card-icon.usage {
+  background: oklch(from var(--chart-1) calc(l * 0.95) c h / 0.3);
+  color: var(--chart-1);
+}
+
+.report-card-icon.circulation {
+  background: oklch(from var(--chart-2) calc(l * 1) c h / 0.3);
+  color: oklch(from var(--chart-2) calc(l * 0.8) c h / 1);
+}
+
+.report-card-icon.trending {
+  background: oklch(from var(--chart-3) calc(l * 1) c h / 0.3);
+  color: oklch(from var(--chart-3) calc(l * 0.8) c h / 1);
+}
+
+.report-card-icon.behavior {
+  background: oklch(from var(--chart-4) calc(l * 1) c h / 0.3);
+  color: oklch(from var(--chart-4) calc(l * 0.8) c h / 1);
+}
+
+.report-card-icon.inventory {
+  background: oklch(from var(--chart-5) calc(l * 1) c h / 0.3);
+  color: oklch(from var(--chart-5) calc(l * 0.8) c h / 1);
+}
+
+.report-card-icon.acquisition {
+  background: oklch(from var(--primary) calc(l * 1) c h / 0.3);
+  color: oklch(from var(--primary) calc(l * 0.8) c h / 1);
+}
+
+.report-card-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--foreground);
+  margin: 0;
+}
+
+.report-card-description {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.report-card-meta {
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+
+/* Report Form */
+.report-form {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-xl);
+}
+
+.report-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.report-form-header {
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border);
+}
+
+.report-form-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-semibold);
+  color: var(--foreground);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.report-form-description {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  margin: 0;
+}
+
+/* Quick Date Buttons */
+.quick-date-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.quick-date-btn {
+  padding: 0.5rem 1rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-date-btn:hover {
+  background: var(--accent);
+  border-color: var(--ring);
+}
+
+.quick-date-btn.active {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+/* Date Range Selector */
+.date-range-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Report History */
+.report-history {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.report-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border);
+}
+
+.report-history-header h3 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--foreground);
+  margin: 0;
+}
+
+.report-history-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  margin-bottom: var(--spacing-md);
+  transition: all 0.2s;
+}
+
+.report-history-item:hover {
+  background: var(--accent);
+  border-color: var(--ring);
+}
+
+.report-history-item:last-child {
+  margin-bottom: 0;
+}
+
+.report-history-icon {
+  font-size: var(--text-3xl);
+  flex-shrink: 0;
+}
+
+.report-history-content {
+  flex: 1;
+}
+
+.report-history-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  color: var(--foreground);
+  margin-bottom: var(--spacing-xs);
+}
+
+.report-history-meta {
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+  margin-bottom: var(--spacing-xs);
+}
+
+.report-history-summary {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  line-height: 1.4;
+}
+
+.report-history-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Empty State */
+.report-history .empty-state {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .reports-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-date-buttons {
+    flex-direction: column;
+  }
+
+  .quick-date-btn {
+    width: 100%;
+  }
+
+  .date-range-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .report-history-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .report-history-actions {
+    width: 100%;
+  }
+
+  .report-history-actions .btn {
+    flex: 1;
+  }
+}

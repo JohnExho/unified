@@ -1,0 +1,47 @@
+<!-- Popular Books Component -->
+<div class="card card-dashboard">
+  <div class="card-header card-dashboard-header">
+    <h3 class="card-title">Popular Books</h3>
+    <a class="button button-default"
+       href="{% url 'librarymanagement:trending_books' %}">View All →</a>
+  </div>
+  <div class="card-body">
+    <div class="table-container">
+      <table class="table">
+        <thead class="table-header">
+          <tr class="table-row">
+            <th class="table-head">Book Title</th>
+            <th class="table-head">Author</th>
+            <th class="table-head">Borrows</th>
+            <th class="table-head">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if popular_books %}
+            {% for item in popular_books %}
+              <tr class="table-row">
+                <td class="table-cell">{{ item.book.title|truncatechars:30 }}</td>
+                <td class="table-cell">
+                  {% if item.book.authors.all %}
+                    {{ item.book.authors.all.0.full_name }}
+                  {% else %}
+                    Unknown
+                  {% endif %}
+                </td>
+                <td class="table-cell">{{ item.borrow_count }}</td>
+                <td class="table-cell">
+                  <span class="status-dot {% if item.book.status == 'available' %}available{% elif item.book.status == 'borrowed' %}borrowed{% else %}reserved{% endif %}"></span>
+                  {{ item.book.get_status_display }}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr class="table-row">
+              <td colspan="4" class="table-emtpy">No trending data available</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
