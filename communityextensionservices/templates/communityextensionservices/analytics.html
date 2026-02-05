@@ -1,0 +1,59 @@
+{% extends "communityextensionservices/base.html" %}
+{% block title %}
+  Analytics · CES Membership
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Decision Support Analytics</div>
+      <div class="page-subtitle">Membership trends, dues health, and engagement signals.</div>
+    </div>
+  </div>
+  <div class="grid cols-4">
+    {% for kpi in kpis %}
+      <div class="card">
+        <div class="muted text-small">{{ kpi.label }}</div>
+        <div class="stat-value">{{ kpi.value }}</div>
+        <div class="badge">{{ kpi.trend|title }}</div>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="grid cols-2" style="margin-top: 24px;">
+    <div class="card">
+      <h3>Membership Split</h3>
+      <p class="muted text-small">Active vs inactive status</p>
+      <div style="margin-top: 16px;">
+        {% for item in membership_split %}
+          <div style="margin-bottom: 12px;">
+            <div class="split">
+              <span class="text-strong">{{ item.label }}</span>
+              <span class="chip">{{ item.value }}</span>
+            </div>
+            <div class="bar" style="margin-top: 6px;">
+              <span style="width: {{ item.value }}%;"></span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card">
+      <h3>Dues Health</h3>
+      <p class="muted text-small">Payment pipeline status</p>
+      <div style="margin-top: 16px;">
+        {% for item in dues_health %}
+          <div class="split" style="margin-bottom: 10px;">
+            <span class="text-strong">{{ item.label }}</span>
+            <span class="chip">{{ item.value }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top: 24px;">
+    <h3>Key Insights</h3>
+    <p class="muted text-small">Auto-generated recommendations for officers.</p>
+    <ul style="margin-top: 16px; display: grid; gap: 10px;">
+      {% for insight in insights %}<li class="badge">{{ insight }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endblock content %}

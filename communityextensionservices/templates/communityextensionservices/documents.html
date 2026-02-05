@@ -1,0 +1,47 @@
+{% extends "communityextensionservices/base.html" %}
+{% block title %}
+  Documents · CES Membership
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Document Repository</div>
+      <div class="page-subtitle">Secure storage for policies, minutes, and reports.</div>
+    </div>
+    <a class="button"
+       href="{% url 'communityextensionservices:ces-document-create' %}">Add Document</a>
+  </div>
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Visibility</th>
+          <th>Uploaded</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for doc in documents %}
+          <tr>
+            <td>
+              <div class="text-strong">{{ doc.title }}</div>
+              <div class="muted text-small">{{ doc.summary|default:"No summary" }}</div>
+            </td>
+            <td>{{ doc.get_category_display }}</td>
+            <td>
+              <span class="badge {% if doc.is_sensitive %}danger{% else %}success{% endif %}">
+                {{ doc.is_sensitive|yesno:"Sensitive,Standard" }}
+              </span>
+            </td>
+            <td>{{ doc.created_at|date:"M d, Y" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" class="muted">No documents uploaded.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock content %}

@@ -1,0 +1,38 @@
+{% extends "communityextensionservices/base.html" %}
+{% block title %}
+  Reports · CES Membership
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Reports & Summaries</div>
+      <div class="page-subtitle">Exportable summaries for officers and auditors.</div>
+    </div>
+    <a class="button secondary"
+       href="{% url 'communityextensionservices:ces-document-create' %}">Upload Report</a>
+  </div>
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Report</th>
+          <th>Summary</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for report in reports %}
+          <tr>
+            <td>{{ report.title }}</td>
+            <td>{{ report.summary|default:"No summary" }}</td>
+            <td>{{ report.created_at|date:"M d, Y" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="3" class="muted">No reports available.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock content %}

@@ -1,0 +1,101 @@
+<aside class="card sidebar-shell">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg width="24"
+           height="24"
+           viewBox="0 0 24 24"
+           fill="none"
+           stroke="white"
+           stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+      </svg>
+    </div>
+    <div>
+      <div class="sidebar-title">Information Hub</div>
+      <div class="muted sidebar-subtitle">CES & Linkages</div>
+    </div>
+  </div>
+  <div class="sidebar-stack">
+    <div>
+      <div class="muted sidebar-section-label">Core Modules</div>
+      <div class="list">
+        <a class="list-item"
+           href="{% url 'informationmanagement:information-dashboard' %}">
+          <div>
+            <div class="text-strong">Dashboard</div>
+            <div class="muted text-small">Overview & highlights</div>
+          </div>
+          <span class="pill">Home</span>
+        </a>
+        <a class="list-item"
+           href="{% url 'informationmanagement:information-projects' %}">
+          <div>
+            <div class="text-strong">Projects</div>
+            <div class="muted text-small">Programs & timelines</div>
+          </div>
+          <span class="pill">Manage</span>
+        </a>
+        <a class="list-item"
+           href="{% url 'informationmanagement:information-beneficiaries' %}">
+          <div>
+            <div class="text-strong">Beneficiaries</div>
+            <div class="muted text-small">Profiles & segments</div>
+          </div>
+          <span class="pill">Profiles</span>
+        </a>
+        <a class="list-item"
+           href="{% url 'informationmanagement:information-partners' %}">
+          <div>
+            <div class="text-strong">Partners</div>
+            <div class="muted text-small">Linkages & MoUs</div>
+          </div>
+          <span class="pill">Linkages</span>
+        </a>
+        <a class="list-item"
+           href="{% url 'informationmanagement:information-activities' %}">
+          <div>
+            <div class="text-strong">Activities</div>
+            <div class="muted text-small">Events & schedules</div>
+          </div>
+          <span class="pill">Calendar</span>
+        </a>
+      </div>
+    </div>
+    <div>
+      <div class="muted sidebar-section-label">Analytics & ML</div>
+      <div class="list">
+        <a class="list-item"
+           href="{% url 'informationmanagement:information-analytics' %}">
+          <div>
+            <div class="text-strong">Analytics</div>
+            <div class="muted text-small">Insights & trends</div>
+          </div>
+          <span class="pill">KPIs</span>
+        </a>
+        <a class="list-item"
+           href="{% url 'informationmanagement:information-reports' %}">
+          <div>
+            <div class="text-strong">Reports</div>
+            <div class="muted text-small">Accreditation ready</div>
+          </div>
+          <span class="pill">Docs</span>
+        </a>
+        <a class="list-item"
+           href="{% url 'informationmanagement:information-ml-lab' %}">
+          <div>
+            <div class="text-strong">ML Lab</div>
+            <div class="muted text-small">Models & experiments</div>
+          </div>
+          <span class="pill">ML</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-footer-wrap">
+    {% include "partials/super_admin_sidebar.html" %}
+    {% include "partials/sidebar_footer_actions.html" %}
+  </div>
+</aside>

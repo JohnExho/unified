@@ -1,0 +1,103 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Beneficiaries · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Beneficiary Management</div>
+      <div class="page-subtitle">Segment communities for targeted services and analytics.</div>
+    </div>
+    <div class="action-group">
+      <a class="button secondary"
+         href="{% url 'informationmanagement:information-projects' %}">View Projects</a>
+      <a class="button"
+         href="{% url 'informationmanagement:information-beneficiary-create' %}">Add Beneficiary Group</a>
+    </div>
+  </div>
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Priority Segments</h3>
+      <p>Distribution of registered beneficiary profiles.</p>
+      {% if segments %}
+        <div class="list">
+          {% for segment in segments %}
+            <div class="list-item">
+              <div>
+                <div class="text-strong">{{ segment.segment }}</div>
+                <div class="muted text-small">{{ segment.households }} households</div>
+              </div>
+              <span class="pill">{{ segment.priority }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">No beneficiary segments recorded.</div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <h3>Data Quality Checks</h3>
+      <p>Ensure data readiness for ML models.</p>
+      <div class="list">
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Profile Completeness</div>
+            <div class="muted text-small">Mandatory fields</div>
+          </div>
+          <span class="badge success">96%</span>
+        </div>
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Duplicate Checks</div>
+            <div class="muted text-small">Unique household IDs</div>
+          </div>
+          <span class="badge warning">Review</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card mt-24">
+    <div class="section-title">
+      <div>
+        <h3>Community Profiles</h3>
+        <p>Prioritize engagement based on vulnerability index.</p>
+      </div>
+      <span class="tag">Geo-ready</span>
+    </div>
+    {% if communities %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Community</th>
+            <th>Households</th>
+            <th>Priority</th>
+            <th>Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for community in communities %}
+            <tr>
+              <td>{{ community.name }}</td>
+              <td>{{ community.households }}</td>
+              <td>
+                <span class="badge {% if community.priority == 'High' %}danger{% elif community.priority == 'Medium' %}warning{% else %}success{% endif %}">{{ community.priority }}</span>
+              </td>
+              <td>{{ community.notes|default:"-" }}</td>
+              <td>
+                <div class="table-actions">
+                  <a class="link-btn"
+                     href="{% url 'informationmanagement:information-beneficiary-edit' community.id %}">Edit</a>
+                  <a class="link-btn danger"
+                     href="{% url 'informationmanagement:information-beneficiary-delete' community.id %}">Delete</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">No community records yet.</div>
+    {% endif %}
+  </div>
+{% endblock content %}

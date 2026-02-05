@@ -1,0 +1,76 @@
+{% extends "communityextensionservices/base.html" %}
+{% block title %}
+  Dues & Contributions · CES Membership
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Dues & Contributions</div>
+      <div class="page-subtitle">Track payment schedules, balances, and ML-ready risk flags.</div>
+    </div>
+    <a class="button"
+       href="{% url 'communityextensionservices:ces-dues-create' %}">Record Dues</a>
+  </div>
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Amount</th>
+          <th>Due Date</th>
+          <th>Status</th>
+          <th>Risk</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in dues %}
+          <tr>
+            <td>{{ item.member }}</td>
+            <td>{{ item.amount }}</td>
+            <td>{{ item.due_date }}</td>
+            <td>
+              <span class="badge">{{ item.get_status_display }}</span>
+            </td>
+            <div class="card" style="margin-top: 24px;">
+              <div class="split">
+                <div>
+                  <h3>Recent Contributions</h3>
+                  <p class="muted text-small">Latest in-kind and volunteer entries</p>
+                </div>
+              </div>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Contribution</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in contributions %}
+                    <tr>
+                      <td>{{ item.member }}</td>
+                      <td>{{ item.title }}</td>
+                      <td>{{ item.get_category_display }}</td>
+                      <td>{{ item.date }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="4" class="muted">No contributions logged yet.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <td>{{ item.late_payment_risk|default:"-" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="muted">No dues records yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock content %}

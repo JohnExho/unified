@@ -1,22 +1,168 @@
-{% if perms.communityextensionservices.access_community_extension_services_system %}
-    <a href="{% url 'communityextensionservices:ces-dashboard' %}">Community Extension Services Dashboard</a>
-{% endif %}
-
-{% comment %} logout button {% endcomment %}
-<form method="post" action="{% url 'core:core_logout' %}">
-    {% csrf_token %}
-    <button type="submit">Logout</button>
-</form>
-
-{% comment %} 
-if multiple systems are accessible, provide a link to system selection 
-{% endcomment %}
-{% if systems|length > 1 %}
-    <label for="system-select">Switch System:</label>
-    <select id="system-select" onchange="if (this.value) window.location.href=this.value;">
-        <option value="">-- Select a system --</option>
-        {% for sys in systems %}
-            <option value="/{{ sys.url }}/">{{ sys.name }}</option>
+{% extends "communityextensionservices/base.html" %}
+{% block title %}
+  Dashboard · CES Membership
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Community Extension Membership</div>
+      <div class="page-subtitle">Centralized records, dues tracking, and ML-ready insights.</div>
+    </div>
+    <div class="split">
+      <a class="button secondary"
+         href="{% url 'communityextensionservices:ces-member-create' %}">Add Member</a>
+      <a class="button"
+         href="{% url 'communityextensionservices:ces-dues-create' %}">Record Dues</a>
+    </div>
+  </div>
+  <div class="grid cols-4">
+    {% for stat in stats %}
+      <div class="card">
+        <div class="muted text-small">{{ stat.label }}</div>
+        <div class="stat-value">{{ stat.value }}</div>
+        <div class="badge {% if stat.trend == 'down' %}danger{% else %}success{% endif %}">
+          {{ stat.delta }}% vs last 30 days
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="grid cols-3" style="margin-top: 24px;">
+    <div class="card">
+      <div class="split">
+        <div>
+          <h3>Membership Status</h3>
+          <p class="muted text-small">Active vs inactive distribution</p>
+        </div>
+      </div>
+      <div style="margin-top: 16px;">
+        {% for item in status_breakdown %}
+          <div style="margin-bottom: 12px;">
+            <div class="split">
+              <span class="text-strong">{{ item.status|title }}</span>
+              <span class="chip">{{ item.count }}</span>
+            </div>
+            <div class="bar" style="margin-top: 8px;">
+              <span style="width: {{ item.count }}%;"></span>
+            </div>
+          </div>
+        {% empty %}
+          <p class="muted">No membership data yet.</p>
         {% endfor %}
-    </select>
-{% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="split">
+        <div>
+          <h3>Dues Health</h3>
+          <p class="muted text-small">Pending vs paid tracking</p>
+        </div>
+      </div>
+      <div style="margin-top: 16px;">
+        {% for item in dues_summary %}
+          <div class="split" style="margin-bottom: 10px;">
+            <span class="text-strong">{{ item.status|title }}</span>
+            <span class="chip">{{ item.count }}</span>
+          </div>
+        {% empty %}
+          <p class="muted">No dues recorded.</p>
+        {% endfor %}
+      </div>
+      <div class="split" style="margin-top: 16px;">
+        <span class="muted text-small">Documents Stored</span>
+        <span class="chip">{{ documents_count }}</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="split">
+        <div>
+          <h3>ML Readiness</h3>
+          <p class="muted text-small">Models registered for demo</p>
+        </div>
+        <span class="chip">{{ ml_count }}</span>
+      </div>
+      <div style="margin-top: 14px;">
+        {% for model in ml_insights %}
+          <div class="split" style="margin-bottom: 10px;">
+            <div>
+              <div class="text-strong">{{ model.name }}</div>
+              <div class="muted text-small">{{ model.algorithm }}</div>
+            </div>
+            <span class="badge">{{ model.status|title }}</span>
+          </div>
+        {% empty %}
+          <p class="muted">No ML models yet. Seed data to populate.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="grid cols-2" style="margin-top: 24px;">
+    <div class="card">
+      <div class="split">
+        <div>
+          <h3>Upcoming Activities</h3>
+          <p class="muted text-small">Next scheduled programs</p>
+        </div>
+        <a class="button secondary"
+           href="{% url 'communityextensionservices:ces-activities' %}">View All</a>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Activity</th>
+            <th>Schedule</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for activity in upcoming_activities %}
+            <tr>
+              <td>{{ activity.title }}</td>
+              <td>{{ activity.start_date }} - {{ activity.end_date }}</td>
+              <td>
+                <span class="badge">{{ activity.status|title }}</span>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="3" class="muted">No upcoming activities.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="split">
+        <div>
+          <h3>Newest Members</h3>
+          <p class="muted text-small">Latest registrations</p>
+        </div>
+        <a class="button secondary"
+           href="{% url 'communityextensionservices:ces-members' %}">Manage</a>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Classification</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for member in recent_members %}
+            <tr>
+              <td>{{ member.last_name }}, {{ member.first_name }}</td>
+              <td>{{ member.get_classification_display }}</td>
+              <td>
+                <span class="badge">{{ member.get_status_display }}</span>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="3" class="muted">No members yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock content %}

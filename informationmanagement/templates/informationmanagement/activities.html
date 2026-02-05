@@ -1,0 +1,104 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Activities · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Activity & Event Management</div>
+      <div class="page-subtitle">Schedule outreach, monitor attendance, and document outputs.</div>
+    </div>
+    <div class="action-group">
+      <a class="button secondary"
+         href="{% url 'informationmanagement:information-reports' %}">View Reports</a>
+      <a class="button"
+         href="{% url 'informationmanagement:information-activity-create' %}">Schedule Activity</a>
+    </div>
+  </div>
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Upcoming Activities</h3>
+      <p>Plan and coordinate with partner teams.</p>
+      {% if upcoming %}
+        <div class="list">
+          {% for activity in upcoming %}
+            <div class="list-item">
+              <div>
+                <div class="text-strong">{{ activity.title }}</div>
+                <div class="muted text-small">{{ activity.date }} · {{ activity.location }}</div>
+              </div>
+              <span class="badge warning">{{ activity.status }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">No upcoming activities scheduled.</div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <h3>Recent Activities</h3>
+      <p>Document outputs for analytics and reports.</p>
+      {% if recent %}
+        <div class="list">
+          {% for activity in recent %}
+            <div class="list-item">
+              <div>
+                <div class="text-strong">{{ activity.title }}</div>
+                <div class="muted text-small">{{ activity.date }} · {{ activity.location }}</div>
+              </div>
+              <span class="badge success">{{ activity.status }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">No recent activities recorded.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card mt-24">
+    <div class="section-title">
+      <div>
+        <h3>Activity Records</h3>
+        <p>Review and update activity details.</p>
+      </div>
+      <span class="tag">Tracking</span>
+    </div>
+    {% if recent %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Activity</th>
+            <th>Date</th>
+            <th>Owner</th>
+            <th>Status</th>
+            <th>Participants</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for activity in recent %}
+            <tr>
+              <td>{{ activity.title }}</td>
+              <td>{{ activity.date }}</td>
+              <td>{{ activity.owner }}</td>
+              <td>
+                <span class="badge {% if activity.status == 'Completed' %}success{% elif activity.status == 'Scheduled' %}warning{% else %}danger{% endif %}">{{ activity.status }}</span>
+              </td>
+              <td>{{ activity.participants }}</td>
+              <td>
+                <div class="table-actions">
+                  <a class="link-btn"
+                     href="{% url 'informationmanagement:information-activity-edit' activity.id %}">Edit</a>
+                  <a class="link-btn danger"
+                     href="{% url 'informationmanagement:information-activity-delete' activity.id %}">Delete</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">No activities to review.</div>
+    {% endif %}
+  </div>
+{% endblock content %}

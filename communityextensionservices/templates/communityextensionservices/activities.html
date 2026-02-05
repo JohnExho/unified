@@ -1,0 +1,54 @@
+{% extends "communityextensionservices/base.html" %}
+{% block title %}
+  Activities · CES Membership
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Activities & Programs</div>
+      <div class="page-subtitle">Schedule, participation, and engagement tracking.</div>
+    </div>
+    <a class="button"
+       href="{% url 'communityextensionservices:ces-activity-create' %}">New Activity</a>
+  </div>
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Activity</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Attendance</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for activity in activities %}
+          <tr>
+            <td>
+              <div class="text-strong">{{ activity.title }}</div>
+              <div class="muted text-small">{{ activity.location }}</div>
+            </td>
+            <td>{{ activity.start_date }} - {{ activity.end_date }}</td>
+            <td>
+              <span class="badge">{{ activity.get_status_display }}</span>
+            </td>
+            <td>{{ activity.attended }} / {{ activity.attendees }}</td>
+            <td>
+              <div class="pill-row">
+                <a class="button secondary"
+                   href="{% url 'communityextensionservices:ces-activity-edit' activity.id %}">Edit</a>
+                <a class="button secondary"
+                   href="{% url 'communityextensionservices:ces-activity-delete' activity.id %}">Delete</a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="muted">No activities scheduled.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock content %}

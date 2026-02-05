@@ -1,0 +1,56 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Analytics · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Analytics & Insights</div>
+      <div class="page-subtitle">Monitor impact indicators and evidence-based recommendations.</div>
+    </div>
+    <div class="action-group">
+      <button class="button secondary">Refresh Insights</button>
+      <button class="button">Generate Snapshot</button>
+    </div>
+  </div>
+  <div class="grid cols-4">
+    {% for kpi in kpis %}
+      <div class="card">
+        <h3>{{ kpi.label }}</h3>
+        <div class="stat-value">{{ kpi.value }}</div>
+        <p>
+          <span class="badge success">{{ kpi.trend }}</span> since last period
+        </p>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="grid cols-2 mt-24">
+    <div class="card">
+      <h3>Quarterly Outcome Trend</h3>
+      <p>Program reach and completion trend lines.</p>
+      <div class="list">
+        {% for item in trend %}
+          <div class="list-item">
+            <div>
+              <div class="text-strong">{{ item.label }}</div>
+              <div class="muted text-small">Outcome index</div>
+            </div>
+            <span class="pill">{{ item.value }}%</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card">
+      <h3>Key Insights</h3>
+      <p>Actionable insights generated from data analysis.</p>
+      <div class="list">
+        {% for insight in insights %}
+          <div class="list-item">
+            <div class="text-strong">{{ insight }}</div>
+            <span class="tag">Insight</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock content %}

@@ -1,0 +1,56 @@
+{% extends "communityextensionservices/base.html" %}
+{% block title %}
+  Members · CES Membership
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Membership Records</div>
+      <div class="page-subtitle">Manage classification, status, and ML readiness fields.</div>
+    </div>
+    <a class="button"
+       href="{% url 'communityextensionservices:ces-member-create' %}">New Member</a>
+  </div>
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Member</th>
+          <th>Classification</th>
+          <th>Status</th>
+          <th>Engagement</th>
+          <th>Churn Risk</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in members %}
+          <tr>
+            <td>
+              <div class="text-strong">{{ member.last_name }}, {{ member.first_name }}</div>
+              <div class="muted text-small">{{ member.department|default:"No department" }}</div>
+            </td>
+            <td>{{ member.get_classification_display }}</td>
+            <td>
+              <span class="badge">{{ member.get_status_display }}</span>
+            </td>
+            <td>{{ member.engagement_score|default:"-" }}</td>
+            <td>{{ member.churn_risk_score|default:"-" }}</td>
+            <td>
+              <div class="pill-row">
+                <a class="button secondary"
+                   href="{% url 'communityextensionservices:ces-member-edit' member.id %}">Edit</a>
+                <a class="button secondary"
+                   href="{% url 'communityextensionservices:ces-member-delete' member.id %}">Delete</a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="muted">No members available. Seed data to demonstrate.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock content %}
