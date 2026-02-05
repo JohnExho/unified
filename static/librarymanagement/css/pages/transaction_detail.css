@@ -3,7 +3,7 @@
 
 /* Detail Card Container */
 .transaction-detail-card {
-  max-width: 900px;
+  max-width: 800px;
   margin: 0 auto;
 }
 
@@ -110,6 +110,14 @@
   font-weight: var(--font-medium);
 }
 
+.label.transaction-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold) !important;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
 /* Notes Section */
 .transaction-notes {
   padding: var(--spacing-lg);
@@ -126,6 +134,7 @@
   gap: var(--spacing-sm);
   justify-content: flex-end;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 /* Form Row - 2 Column Layout */

@@ -19,9 +19,12 @@ function returnBook(transactionId) {
     inputPlaceholder: "Apply fine for overdue",
   }).then((result) => {
     if (result.isConfirmed) {
-      fetchWithCsrf(`/library/transactions/${transactionId}/return/`, {
-        apply_fine: result.value ? "true" : "false",
-      }).then((response) =>
+      fetchWithCsrf(
+        `/librarymanagement/transactions/${transactionId}/return/`,
+        {
+          apply_fine: result.value ? "true" : "false",
+        },
+      ).then((response) =>
         handleApiResponse(response, "Book has been returned.", true),
       );
     }
@@ -50,7 +53,7 @@ function renewBook(transactionId) {
     },
   }).then((result) => {
     if (result.isConfirmed) {
-      fetchWithCsrf(`/library/transactions/${transactionId}/renew/`, {
+      fetchWithCsrf(`/librarymanagement/transactions/${transactionId}/renew/`, {
         extend_days: result.value || 14,
       }).then((response) =>
         handleApiResponse(response, "Book has been renewed.", true),
@@ -64,5 +67,10 @@ function renewBook(transactionId) {
  * @param {string|number} transactionId - The transaction ID
  */
 function viewTransactionDetails(transactionId) {
-  window.location.href = `/library/transactions/${transactionId}/`;
+  window.location.href = `/librarymanagement/transactions/${transactionId}/`;
 }
+
+// Ensure functions are available in the global scope for inline handlers
+window.returnBook = returnBook;
+window.renewBook = renewBook;
+window.viewTransactionDetails = viewTransactionDetails;
