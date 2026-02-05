@@ -17,12 +17,31 @@
   <main class="main-container">
     <div class="content-wrapper settings-container">
       {% include "librarymanagement/components/pages/library_settings/header.html" %}
-      {% include "librarymanagement/components/pages/library_settings/library-info.html" %}
-      {% include "librarymanagement/components/pages/library_settings/general-settings.html" %}
-      {% include "librarymanagement/components/pages/library_settings/fines-fees.html" %}
-      {% include "librarymanagement/components/pages/library_settings/notifications.html" %}
-      {% include "librarymanagement/components/pages/library_settings/features.html" %}
-      {% include "librarymanagement/components/pages/library_settings/actions.html" %}
+      <form id="library-settings-form"
+            method="post"
+            action="{% url 'librarymanagement:library_settings' %}">
+        {% csrf_token %}
+        <input type="checkbox"
+               id="enable_sms_notifications"
+               name="enable_sms_notifications"
+               class="visually-hidden"
+               {% if settings and settings.enable_sms_notifications %}checked{% endif %} />
+        <input type="number"
+               name="reservation_expiry_days"
+               class="visually-hidden"
+               value="{{ settings.reservation_expiry_days|default:3 }}" />
+        <input type="checkbox"
+               id="auto_extend_on_no_reservation"
+               name="auto_extend_on_no_reservation"
+               class="visually-hidden"
+               {% if settings and settings.auto_extend_on_no_reservation %}checked{% endif %} />
+        {% include "librarymanagement/components/pages/library_settings/library-info.html" %}
+        {% include "librarymanagement/components/pages/library_settings/general-settings.html" %}
+        {% include "librarymanagement/components/pages/library_settings/fines-fees.html" %}
+        {% include "librarymanagement/components/pages/library_settings/notifications.html" %}
+        {% include "librarymanagement/components/pages/library_settings/features.html" %}
+        {% include "librarymanagement/components/pages/library_settings/actions.html" %}
+      </form>
     </div>
   </main>
 {% endblock content %}
@@ -30,10 +49,24 @@
   <script src="{% static 'librarymanagement/js/sweetalert2.all.min.js' %}"></script>
   <script>
       function toggleSwitch(element) {
-        element.classList.toggle("active");
+        const inputId = element.getAttribute("data-input");
+        const checkbox = inputId ? document.getElementById(inputId) : null;
+        if (!checkbox) return;
+        checkbox.checked = !checkbox.checked;
+        element.classList.toggle("active", checkbox.checked);
+      }
+
+      function syncTogglesFromInputs() {
+        document.querySelectorAll(".toggle-switch[data-input]").forEach((toggle) => {
+          const inputId = toggle.getAttribute("data-input");
+          const checkbox = document.getElementById(inputId);
+          if (!checkbox) return;
+          toggle.classList.toggle("active", checkbox.checked);
+        });
       }
 
       function saveSettings() {
+        const form = document.getElementById("library-settings-form");
         Swal.fire({
           title: "Save Settings?",
           text: "All changes will be applied to the library system.",
@@ -43,26 +76,13 @@
           confirmButtonColor: "#2563eb",
         }).then((result) => {
           if (result.isConfirmed) {
-            Swal.fire({
-              title: "Saving...",
-              text: "Please wait while we update your settings.",
-              allowOutsideClick: false,
-              didOpen: () => {
-                Swal.showLoading();
-                setTimeout(() => {
-                  Swal.fire(
-                    "Saved!",
-                    "Your settings have been updated successfully.",
-                    "success",
-                  );
-                }, 1500);
-              },
-            });
+            form?.submit();
           }
         });
       }
 
       function resetSettings() {
+        const form = document.getElementById("library-settings-form");
         Swal.fire({
           title: "Reset Settings?",
           text: "This will restore all settings to their default values.",
@@ -72,13 +92,15 @@
           confirmButtonColor: "#ef4444",
         }).then((result) => {
           if (result.isConfirmed) {
-            Swal.fire(
-              "Reset!",
-              "Settings have been restored to defaults.",
-              "success",
-            );
+            form?.reset();
+            syncTogglesFromInputs();
+            Swal.fire("Reset!", "Settings have been restored.", "success");
           }
         });
       }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        syncTogglesFromInputs();
+      });
   </script>
 {% endblock extra_scripts %}

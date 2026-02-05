@@ -320,17 +320,30 @@ def download_report(request, report_id):
 
 def library_settings(request):
     """Library configuration settings page"""
-    # TODO: Create LibrarySettings model
-    # For now, just render the page without settings
+    library = Library.objects.first()
+    settings = None
+    form = None
 
-    if request.method == "POST":
-        # Handle library settings updates
-        # TODO: Implement library settings form handling
-        messages.info(request, "Library settings update functionality coming soon!")
-        return redirect("librarymanagement:library_settings")
+    if library:
+        settings = LibrarySettingsServices.get_or_create_settings(library)
+        from librarymanagement.forms import LibrarySettingsForm
+
+        if request.method == "POST":
+            form = LibrarySettingsForm(request.POST, instance=settings)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Library settings updated successfully!")
+                return redirect("librarymanagement:library_settings")
+            messages.error(request, "Please correct the errors in the form.")
+        else:
+            form = LibrarySettingsForm(instance=settings)
+    else:
+        messages.warning(request, "No library found. Please create a library first.")
 
     context = {
-        "library_config": None,
+        "library": library,
+        "settings": settings,
+        "form": form,
     }
 
     return render(request, "librarymanagement/pages/library_settings.html", context)
@@ -1363,7 +1376,7 @@ def manage_library_settings(request):
     return render(
         request,
         "librarymanagement/pages/library_settings.html",
-        {"form": form, "settings": settings},
+        {"form": form, "settings": settings, "library": library},
     )
 
 

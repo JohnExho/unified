@@ -26,6 +26,7 @@ class LibraryForm(forms.ModelForm):
             "location",
             "contact_email",
             "contact_phone",
+            "operating_hours",
         ]
         widgets = {
             "name": forms.TextInput(
@@ -46,6 +47,12 @@ class LibraryForm(forms.ModelForm):
             ),
             "contact_phone": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "+1234567890"}
+            ),
+            "operating_hours": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Mon-Fri: 8AM - 8PM",
+                }
             ),
         }
 
@@ -786,7 +793,11 @@ class WaiveFineForm(forms.Form):
     )
     reason = forms.CharField(
         widget=forms.Textarea(
-            attrs={"class": "form-control", "rows": 3, "placeholder": "Reason for waiving fine"}
+            attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Reason for waiving fine",
+            }
         ),
         help_text="Reason for waiving the fine",
     )

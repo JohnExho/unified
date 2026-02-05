@@ -11,7 +11,8 @@
     <div class="settings-item-control">
       <input type="text"
              class="form-control input-width-300"
-             value="University Library" />
+             name="library_name"
+             value="{{ settings.library_name|default:'University Library' }}" />
     </div>
   </div>
   <div class="settings-item">
@@ -20,7 +21,11 @@
       <div class="settings-item-description">Number of days for standard book loans</div>
     </div>
     <div class="settings-item-control">
-      <input type="number" class="form-control input-width-120" value="14" />
+      <input type="number"
+             class="form-control input-width-120"
+             name="default_loan_period_days"
+             min="1"
+             value="{{ settings.default_loan_period_days|default:14 }}" />
     </div>
   </div>
   <div class="settings-item">
@@ -29,7 +34,11 @@
       <div class="settings-item-description">How many times a book can be renewed</div>
     </div>
     <div class="settings-item-control">
-      <input type="number" class="form-control input-width-120" value="3" />
+      <input type="number"
+             class="form-control input-width-120"
+             name="maximum_renewals"
+             min="0"
+             value="{{ settings.maximum_renewals|default:2 }}" />
     </div>
   </div>
   <div class="settings-item">
@@ -38,7 +47,11 @@
       <div class="settings-item-description">Concurrent book lending limit</div>
     </div>
     <div class="settings-item-control">
-      <input type="number" class="form-control input-width-120" value="5" />
+      <input type="number"
+             class="form-control input-width-120"
+             name="maximum_books_per_user"
+             min="1"
+             value="{{ settings.maximum_books_per_user|default:5 }}" />
     </div>
   </div>
 </div>

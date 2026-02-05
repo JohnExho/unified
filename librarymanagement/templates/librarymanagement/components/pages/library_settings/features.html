@@ -9,7 +9,14 @@
       <div class="settings-item-description">AI-powered personalized suggestions</div>
     </div>
     <div class="settings-item-control">
-      <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+      <input type="checkbox"
+             id="enable_book_recommendations"
+             name="enable_book_recommendations"
+             class="visually-hidden"
+             {% if settings and settings.enable_book_recommendations %}checked{% endif %} />
+      <div class="toggle-switch {% if settings and settings.enable_book_recommendations %}active{% endif %}"
+           data-input="enable_book_recommendations"
+           onclick="toggleSwitch(this)"></div>
     </div>
   </div>
   <div class="settings-item">
@@ -18,7 +25,14 @@
       <div class="settings-item-description">Monitor user behavior for analytics</div>
     </div>
     <div class="settings-item-control">
-      <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+      <input type="checkbox"
+             id="enable_user_analytics"
+             name="enable_user_analytics"
+             class="visually-hidden"
+             {% if settings and settings.enable_user_analytics %}checked{% endif %} />
+      <div class="toggle-switch {% if settings and settings.enable_user_analytics %}active{% endif %}"
+           data-input="enable_user_analytics"
+           onclick="toggleSwitch(this)"></div>
     </div>
   </div>
   <div class="settings-item">
@@ -27,7 +41,14 @@
       <div class="settings-item-description">Show popular books on dashboard</div>
     </div>
     <div class="settings-item-control">
-      <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+      <input type="checkbox"
+             id="enable_trending_analysis"
+             name="enable_trending_analysis"
+             class="visually-hidden"
+             {% if settings and settings.enable_trending_analysis %}checked{% endif %} />
+      <div class="toggle-switch {% if settings and settings.enable_trending_analysis %}active{% endif %}"
+           data-input="enable_trending_analysis"
+           onclick="toggleSwitch(this)"></div>
     </div>
   </div>
   <div class="settings-item">
@@ -36,7 +57,14 @@
       <div class="settings-item-description">Enable e-books and digital content</div>
     </div>
     <div class="settings-item-control">
-      <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
+      <input type="checkbox"
+             id="enable_digital_resources"
+             name="enable_digital_resources"
+             class="visually-hidden"
+             {% if settings and settings.enable_digital_resources %}checked{% endif %} />
+      <div class="toggle-switch {% if settings and settings.enable_digital_resources %}active{% endif %}"
+           data-input="enable_digital_resources"
+           onclick="toggleSwitch(this)"></div>
     </div>
   </div>
 </div>

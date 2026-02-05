@@ -11,6 +11,10 @@
   box-shadow: var(--shadow-sm);
 }
 
+.visually-hidden {
+  display: none;
+}
+
 .library-info-header {
   display: flex;
   justify-content: space-between;

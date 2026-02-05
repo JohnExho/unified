@@ -9,7 +9,14 @@
       <div class="settings-item-description">Charge users for overdue books</div>
     </div>
     <div class="settings-item-control">
-      <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+      <input type="checkbox"
+             id="enable_fines"
+             name="enable_fines"
+             class="visually-hidden"
+             {% if settings and settings.enable_fines %}checked{% endif %} />
+      <div class="toggle-switch {% if settings and settings.enable_fines %}active{% endif %}"
+           data-input="enable_fines"
+           onclick="toggleSwitch(this)"></div>
     </div>
   </div>
   <div class="settings-item">
@@ -22,8 +29,10 @@
         <span class="currency-prefix">₱</span>
         <input type="number"
                class="form-control currency-input"
-               value="10.00"
-               step="0.01" />
+               name="daily_fine_amount"
+               min="0"
+               step="0.01"
+               value="{{ settings.daily_fine_amount|default:'1.00' }}" />
       </div>
     </div>
   </div>
@@ -37,8 +46,10 @@
         <span class="currency-prefix">₱</span>
         <input type="number"
                class="form-control currency-input"
-               value="500.00"
-               step="0.01" />
+               name="maximum_fine_amount"
+               min="0"
+               step="0.01"
+               value="{{ settings.maximum_fine_amount|default:'50.00' }}" />
       </div>
     </div>
   </div>
@@ -48,7 +59,11 @@
       <div class="settings-item-description">Days before fines start accumulating</div>
     </div>
     <div class="settings-item-control">
-      <input type="number" class="form-control input-width-120" value="0" />
+      <input type="number"
+             class="form-control input-width-120"
+             name="grace_period_days"
+             min="0"
+             value="{{ settings.grace_period_days|default:0 }}" />
     </div>
   </div>
 </div>
