@@ -297,7 +297,7 @@ def reports_dashboard(request):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 def download_report(request, report_id):
     """Download generated report in the requested format."""
     from librarymanagement.models import LibraryReport
@@ -423,6 +423,57 @@ def user_settings(request):
     }
 
     return render(request, "librarymanagement/pages/user-settings.html", context)
+
+
+@login_required
+def user_profile_data(request):
+    """Return current user's profile data as JSON."""
+    user = request.user
+    avatar_url = ""
+    if getattr(user, "avatar", None):
+        try:
+            avatar_url = user.avatar.url
+        except Exception:
+            avatar_url = ""
+    if not avatar_url:
+        avatar_url = getattr(user, "avatar_url", "") or ""
+
+    return JsonResponse(
+        {
+            "success": True,
+            "profile": {
+                "id": str(user.id),
+                "username": user.username or "",
+                "email": user.email or "",
+                "first_name": user.first_name or "",
+                "middle_name": user.middle_name or "",
+                "last_name": user.last_name or "",
+                "phone_number": user.phone_number or "",
+                "bio": user.bio or "",
+                "avatar_url": avatar_url,
+                "is_email_verified": bool(getattr(user, "is_email_verified", False)),
+            },
+        }
+    )
+
+
+@login_required
+def user_activity_stats(request):
+    """Return current user's activity stats as JSON."""
+    stats = {
+        "total_borrowed": BorrowingTransaction.objects.filter(
+            user=request.user
+        ).count(),
+        "currently_reading": BorrowingTransaction.objects.filter(
+            user=request.user, status__in=["active", "overdue"]
+        ).count(),
+        "total_reservations": Reservation.objects.filter(user=request.user).count(),
+        "overdue_books": BorrowingTransaction.objects.filter(
+            user=request.user, status="overdue"
+        ).count(),
+    }
+
+    return JsonResponse({"success": True, "stats": stats})
 
 
 @require_POST
@@ -783,7 +834,7 @@ from librarymanagement.services import (
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 def edit_book(request, book_id):
     """Edit book details"""
     book = get_object_or_404(Book, id=book_id)
@@ -795,7 +846,9 @@ def edit_book(request, book_id):
 
             updated_book = BookServices.update_book(book_id, data, files)
 
-            messages.success(request, f"Book '{updated_book.title}' updated successfully!")
+            messages.success(
+                request, f"Book '{updated_book.title}' updated successfully!"
+            )
             return redirect("librarymanagement:books_list")
 
         except Exception as e:
@@ -814,7 +867,7 @@ def edit_book(request, book_id):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 @require_POST
 def delete_book(request, book_id):
     """Delete a book"""
@@ -831,7 +884,7 @@ def delete_book(request, book_id):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 @require_POST
 def toggle_book_status(request, book_id):
     """Toggle book status"""
@@ -849,7 +902,7 @@ def toggle_book_status(request, book_id):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 def bulk_import_books(request):
     """Bulk import books from CSV"""
     if request.method == "POST":
@@ -904,7 +957,7 @@ def bulk_import_books(request):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 def export_books(request):
     """Export books to the requested format"""
     try:
@@ -928,7 +981,7 @@ def export_books(request):
 
 # Category Management Views
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 def categories_list(request):
     """List all categories"""
     categories = Category.objects.all().prefetch_related("subcategories")
@@ -941,7 +994,7 @@ def categories_list(request):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 def add_category(request):
     """Add new category"""
     if request.method == "POST":
@@ -952,7 +1005,9 @@ def add_category(request):
         if form.is_valid():
             try:
                 category = form.save()
-                messages.success(request, f"Category '{category.name}' created successfully!")
+                messages.success(
+                    request, f"Category '{category.name}' created successfully!"
+                )
                 return redirect("librarymanagement:categories_list")
             except Exception as e:
                 messages.error(request, f"Error creating category: {str(e)}")
@@ -961,13 +1016,11 @@ def add_category(request):
 
         form = CategoryForm()
 
-    return render(
-        request, "librarymanagement/pages/add_category.html", {"form": form}
-    )
+    return render(request, "librarymanagement/pages/add_category.html", {"form": form})
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 def edit_category(request, category_id):
     """Edit category"""
     category = get_object_or_404(Category, id=category_id)
@@ -980,7 +1033,9 @@ def edit_category(request, category_id):
         if form.is_valid():
             try:
                 category = form.save()
-                messages.success(request, f"Category '{category.name}' updated successfully!")
+                messages.success(
+                    request, f"Category '{category.name}' updated successfully!"
+                )
                 return redirect("librarymanagement:categories_list")
             except Exception as e:
                 messages.error(request, f"Error updating category: {str(e)}")
@@ -997,7 +1052,7 @@ def edit_category(request, category_id):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 @require_POST
 def delete_category(request, category_id):
     """Delete category"""
@@ -1015,7 +1070,7 @@ def delete_category(request, category_id):
 
 # Author Management Views
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 def edit_author(request, author_id):
     """Edit author"""
     author = get_object_or_404(Author, id=author_id)
@@ -1028,7 +1083,9 @@ def edit_author(request, author_id):
         if form.is_valid():
             try:
                 author = AuthorServices.update_author(author, form)
-                messages.success(request, f"Author '{author.full_name}' updated successfully!")
+                messages.success(
+                    request, f"Author '{author.full_name}' updated successfully!"
+                )
                 return redirect("librarymanagement:authors_publishers_management")
             except Exception as e:
                 messages.error(request, f"Error updating author: {str(e)}")
@@ -1045,7 +1102,7 @@ def edit_author(request, author_id):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 @require_POST
 def delete_author(request, author_id):
     """Delete author"""
@@ -1062,7 +1119,7 @@ def delete_author(request, author_id):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 @require_POST
 def toggle_author_status(request, author_id):
     """Toggle author status"""
@@ -1079,7 +1136,7 @@ def toggle_author_status(request, author_id):
 
 # Publisher Management Views
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 def edit_publisher(request, publisher_id):
     """Edit publisher"""
     publisher = get_object_or_404(Publisher, id=publisher_id)
@@ -1092,7 +1149,9 @@ def edit_publisher(request, publisher_id):
         if form.is_valid():
             try:
                 publisher = PublisherServices.update_publisher(publisher, form)
-                messages.success(request, f"Publisher '{publisher.name}' updated successfully!")
+                messages.success(
+                    request, f"Publisher '{publisher.name}' updated successfully!"
+                )
                 return redirect("librarymanagement:authors_publishers_management")
             except Exception as e:
                 messages.error(request, f"Error updating publisher: {str(e)}")
@@ -1109,7 +1168,7 @@ def edit_publisher(request, publisher_id):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 @require_POST
 def delete_publisher(request, publisher_id):
     """Delete publisher"""
@@ -1126,7 +1185,7 @@ def delete_publisher(request, publisher_id):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 @require_POST
 def toggle_publisher_status(request, publisher_id):
     """Toggle publisher status"""
@@ -1143,7 +1202,7 @@ def toggle_publisher_status(request, publisher_id):
 
 # Transaction Management Views
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 @require_POST
 def mark_book_lost(request, transaction_id):
     """Mark book as lost"""
@@ -1159,7 +1218,7 @@ def mark_book_lost(request, transaction_id):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 @require_POST
 def waive_fine(request, transaction_id):
     """Waive fine"""
@@ -1192,7 +1251,7 @@ def waive_fine(request, transaction_id):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 @require_POST
 def pay_fine(request, transaction_id):
     """Record fine payment"""
@@ -1227,7 +1286,7 @@ def pay_fine(request, transaction_id):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 @require_POST
 def extend_due_date(request, transaction_id):
     """Extend due date"""
@@ -1250,7 +1309,7 @@ def extend_due_date(request, transaction_id):
 
 
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 @require_POST
 def bulk_return_books(request):
     """Bulk return books"""
@@ -1281,7 +1340,7 @@ def bulk_return_books(request):
 
 # Library Settings Views
 @login_required
-@require_system_role(['admin', 'superadmin'])
+@require_system_role(["admin", "superadmin"])
 def manage_library_settings(request):
     """Manage library settings"""
     library = Library.objects.first()  # Get first library or handle multiple
@@ -1322,9 +1381,11 @@ def advanced_search(request):
             query=form.cleaned_data.get("query"),
             category_ids=[c.id for c in form.cleaned_data.get("categories", [])],
             author_ids=[a.id for a in form.cleaned_data.get("authors", [])],
-            publisher_id=form.cleaned_data.get("publisher").id
-            if form.cleaned_data.get("publisher")
-            else None,
+            publisher_id=(
+                form.cleaned_data.get("publisher").id
+                if form.cleaned_data.get("publisher")
+                else None
+            ),
             status=form.cleaned_data.get("status"),
             resource_type=form.cleaned_data.get("resource_type"),
             year_from=form.cleaned_data.get("year_from"),

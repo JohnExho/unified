@@ -87,5 +87,70 @@
           e.target.setCustomValidity('');
         }
       });
+
+      // Fetch user profile data and populate fields
+      (function loadUserProfile() {
+        const url = "{% url 'librarymanagement:user_profile_data' %}";
+        fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data || !data.success || !data.profile) return;
+            const profile = data.profile;
+
+            const setValue = (id, value) => {
+              const el = document.getElementById(id);
+              if (el) el.value = value ?? "";
+            };
+
+            setValue("username", profile.username);
+            setValue("email", profile.email);
+            setValue("first_name", profile.first_name);
+            setValue("middle_name", profile.middle_name);
+            setValue("last_name", profile.last_name);
+            setValue("phone_number", profile.phone_number);
+            const bioEl = document.getElementById("bio");
+            if (bioEl) bioEl.value = profile.bio ?? "";
+
+            if (profile.avatar_url) {
+              const avatarContainer = document.querySelector(
+                ".current-avatar img, .current-avatar .avatar-placeholder",
+              );
+              if (avatarContainer) {
+                if (avatarContainer.tagName === "IMG") {
+                  avatarContainer.src = profile.avatar_url;
+                } else {
+                  avatarContainer.outerHTML =
+                    '<img src="' + profile.avatar_url + '" alt="Avatar" width="120" height="120" />';
+                }
+              }
+            }
+          })
+          .catch(() => {
+            // Fail silently; server-rendered values are already in the template
+          });
+      })();
+
+      // Fetch user activity stats and populate values
+      (function loadUserActivityStats() {
+        const url = "{% url 'librarymanagement:user_activity_stats' %}";
+        fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data || !data.success || !data.stats) return;
+            const stats = data.stats;
+            const setText = (id, value) => {
+              const el = document.getElementById(id);
+              if (el) el.textContent = value ?? "0";
+            };
+
+            setText("stat-total-borrowed", stats.total_borrowed);
+            setText("stat-currently-reading", stats.currently_reading);
+            setText("stat-total-reservations", stats.total_reservations);
+            setText("stat-overdue-books", stats.overdue_books);
+          })
+          .catch(() => {
+            // Fail silently; server-rendered values are already in the template
+          });
+      })();
   </script>
 {% endblock extra_scripts %}

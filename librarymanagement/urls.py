@@ -80,6 +80,16 @@ urlpatterns = [
     path("settings/", views.library_settings, name="library_settings"),
     path("settings/user/", views.user_settings, name="user_settings"),
     path(
+        "settings/user/profile/",
+        views.user_profile_data,
+        name="user_profile_data",
+    ),
+    path(
+        "settings/user/activity/",
+        views.user_activity_stats,
+        name="user_activity_stats",
+    ),
+    path(
         "settings/manage/",
         views.manage_library_settings,
         name="manage_library_settings",
@@ -109,9 +119,7 @@ urlpatterns = [
     ),
     # Author Management
     path("authors/<uuid:author_id>/edit/", views.edit_author, name="edit_author"),
-    path(
-        "authors/<uuid:author_id>/delete/", views.delete_author, name="delete_author"
-    ),
+    path("authors/<uuid:author_id>/delete/", views.delete_author, name="delete_author"),
     path(
         "authors/<uuid:author_id>/toggle-status/",
         views.toggle_author_status,
@@ -154,7 +162,9 @@ urlpatterns = [
         views.extend_due_date,
         name="extend_due_date",
     ),
-    path("transactions/bulk-return/", views.bulk_return_books, name="bulk_return_books"),
+    path(
+        "transactions/bulk-return/", views.bulk_return_books, name="bulk_return_books"
+    ),
     # Advanced Search
     path("search/advanced/", views.advanced_search, name="advanced_search"),
     # User Profile

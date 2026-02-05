@@ -12,7 +12,7 @@
   <div class="settings-card-body">
     <form method="post"
           class="settings-form-container"
-          action="{% url 'librarymanagement:library_settings' %}"
+          action="{% url 'librarymanagement:user_settings' %}"
           enctype="multipart/form-data">
       {% csrf_token %}
       <input type="hidden" name="action" value="update_profile" />
