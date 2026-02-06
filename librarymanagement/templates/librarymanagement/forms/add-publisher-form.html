@@ -1,0 +1,49 @@
+{# Add Publisher Form #}
+<form id="addPublisherForm"
+      method="post"
+      action="{% url 'librarymanagement:add_publisher' %}"
+      class="publisher-form">
+  {% csrf_token %}
+  {% if form.errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="form-group">
+    <label for="name" class="form-label label">
+      Publisher Name <span class="text-destructive">*</span>
+    </label>
+    <input type="text"
+           id="name"
+           name="name"
+           class="input input-sm"
+           required
+           placeholder="Enter publisher name" />
+  </div>
+  <div class="form-group">
+    <label for="address" class="form-label label">Address</label>
+    <textarea id="address"
+              name="address"
+              class="textarea textarea-sm"
+              rows="2"
+              placeholder="Enter publisher address (optional)"></textarea>
+  </div>
+  <div class="form-group">
+    <label for="website" class="form-label label">Website</label>
+    <input type="url"
+           id="website"
+           name="website"
+           class="input input-sm"
+           placeholder="https://example.com" />
+  </div>
+  <div class="form-group">
+    <label for="email" class="form-label label">Email</label>
+    <input type="email"
+           id="email"
+           name="email"
+           class="input input-sm"
+           placeholder="contact@publisher.com" />
+  </div>
+  <div class="modal-footer">
+    <button type="button"
+            class="button button-ghost"
+            onclick="closeAddPublisherModal()">Cancel</button>
+    <button type="submit" class="button button-primary">Add Publisher</button>
+  </div>
+</form>

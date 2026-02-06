@@ -1,0 +1,48 @@
+<!-- Recent Activity Timeline -->
+{% if reservations %}
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Reservation Timeline</h3>
+    </div>
+    <div class="reservation-timeline">
+      {% for reservation in reservations|slice:":5" %}
+        <div class="timeline-item">
+          <div class="timeline-marker {{ reservation.status }}">
+            {% if reservation.status == 'pending' %}
+              {% include "librarymanagement/components/icons/loader.svg" %}
+            {% elif reservation.status == 'ready' %}
+              {% include "librarymanagement/components/icons/check.svg" %}
+            {% elif reservation.status == 'fulfilled' %}
+              {% include "librarymanagement/components/icons/book.svg" %}
+            {% elif reservation.status == 'cancelled' %}
+              {% include "librarymanagement/components/icons/x.svg" %}
+            {% else %}
+              {% include "librarymanagement/components/icons/calendar.svg" %}
+            {% endif %}
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-header">
+              <div>
+                <h4 class="timeline-title">{{ reservation.book.title }}</h4>
+                <div class="timeline-meta">
+                  <span>Reserved by <strong>{{ reservation.user.username }}</strong></span>
+                  <span>•</span>
+                  <span>{{ reservation.reservation_date|date:"M d, Y h:i A" }}</span>
+                </div>
+              </div>
+              {% if reservation.status == 'pending' %}
+                <span class="badge badge-warning">{{ reservation.get_status_display }}</span>
+              {% elif reservation.status == 'ready' %}
+                <span class="badge badge-success">{{ reservation.get_status_display }}</span>
+              {% elif reservation.status == 'fulfilled' %}
+                <span class="badge badge-secondary">{{ reservation.get_status_display }}</span>
+              {% else %}
+                <span class="badge badge-destructive">{{ reservation.get_status_display }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}

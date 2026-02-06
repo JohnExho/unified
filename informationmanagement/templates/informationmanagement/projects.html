@@ -1,0 +1,121 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Projects · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Project Portfolio</div>
+      <div class="page-subtitle">Manage extension initiatives and track progress by category.</div>
+    </div>
+    <div class="action-group">
+      <a class="button secondary"
+         href="{% url 'informationmanagement:information-beneficiaries' %}">View Beneficiaries</a>
+      <a class="button"
+         href="{% url 'informationmanagement:information-project-create' %}">New Project</a>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">
+      <div>
+        <h3>Active Project List</h3>
+        <p>Filter by program area and status.</p>
+      </div>
+      <div class="flex-wrap">
+        {% for filter in filters %}<span class="pill">{{ filter }}</span>{% endfor %}
+      </div>
+    </div>
+    {% if projects %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th>Category</th>
+            <th>Lead</th>
+            <th>Status</th>
+            <th>Beneficiaries</th>
+            <th>Predicted Success</th>
+            <th>Predicted Reach</th>
+            <th>Timeline</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for project in projects %}
+            <tr>
+              <td>{{ project.name }}</td>
+              <td>{{ project.category }}</td>
+              <td>{{ project.lead }}</td>
+              <td>
+                <span class="badge {% if project.status == 'Ongoing' %}success{% elif project.status == 'Proposed' %}warning{% else %}danger{% endif %}">{{ project.status }}</span>
+              </td>
+              <td>{{ project.beneficiaries_count }}</td>
+              <td>{{ project.predicted_success|default:"-" }}</td>
+              <td>{{ project.predicted_reach|default:"-" }}</td>
+              <td>{{ project.start_date }} - {{ project.end_date }}</td>
+              <td>
+                <div class="table-actions">
+                  <a class="link-btn"
+                     href="{% url 'informationmanagement:information-project-edit' project.id %}">Edit</a>
+                  <a class="link-btn danger"
+                     href="{% url 'informationmanagement:information-project-delete' project.id %}">Delete</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">No projects available. Create a new project to begin.</div>
+    {% endif %}
+  </div>
+  <div class="grid cols-2 mt-24">
+    <div class="card">
+      <h3>Project Stages</h3>
+      <p>Pipeline visibility for approval and delivery.</p>
+      <div class="list">
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Proposed</div>
+            <div class="muted text-small">Concept notes and approvals</div>
+          </div>
+          <span class="pill">4</span>
+        </div>
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Ongoing</div>
+            <div class="muted text-small">Execution & monitoring</div>
+          </div>
+          <span class="pill">9</span>
+        </div>
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Completed</div>
+            <div class="muted text-small">Outcomes documented</div>
+          </div>
+          <span class="pill">12</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>ML Feature Notes</h3>
+      <p>Data points captured for predictive analytics.</p>
+      <div class="list">
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Engagement Score</div>
+            <div class="muted text-small">Attendance & participation</div>
+          </div>
+          <span class="badge success">Ready</span>
+        </div>
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Impact Rating</div>
+            <div class="muted text-small">Outcome survey index</div>
+          </div>
+          <span class="badge warning">Collecting</span>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

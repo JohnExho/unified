@@ -16,6 +16,7 @@ __pycache__/
 *.key
 *.crt
 secret_key.txt
+*.md
 
 **/migrations/*.py
 !*/migrations/__init__.py

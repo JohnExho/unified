@@ -1,0 +1,86 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+          content="{% block meta_description %}Library Management System - Manage books, users, and transactions efficiently.{% endblock meta_description %}" />
+    <meta name="keywords"
+          content="{% block meta_keywords %}library, management, books, users, transactions{% endblock meta_keywords %}" />
+    <title>
+      {% block title %}
+        Library Management
+      {% endblock title %}
+    </title>
+    {# Global Styles #}
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/global.css' %}" />
+    {# Component Styles #}
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/sidebar.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/button.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/card.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/table.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/dialog.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/form.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/input.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/select.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/label.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/textarea.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/badge.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/avatar.css' %}" />
+    <link rel="stylesheet"
+          href="{% static 'librarymanagement/css/components/ui/spinner.css' %}" />
+    {# SweetAlert2 for notifications #}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {% block extra_head %}
+    {% endblock extra_head %}
+  </head>
+  <body class="inset-body">
+    {% include "librarymanagement/components/ui/sidebar.html" %}
+    {% block content %}
+      <div class="main-content-inset"></div>
+    {% endblock content %}
+    <script>
+      window.DJANGO_MESSAGES = [
+        {% for message in messages %}
+          {
+            level: "{{ message.tags }}",
+            text: "{{ message|escapejs }}"
+          }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      ];
+
+      if (window.DJANGO_MESSAGES && window.DJANGO_MESSAGES.length > 0) {
+        window.DJANGO_MESSAGES.forEach(msg => {
+          Swal.fire({
+            icon: msg.level === 'error' ? 'error' : msg.level === 'warning' ? 'warning' : msg.level === 'info' ? 'info' : 'success',
+            title: msg.level.charAt(0).toUpperCase() + msg.level.slice(1),
+            text: msg.text,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: msg.level === 'error' ? 5000 : 3000,
+            timerProgressBar: true
+          });
+        });
+      }
+    </script>
+    {# Core Scripts #}
+    <script src="{% static 'core/js/sidebar.js' %}"></script>
+    {% block extra_scripts %}
+    {% endblock extra_scripts %}
+  </body>
+</html>

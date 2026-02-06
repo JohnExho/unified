@@ -1,0 +1,42 @@
+<!-- Recent Borrowings Component -->
+<div class="card card-dashboard">
+  <div class="card-header card-dashboard-header">
+    <h3 class="card-title">Recent Borrowings</h3>
+    <a class="button button-default"
+       href="{% url 'librarymanagement:transactions_list' %}">View All →</a>
+  </div>
+  <div class="card-body">
+    <div class="table-container">
+      <table class="table">
+        <thead class="table-header">
+          <tr class="table-row">
+            <th class="table-head">Book</th>
+            <th class="table-head">Member</th>
+            <th class="table-head">Due Date</th>
+            <th class="table-head">Status</th>
+          </tr>
+        </thead>
+        <tbody class="table-body">
+          {% if recent_transactions %}
+            {% for transaction in recent_transactions %}
+              <tr class="table-row">
+                <td class="table-cell">{{ transaction.book.title|truncatechars:30 }}</td>
+                <td class="table-cell">{{ transaction.user.username }}</td>
+                <td class="table-cell">{{ transaction.due_date|date:"M d, Y" }}</td>
+                <td class="table-cell">
+                  <span class="badge {% if transaction.status == 'active' %}badge-success{% elif transaction.status == 'overdue' %}badge-danger{% elif transaction.status == 'returned' %}badge-info{% else %}badge-warning{% endif %}">
+                    {{ transaction.get_status_display }}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr class="table-row">
+              <td class="table-cell table-emtpy" colspan="4">No recent transactions</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

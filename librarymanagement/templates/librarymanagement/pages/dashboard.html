@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+  Dashboard - Library Management
+{% endblock title %}
+{% block meta_description %}
+  Dashboard for the Library Management System. Manage books, users, and transactions efficiently.
+{% endblock meta_description %}
+{% block meta_keywords %}
+  library, management, dashboard, books, users, transactions
+{% endblock meta_keywords %}
+{% block extra_head %}
+  <link rel="stylesheet"
+        href="{% static 'librarymanagement/css/pages/dashboard.css' %}" />
+{% endblock extra_head %}
+{% block content %}
+  {% include "librarymanagement/components/pages/dashboard/main.html" %}
+{% endblock content %}

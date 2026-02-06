@@ -1,0 +1,11 @@
+<div class="avatar {% if avatar_size %}avatar-{{ avatar_size }}{% endif %} {% if avatar_shape == 'square' %}avatar-square{% elif avatar_shape == 'rounded' %}avatar-rounded{% endif %} {% if avatar_bordered %}avatar-bordered{% endif %} {{ avatar_class|default:'' }}">
+  {% if avatar_src %}
+    <img class="avatar-image"
+         src="{{ avatar_src }}"
+         alt="{{ avatar_alt|default:'Avatar' }}"
+         {% if avatar_size == "xs" %} width="24" height="24" {% elif avatar_size == "sm" %} width="32" height="32" {% elif avatar_size == "lg" %} width="64" height="64" {% elif avatar_size == "xl" %} width="96" height="96" {% else %} width="40" height="40" {% endif %} />
+  {% else %}
+    <div class="avatar-fallback">{{ avatar_fallback|default:"?" }}</div>
+  {% endif %}
+  {% if avatar_status %}<span class="avatar-status avatar-status-{{ avatar_status }}"></span>{% endif %}
+</div>

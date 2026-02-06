@@ -1,0 +1,45 @@
+{% extends "communityextensionservices/base.html" %}
+{% block title %}
+  ML Lab · CES Membership
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Machine Learning Lab</div>
+      <div class="page-subtitle">Prototype models for churn prediction and engagement scoring.</div>
+    </div>
+    <span class="badge">Integration-ready</span>
+  </div>
+  <div class="grid cols-3">
+    {% for model in ml_models %}
+      <div class="card">
+        <div class="split">
+          <div>
+            <h3>{{ model.name }}</h3>
+            <p class="muted text-small">{{ model.algorithm }} · {{ model.target }}</p>
+          </div>
+          <span class="badge">{{ model.status|title }}</span>
+        </div>
+        <div style="margin-top: 12px;">
+          <div class="muted text-small">Score</div>
+          <div class="stat-value">{{ model.score|default:"—" }}</div>
+        </div>
+        <div class="muted text-small" style="margin-top: 12px;">{{ model.notes|default:"No notes yet." }}</div>
+      </div>
+    {% empty %}
+      <div class="card">
+        <h3>ML Sandbox Ready</h3>
+        <p class="muted text-small">Seed data to showcase predictive models and pipelines.</p>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="card" style="margin-top: 24px;">
+    <h3>Planned Experiments</h3>
+    <div class="pill-row" style="margin-top: 12px;">
+      <span class="badge">Retention Forecast</span>
+      <span class="badge">Contribution Propensity</span>
+      <span class="badge">Activity Attendance Uplift</span>
+      <span class="badge">Member Segmentation</span>
+    </div>
+  </div>
+{% endblock content %}

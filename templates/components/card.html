@@ -1,0 +1,18 @@
+<div class="card {{ card_class|default:'' }}">
+  {% if card_header or card_title or card_description %}
+    <div class="card-header">
+      {% if card_header %}
+        {% include card_header %}
+      {% else %}
+        {% if card_title %}<h3 class="card-title">{{ card_title }}</h3>{% endif %}
+        {% if card_description %}<p class="card-description">{{ card_description }}</p>{% endif %}
+      {% endif %}
+    </div>
+  {% endif %}
+  {% if card_content %}
+    <div class="card-content">{% include card_content %}</div>
+  {% endif %}
+  {% if card_footer %}
+    <div class="card-footer {% if card_footer_styled %}card-footer-styled{% endif %}">{% include card_footer %}</div>
+  {% endif %}
+</div>

@@ -1,243 +1,30 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description"
-          content="Manage authors and publishers in the Library Management system." />
-    <meta name="keywords"
-          content="library, authors, publishers, management, books" />
-    <title>Authors & Publishers - Library Management</title>
-    <link rel="stylesheet"
-          href="{% static 'librarymanagement/css/library-base.css' %}" />
-    <link rel="stylesheet"
-          href="{% static 'librarymanagement/css/authors_publishers.css' %}" />
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-.modal-overlay {
-display: none;
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0, 0, 0, 0.5);
-z-index: 1000;
-align-items: center;
-justify-content: center;
-}
-.modal-overlay.active {
-display: flex;
-}
-    </style>
-  </head>
-  <body>
-    <div class="dashboard-container">
-      {% include "librarymanagement/components/sidebar.html" %}
-      <main class="main-content">
-        <div class="content-wrapper">
-          <div class="page-header">
-            <h1 class="page-title">Authors & Publishers</h1>
-            <p class="page-description">View, add, and manage authors and publishers</p>
-            <div class="toolbar">
-              <button class="toolbar-btn add-author-btn" onclick="openAddAuthorModal()">Add Author</button>
-              <button class="toolbar-btn add-publisher-btn"
-                      onclick="openAddPublisherModal()">Add Publisher</button>
-            </div>
-          </div>
-          <div class="management-grid">
-            <div class="management-section">
-              <h2>Authors</h2>
-              <table class="management-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Books</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for author in authors %}
-                    <tr>
-                      <td>{{ author.full_name }}</td>
-                      <td>{{ author.books.count }}</td>
-                    </tr>
-                  {% empty %}
-                    <tr>
-                      <td colspan="2">No authors found.</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            <div class="management-section">
-              <h2>Publishers</h2>
-              <table class="management-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Books</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for publisher in publishers %}
-                    <tr>
-                      <td>{{ publisher.name }}</td>
-                      <td>{{ publisher.books.count }}</td>
-                    </tr>
-                  {% empty %}
-                    <tr>
-                      <td colspan="2">No publishers found.</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-    <!-- Add Author Modal -->
-    <div id="addAuthorModal" class="modal-overlay">
-      <div class="modal">
-        <div class="modal-header">
-          <h3>Add New Author</h3>
-          <button class="modal-close" onclick="closeAddAuthorModal()">×</button>
-        </div>
-        <div class="modal-body">
-          <form id="addAuthorForm"
-                method="post"
-                action="{% url 'librarymanagement:add_author' %}">
-            {% csrf_token %}
-            {% if form.errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
-            <div class="form-row">
-              <div class="form-group">
-                <label for="first_name">
-                  First Name <span class="required">*</span>
-                </label>
-                <input type="text"
-                       id="first_name"
-                       name="first_name"
-                       class="form-control"
-                       required
-                       placeholder="Enter first name" />
-              </div>
-              <div class="form-group">
-                <label for="last_name">
-                  Last Name <span class="required">*</span>
-                </label>
-                <input type="text"
-                       id="last_name"
-                       name="last_name"
-                       class="form-control"
-                       required
-                       placeholder="Enter last name" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="middle_name">Middle Name</label>
-              <input type="text"
-                     id="middle_name"
-                     name="middle_name"
-                     class="form-control"
-                     placeholder="Enter middle name (optional)" />
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="birth_date">Birth Date</label>
-                <input type="date" id="birth_date" name="birth_date" class="form-control" />
-              </div>
-              <div class="form-group">
-                <label for="nationality">Nationality</label>
-                <input type="text"
-                       id="nationality"
-                       name="nationality"
-                       class="form-control"
-                       placeholder="Enter nationality" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="bio">Biography</label>
-              <textarea id="bio"
-                        name="bio"
-                        class="form-control"
-                        rows="4"
-                        placeholder="Enter author biography"></textarea>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-ghost" onclick="closeAddAuthorModal()">Cancel</button>
-              <button type="submit" class="btn btn-primary">Add Author</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-    <!-- Add Publisher Modal -->
-    <div id="addPublisherModal" class="modal-overlay">
-      <div class="modal">
-        <div class="modal-header">
-          <h3>Add New Publisher</h3>
-          <button class="modal-close" onclick="closeAddPublisherModal()">×</button>
-        </div>
-        <div class="modal-body">
-          <form id="addPublisherForm"
-                method="post"
-                action="{% url 'librarymanagement:add_publisher' %}">
-            {% csrf_token %}
-            {% if form.errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
-            <div class="form-group">
-              <label for="name">
-                Publisher Name <span class="required">*</span>
-              </label>
-              <input type="text"
-                     id="name"
-                     name="name"
-                     class="form-control"
-                     required
-                     placeholder="Enter publisher name" />
-            </div>
-            <div class="form-group">
-              <label for="address">Address</label>
-              <textarea id="address"
-                        name="address"
-                        class="form-control"
-                        rows="3"
-                        placeholder="Enter publisher address"></textarea>
-            </div>
-            <div class="form-group">
-              <label for="website">Website</label>
-              <input type="url"
-                     id="website"
-                     name="website"
-                     class="form-control"
-                     placeholder="https://publisher.com" />
-            </div>
-            <div class="form-group">
-              <label for="email">Email</label>
-              <input type="email"
-                     id="email"
-                     name="email"
-                     class="form-control"
-                     placeholder="contact@publisher.com" />
-            </div>
-            <div class="modal-footer">
-              <button type="button"
-                      class="btn btn-ghost"
-                      onclick="closeAddPublisherModal()">Cancel</button>
-              <button type="submit" class="btn btn-primary">Add Publisher</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-    <script>
+{% block title %}
+  Authors & Publishers - Library Management
+{% endblock title %}
+{% block meta_description %}
+  Manage authors and publishers in the Library Management system.
+{% endblock meta_description %}
+{% block meta_keywords %}
+  library, authors, publishers, management, books
+{% endblock meta_keywords %}
+{% block extra_head %}
+  <link rel="stylesheet"
+        href="{% static 'librarymanagement/css/pages/authors_publishers.css' %}" />
+{% endblock extra_head %}
+{% block content %}
+  {% include "librarymanagement/components/pages/authors_publishers/main.html" %}
+  {% include "librarymanagement/modals/modal-author.html" %}
+  {% include "librarymanagement/modals/modal-publisher.html" %}
+{% endblock content %}
+{% block extra_scripts %}
+  <script src="{% static 'librarymanagement/js/modal_operations.js' %}"></script>
+  <script>
       // Display Django messages
       window.DJANGO_MESSAGES = [
         {% for message in messages %}
-          {
-            level: "{{ message.tags }}",
-            text: "{{ message|escapejs }}"
-          }{% if not forloop.last %},{% endif %}
+          { level: "{{ message.tags }}", text: "{{ message|escapejs }}" }{% if not forloop.last %},{% endif %}
         {% endfor %}
       ];
 
@@ -256,52 +43,9 @@ display: flex;
         });
       }
 
-      function openAddAuthorModal() {
-        document.getElementById("addAuthorModal").classList.add("active");
-        document.body.style.overflow = "hidden";
-      }
-
-      function closeAddAuthorModal() {
-        document.getElementById("addAuthorModal").classList.remove("active");
-        document.body.style.overflow = "auto";
-        document.getElementById("addAuthorForm").reset();
-      }
-
-      function openAddPublisherModal() {
-        document.getElementById("addPublisherModal").classList.add("active");
-        document.body.style.overflow = "hidden";
-      }
-
-      function closeAddPublisherModal() {
-        document.getElementById("addPublisherModal").classList.remove("active");
-        document.body.style.overflow = "auto";
-        document.getElementById("addPublisherForm").reset();
-      }
-
-      // Close modals when clicking outside
-      document
-        .getElementById("addAuthorModal")
-        ?.addEventListener("click", function (e) {
-          if (e.target === this) {
-            closeAddAuthorModal();
-          }
-        });
-
-      document
-        .getElementById("addPublisherModal")
-        ?.addEventListener("click", function (e) {
-          if (e.target === this) {
-            closeAddPublisherModal();
-          }
-        });
-
-      // Close modals with Escape key
-      document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape") {
-          closeAddAuthorModal();
-          closeAddPublisherModal();
-        }
-      });
-    </script>
-  </body>
-</html>
+      // Setup modal event listeners
+      setupModalOutsideClick("addAuthorModal");
+      setupModalOutsideClick("addPublisherModal");
+      setupModalEscapeKey(["addAuthorModal", "addPublisherModal"]);
+  </script>
+{% endblock extra_scripts %}

@@ -10,6 +10,7 @@ from .models import (
     Reservation,
     LibraryReport,
     Notification,
+    LibrarySettings,
 )
 import json
 
@@ -25,6 +26,7 @@ class LibraryForm(forms.ModelForm):
             "location",
             "contact_email",
             "contact_phone",
+            "operating_hours",
         ]
         widgets = {
             "name": forms.TextInput(
@@ -45,6 +47,12 @@ class LibraryForm(forms.ModelForm):
             ),
             "contact_phone": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "+1234567890"}
+            ),
+            "operating_hours": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Mon-Fri: 8AM - 8PM",
+                }
             ),
         }
 
@@ -598,4 +606,226 @@ class BulkBookImportForm(forms.Form):
         initial=False,
         widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
         help_text="Update existing books with matching ISBN or accession number",
+    )
+
+
+class LibrarySettingsForm(forms.ModelForm):
+    """Form for library settings"""
+
+    class Meta:
+        model = LibrarySettings
+        fields = [
+            "library_name",
+            "default_loan_period_days",
+            "maximum_renewals",
+            "maximum_books_per_user",
+            "enable_fines",
+            "daily_fine_amount",
+            "maximum_fine_amount",
+            "grace_period_days",
+            "enable_email_notifications",
+            "enable_sms_notifications",
+            "notify_due_dates",
+            "notify_overdue",
+            "notify_reservation_ready",
+            "days_before_due_notification",
+            "enable_book_recommendations",
+            "enable_trending_analysis",
+            "enable_user_analytics",
+            "enable_digital_resources",
+            "reservation_expiry_days",
+            "auto_extend_on_no_reservation",
+        ]
+        widgets = {
+            "library_name": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Library Name"}
+            ),
+            "default_loan_period_days": forms.NumberInput(
+                attrs={"class": "form-control", "min": "1"}
+            ),
+            "maximum_renewals": forms.NumberInput(
+                attrs={"class": "form-control", "min": "0"}
+            ),
+            "maximum_books_per_user": forms.NumberInput(
+                attrs={"class": "form-control", "min": "1"}
+            ),
+            "enable_fines": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "daily_fine_amount": forms.NumberInput(
+                attrs={"class": "form-control", "step": "0.01", "min": "0"}
+            ),
+            "maximum_fine_amount": forms.NumberInput(
+                attrs={"class": "form-control", "step": "0.01", "min": "0"}
+            ),
+            "grace_period_days": forms.NumberInput(
+                attrs={"class": "form-control", "min": "0"}
+            ),
+            "enable_email_notifications": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+            "enable_sms_notifications": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+            "notify_due_dates": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+            "notify_overdue": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "notify_reservation_ready": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+            "days_before_due_notification": forms.NumberInput(
+                attrs={"class": "form-control", "min": "1"}
+            ),
+            "enable_book_recommendations": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+            "enable_trending_analysis": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+            "enable_user_analytics": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+            "enable_digital_resources": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+            "reservation_expiry_days": forms.NumberInput(
+                attrs={"class": "form-control", "min": "1"}
+            ),
+            "auto_extend_on_no_reservation": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+        }
+
+
+class AdvancedSearchForm(forms.Form):
+    """Form for advanced book search"""
+
+    query = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Search by title, ISBN, or keyword...",
+            }
+        ),
+    )
+    categories = forms.ModelMultipleChoiceField(
+        queryset=Category.objects.all(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={"class": "form-control"}),
+    )
+    authors = forms.ModelMultipleChoiceField(
+        queryset=Author.objects.all(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={"class": "form-control"}),
+    )
+    publisher = forms.ModelChoiceField(
+        queryset=Publisher.objects.all(),
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"}),
+        empty_label="All Publishers",
+    )
+    status = forms.ChoiceField(
+        choices=[("", "All Status")] + list(Book.STATUS_CHOICES),
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+    resource_type = forms.ChoiceField(
+        choices=[("", "All Types")] + list(Book.RESOURCE_TYPE_CHOICES),
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+    year_from = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(
+            attrs={"class": "form-control", "placeholder": "Year from"}
+        ),
+    )
+    year_to = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(
+            attrs={"class": "form-control", "placeholder": "Year to"}
+        ),
+    )
+    language = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "Language"}
+        ),
+    )
+
+
+class FinePaymentForm(forms.Form):
+    """Form for recording fine payment"""
+
+    transaction_id = forms.UUIDField(widget=forms.HiddenInput())
+    amount_paid = forms.DecimalField(
+        min_value=0,
+        decimal_places=2,
+        widget=forms.NumberInput(
+            attrs={"class": "form-control", "step": "0.01", "min": "0"}
+        ),
+        help_text="Amount paid by user",
+    )
+    payment_method = forms.ChoiceField(
+        choices=[
+            ("cash", "Cash"),
+            ("card", "Card"),
+            ("gcash", "GCash"),
+            ("bank_transfer", "Bank Transfer"),
+            ("other", "Other"),
+        ],
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+
+
+class WaiveFineForm(forms.Form):
+    """Form for waiving fines"""
+
+    transaction_id = forms.UUIDField(widget=forms.HiddenInput())
+    waive_amount = forms.DecimalField(
+        required=False,
+        min_value=0,
+        decimal_places=2,
+        widget=forms.NumberInput(
+            attrs={"class": "form-control", "step": "0.01", "min": "0"}
+        ),
+        help_text="Amount to waive (leave blank to waive all)",
+    )
+    reason = forms.CharField(
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Reason for waiving fine",
+            }
+        ),
+        help_text="Reason for waiving the fine",
+    )
+
+
+class ExtendDueDateForm(forms.Form):
+    """Form for extending due dates"""
+
+    transaction_id = forms.UUIDField(widget=forms.HiddenInput())
+    additional_days = forms.IntegerField(
+        min_value=1,
+        max_value=30,
+        initial=7,
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
+        help_text="Number of days to extend",
+    )
+
+
+class BulkReturnForm(forms.Form):
+    """Form for bulk returning books"""
+
+    transaction_ids = forms.CharField(
+        widget=forms.HiddenInput(),
+        help_text="Comma-separated transaction IDs",
+    )
+    return_date = forms.DateTimeField(
+        widget=forms.DateTimeInput(
+            attrs={"class": "form-control", "type": "datetime-local"}
+        ),
+        initial=timezone.now,
     )

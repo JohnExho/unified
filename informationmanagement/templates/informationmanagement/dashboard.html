@@ -1,22 +1,155 @@
-{% if perms.informationmanagement.access_information_management_system %}
-    <a href="{% url 'informationmanagement:information-dashboard' %}">Information Management Dashboard</a>
-{% endif %}
-
-{% comment %} logout button {% endcomment %}
-<form method="post" action="{% url 'core:core_logout' %}">
-    {% csrf_token %}
-    <button type="submit">Logout</button>
-</form>
-
-{% comment %} 
-if multiple systems are accessible, provide a link to system selection 
-{% endcomment %}
-{% if systems|length > 1 %}
-    <label for="system-select">Switch System:</label>
-    <select id="system-select" onchange="if (this.value) window.location.href=this.value;">
-        <option value="">-- Select a system --</option>
-        {% for sys in systems %}
-            <option value="/{{ sys.url }}/">{{ sys.name }}</option>
-        {% endfor %}
-    </select>
-{% endif %}
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Dashboard · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Information Management Dashboard</div>
+      <div class="page-subtitle">Centralized view of extension programs, partners, and analytics.</div>
+    </div>
+    <div class="action-group">
+      <a class="button secondary"
+         href="{% url 'informationmanagement:information-reports' %}">View Reports</a>
+      <a class="button"
+         href="{% url 'informationmanagement:information-project-create' %}">Create Project</a>
+    </div>
+  </div>
+  <div class="grid cols-4">
+    {% for stat in stats %}
+      <div class="card">
+        <h3>{{ stat.label }}</h3>
+        <div class="stat-value">{{ stat.value }}</div>
+        <p>
+          <span class="badge {% if stat.trend == 'up' %}success{% else %}warning{% endif %}">
+            {{ stat.delta }}% vs last period
+          </span>
+        </p>
+      </div>
+    {% endfor %}
+  </div>
+  <div class="grid cols-3 mt-24">
+    <div class="card grid-span-2">
+      <div class="section-title">
+        <div>
+          <h3>Project Progress</h3>
+          <p>Track active initiatives across categories.</p>
+        </div>
+        <span class="tag">Live</span>
+      </div>
+      {% if projects %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Timeline</th>
+              <th>Progress</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for project in projects %}
+              <tr>
+                <td>{{ project.name }}</td>
+                <td>{{ project.category }}</td>
+                <td>
+                  <span class="badge {% if project.status == 'Ongoing' %}success{% elif project.status == 'Proposed' %}warning{% else %}danger{% endif %}">{{ project.status }}</span>
+                </td>
+                <td>{{ project.start_date }} - {{ project.end_date }}</td>
+                <td>
+                  <progress class="progress-native" value="{{ project.progress }}" max="100"></progress>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">No projects yet. Add your first project to start tracking progress.</div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <div class="section-title">
+        <div>
+          <h3>Coverage by Sector</h3>
+          <p>Program distribution across categories.</p>
+        </div>
+      </div>
+      {% if sector_coverage %}
+        <div class="list">
+          {% for sector in sector_coverage %}
+            <div class="list-item">
+              <div>
+                <div class="text-strong">{{ sector.name }}</div>
+                <div class="muted text-small">{{ sector.value }}% of initiatives</div>
+              </div>
+              <span class="pill sector-pill sector-{{ sector.key }}">{{ sector.value }}%</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">Coverage data will appear after projects are added.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="grid cols-2 mt-24">
+    <div class="card">
+      <div class="section-title">
+        <div>
+          <h3>Recent Activities</h3>
+          <p>Latest extension & linkage actions.</p>
+        </div>
+        <span class="tag">Updated</span>
+      </div>
+      {% if recent_activities %}
+        <div class="list">
+          {% for activity in recent_activities %}
+            <div class="list-item">
+              <div>
+                <div class="text-strong">{{ activity.title }}</div>
+                <div class="muted text-small">{{ activity.location }} · {{ activity.date }}</div>
+              </div>
+              <div class="text-right">
+                <div class="badge success">{{ activity.status }}</div>
+                <div class="muted text-small mt-4">{{ activity.participants }} participants</div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">No activities recorded yet.</div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <div class="section-title">
+        <div>
+          <h3>ML Readiness</h3>
+          <p>Prepared datasets and pipelines.</p>
+        </div>
+      </div>
+      <div class="list">
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Models</div>
+            <div class="muted text-small">Registered for experimentation</div>
+          </div>
+          <span class="badge success">{{ ml_summary.models }}</span>
+        </div>
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Pipelines</div>
+            <div class="muted text-small">Feature and monitoring flows</div>
+          </div>
+          <span class="badge warning">{{ ml_summary.pipelines }}</span>
+        </div>
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Experiments</div>
+            <div class="muted text-small">Active and completed runs</div>
+          </div>
+          <span class="badge success">{{ ml_summary.experiments }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

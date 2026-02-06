@@ -1,0 +1,14 @@
+<main class="main-container">
+  <div class="book-page-container">
+    {% block book-contents %}
+      <!-- Page Header -->
+      {% include "librarymanagement/components/pages/books/header.html" %}
+      <!-- Stats Mini Cards -->
+      {% include "librarymanagement/components/pages/books/stats.html" %}
+      <!-- Filter Bar -->
+      {% include "librarymanagement/components/pages/books/filter.html" %}
+      <!-- View Toggle and Results -->
+      {% include "librarymanagement/components/pages/books/toggle-result.html" %}
+    {% endblock book-contents %}
+  </div>
+</main>

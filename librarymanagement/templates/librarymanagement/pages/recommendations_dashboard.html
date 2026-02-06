@@ -1,93 +1,24 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description"
-          content="AI-powered personalized book recommendations dashboard for library users." />
-    <meta name="keywords"
-          content="library, book recommendations, AI, personalized suggestions, dashboard" />
-    <title>Book Recommendations - Library Management</title>
-    <link rel="stylesheet"
-          href="{% static "librarymanagement/css/library-base.css" %}" />
-    <link rel="stylesheet"
-          href="{% static "librarymanagement/css/recommendations.css" %}" />
-  </head>
-  <body>
-    <div class="dashboard-container">
-      {% include "librarymanagement/components/sidebar.html" %}
-      <main class="main-content">
-        <div class="content-wrapper">
-          <div class="page-header">
-            <h1 class="page-title">Book Recommendations</h1>
-            <p class="page-description">AI-powered personalized book suggestions for users</p>
-          </div>
-          <!-- Stats -->
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon info">{% include "librarymanagement/components/icons/robot-face.svg" %}</div>
-              <div class="stat-value">{{ recommendations|length }}</div>
-              <div class="stat-label">Active Recommendations</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon success">{% include "librarymanagement/components/icons/check.svg" %}</div>
-              <div class="stat-value">{{ actioned_count }}</div>
-              <div class="stat-label">Actioned</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon warning">{% include "librarymanagement/components/icons/chart-bar.svg" %}</div>
-              <div class="stat-value">{{ success_rate }}%</div>
-              <div class="stat-label">Success Rate</div>
-            </div>
-          </div>
-          <!-- Filters (can be implemented when filtering logic is added) -->
-          <!-- Recommendations Grid -->
-          <div class="recommendations-grid">
-            {% if recommendations %}
-              {% for recommendation in recommendations %}
-                <div class="recommendation-card">
-                  <div class="recommendation-cover">
-                    {% if recommendation.book.cover_image %}
-                      <img src="{{ recommendation.book.cover_image.url }}"
-                           alt="{{ recommendation.book.title }}"
-                           width="120"
-                           height="180" />
-                    {% else %}
-                      📚
-                    {% endif %}
-                    <div class="recommendation-score">⭐ {{ recommendation.score }}</div>
-                  </div>
-                  <div class="recommendation-body">
-                    <h3 class="recommendation-title">{{ recommendation.book.title }}</h3>
-                    {% if recommendation.reason %}<div class="recommendation-reason">💡 {{ recommendation.reason }}</div>{% endif %}
-                    <div class="recommendation-meta">
-                      <span>For {{ recommendation.user.username }}</span>
-                      <span>{{ recommendation.created_at|timesince }} ago</span>
-                    </div>
-                    <div class="recommendation-actions">
-                      <button class="btn btn-primary btn-sm">View Book</button>
-                      <button class="btn btn-outline btn-sm">Dismiss</button>
-                    </div>
-                  </div>
-                </div>
-              {% endfor %}
-            {% else %}
-              <div class="card full-width-card">
-                <div class="empty-state">
-                  <div class="empty-state-icon">🤖</div>
-                  <h3>No Recommendations Yet</h3>
-                  <p>
-                    Book recommendations will be generated based on user behavior
-                    and preferences.
-                  </p>
-                  <button class="btn btn-primary mt-lg">Generate Recommendations</button>
-                </div>
-              </div>
-            {% endif %}
-          </div>
-        </div>
-      </main>
+{% block title %}
+  Book Recommendations - Library Management
+{% endblock title %}
+{% block meta_description %}
+  AI-powered personalized book recommendations dashboard for library users.
+{% endblock meta_description %}
+{% block meta_keywords %}
+  library, book recommendations, AI, personalized suggestions, dashboard
+{% endblock meta_keywords %}
+{% block extra_head %}
+  <link rel="stylesheet"
+        href="{% static 'librarymanagement/css/pages/recommendations.css' %}" />
+{% endblock extra_head %}
+{% block content %}
+  <main class="main-container">
+    {% include "librarymanagement/components/pages/recommendations/header.html" %}
+    <div class="reservation-container">
+      {% include "librarymanagement/components/pages/recommendations/stats.html" %}
+      {% include "librarymanagement/components/pages/recommendations/grid.html" %}
     </div>
-  </body>
-</html>
+  </main>
+{% endblock content %}

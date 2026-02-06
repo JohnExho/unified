@@ -1,0 +1,102 @@
+/* =========================
+   Textarea Component (shadcn-ui style)
+========================= */
+
+/* Base Textarea */
+.textarea {
+  display: flex;
+  width: auto;
+  min-height: 2.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-input);
+  background-color: var(--color-background);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--text-sm);
+  color: var(--color-foreground);
+  line-height: 1.5;
+  transition: all 150ms ease-in-out;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.textarea::placeholder {
+  color: var(--color-muted-foreground);
+}
+
+.textarea:hover {
+  border-color: var(--color-border);
+}
+
+.textarea:focus {
+  border-color: var(--color-ring);
+  outline: 2px solid var(--color-ring);
+  outline-offset: 0;
+}
+
+.textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  background-color: var(--color-muted);
+}
+
+/* Textarea Sizes */
+.textarea-sm {
+  min-height: 3.5rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--text-xs);
+}
+
+.textarea-lg {
+  min-height: 8rem;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--text-base);
+}
+
+/* Fixed Height */
+.textarea-fixed {
+  resize: none;
+}
+
+/* Auto-resize */
+.textarea-auto {
+  resize: none;
+  overflow: hidden;
+}
+
+/* Error State */
+.textarea-error {
+  border-color: var(--destructive);
+}
+
+.textarea-error:focus {
+  outline-color: var(--destructive);
+}
+
+/* Success State */
+.textarea-success {
+  border-color: var(--success);
+}
+
+.textarea-success:focus {
+  outline-color: var(--success);
+}
+
+/* Character Counter */
+.textarea-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.textarea-counter {
+  position: absolute;
+  bottom: var(--spacing-xs);
+  right: var(--spacing-sm);
+  font-size: var(--text-xs);
+  color: var(--color-muted-foreground);
+  pointer-events: none;
+}
+
+.textarea-wrapper .textarea {
+  padding-bottom: calc(var(--spacing-sm) + 1.5rem);
+}

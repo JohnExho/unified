@@ -1,0 +1,31 @@
+<div class="textarea-wrapper">
+  <textarea id="{{ textarea_id }}"
+            name="{{ textarea_name }}"
+            class="textarea {% if textarea_size %}textarea-{{ textarea_size }}{% endif %} {% if textarea_auto_resize %}textarea-auto{% endif %} {% if textarea_fixed %}textarea-fixed{% endif %} {% if textarea_error %}textarea-error{% endif %} {% if textarea_success %}textarea-success{% endif %} {{ textarea_class|default:'' }}"
+            rows="{{ textarea_rows|default:3 }}"
+            {% if textarea_placeholder %}placeholder="{{ textarea_placeholder }}"{% endif %}
+            {% if textarea_required %}required{% endif %}
+            {% if textarea_disabled %}disabled{% endif %}
+            {% if textarea_readonly %}readonly{% endif %}
+            {% if textarea_max_length %}maxlength="{{ textarea_max_length }}"{% endif %}>{% if textarea_value %}{{ textarea_value }}{% endif %}</textarea>
+  {% if textarea_show_counter and textarea_max_length %}
+    <div class="textarea-counter">
+      <span class="textarea-counter-current">0</span> / {{ textarea_max_length }}
+    </div>
+  {% endif %}
+</div>
+{% if textarea_show_counter and textarea_max_length %}
+  <script>
+  (function() {
+    const textarea = document.getElementById('{{ textarea_id }}');
+    const counter = textarea.parentElement.querySelector('.textarea-counter-current');
+
+    function updateCounter() {
+      counter.textContent = textarea.value.length;
+    }
+
+    textarea.addEventListener('input', updateCounter);
+    updateCounter();
+  })();
+  </script>
+{% endif %}

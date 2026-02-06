@@ -1,0 +1,9 @@
+<div class="page-header">
+  <h1 class="page-title">Reports Dashboard</h1>
+  <p class="page-description">Generate and view library analytics reports</p>
+  {% if report_stats %}
+    <div class="page-stats">
+      <span class="badge badge-default stat-badge">Total Reports: {{ report_stats.total_reports }}</span>
+    </div>
+  {% endif %}
+</div>

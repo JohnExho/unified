@@ -1,0 +1,16 @@
+<!-- Main Content -->
+<main class="main-container">
+  <div class="dashboard-content">
+    {% block main-content %}
+      {% include "librarymanagement/components/pages/dashboard/header.html" %}
+      {% include "librarymanagement/components/pages/dashboard/stats-grid.html" %}
+      <div class="dashboard-cards-row">
+        {% include "librarymanagement/components/pages/dashboard/grid-cards.html" %}
+        {% include "librarymanagement/components/pages/dashboard/trends-section.html" %}
+      </div>
+      <div class="activity-overview-card">
+        {% include "librarymanagement/components/pages/dashboard/library-activities.html" %}
+      </div>
+    {% endblock main-content %}
+  </div>
+</main>

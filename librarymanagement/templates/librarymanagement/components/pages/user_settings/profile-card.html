@@ -1,0 +1,133 @@
+<div class="settings-card">
+  <div class="settings-card-header">
+    <h2 class="settings-card-title">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+      Profile Information
+    </h2>
+    <p class="settings-card-description">Update your personal details</p>
+  </div>
+  <div class="settings-card-body">
+    <form method="post"
+          class="settings-form-container"
+          action="{% url 'librarymanagement:user_settings' %}"
+          enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="update_profile" />
+      <!-- Avatar Section -->
+      <div class="profile-avatar-section">
+        <div class="current-avatar">
+          {% if user.avatar %}
+            <img src="{{ user.avatar.url }}"
+                 alt="{{ user.username }}"
+                 width="120"
+                 height="120" />
+          {% elif user.avatar_url %}
+            <img src="{{ user.avatar_url }}"
+                 alt="{{ user.username }}"
+                 width="120"
+                 height="120" />
+          {% else %}
+            <div class="avatar-placeholder">{{ user.first_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}</div>
+          {% endif %}
+        </div>
+        <div class="avatar-upload">
+          <label for="avatar" class="button button-outline button-sm">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Upload Photo
+          </label>
+          <input type="file"
+                 id="avatar"
+                 name="avatar"
+                 accept="image/*"
+                 class="visually-hidden" />
+          <p class="text-muted">JPG, PNG or GIF (max 2MB)</p>
+        </div>
+      </div>
+      <!-- Personal Information -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="username" class="form-label label">Username</label>
+          <input type="text"
+                 id="username"
+                 name="username"
+                 class="input input-sm"
+                 value="{{ user.username }}"
+                 readonly />
+          <small class="form-text">Username cannot be changed</small>
+        </div>
+        <div class="form-group">
+          <label for="email" class="form-label label">Email Address</label>
+          <input type="email"
+                 id="email"
+                 name="email"
+                 class="input input-sm"
+                 value="{{ user.email }}"
+                 required />
+          {% if user.is_email_verified %}
+            <small class="form-text text-success">✓ Verified</small>
+          {% else %}
+            <small class="form-text text-warning">⚠ Not verified</small>
+          {% endif %}
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="first_name" class="form-label label">First Name</label>
+          <input type="text"
+                 id="first_name"
+                 name="first_name"
+                 class="input input-sm"
+                 value="{{ user.first_name }}" />
+        </div>
+        <div class="form-group">
+          <label for="middle_name" class="form-label label">Middle Name</label>
+          <input type="text"
+                 id="middle_name"
+                 name="middle_name"
+                 class="input input-sm"
+                 value="{{ user.middle_name }}" />
+        </div>
+        <div class="form-group">
+          <label for="last_name" class="form-label label">Last Name</label>
+          <input type="text"
+                 id="last_name"
+                 name="last_name"
+                 class="input input-sm"
+                 value="{{ user.last_name }}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="phone_number" class="form-label label">Phone Number</label>
+        <input type="tel"
+               id="phone_number"
+               name="phone_number"
+               class="input input-sm"
+               value="{{ user.phone_number }}"
+               placeholder="+1234567890" />
+      </div>
+      <div class="form-group">
+        <label for="bio" class="form-label label">Bio</label>
+        <textarea id="bio"
+                  name="bio"
+                  class="textarea textarea-sm"
+                  rows="4"
+                  placeholder="Tell us about yourself">{{ user.bio }}</textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="button button-default">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

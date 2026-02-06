@@ -1,0 +1,105 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Partners · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Partner & Linkages</div>
+      <div class="page-subtitle">Monitor contributions, engagement, and pipeline.</div>
+    </div>
+    <div class="action-group">
+      <a class="button secondary"
+         href="{% url 'informationmanagement:information-projects' %}">View Projects</a>
+      <a class="button"
+         href="{% url 'informationmanagement:information-partner-create' %}">Add Partner</a>
+    </div>
+  </div>
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Active Partnerships</h3>
+      <p>Strategic partners and commitments.</p>
+      {% if partners %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Partner</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Engagement</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for partner in partners %}
+              <tr>
+                <td>{{ partner.name }}</td>
+                <td>{{ partner.partner_type }}</td>
+                <td>
+                  <span class="badge {% if partner.status == 'Active' %}success{% elif partner.status == 'Prospecting' %}warning{% else %}danger{% endif %}">{{ partner.status }}</span>
+                </td>
+                <td>{{ partner.engagement }}</td>
+                <td>
+                  <div class="table-actions">
+                    <a class="link-btn"
+                       href="{% url 'informationmanagement:information-partner-edit' partner.id %}">Edit</a>
+                    <a class="link-btn danger"
+                       href="{% url 'informationmanagement:information-partner-delete' partner.id %}">Delete</a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">No partner records yet.</div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <h3>Pipeline Overview</h3>
+      <p>Current status of engagement pipeline.</p>
+      <div class="list">
+        {% for stage in pipeline %}
+          <div class="list-item">
+            <div>
+              <div class="text-strong">{{ stage.stage }}</div>
+              <div class="muted text-small">Partnership status</div>
+            </div>
+            <span class="pill">{{ stage.count }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="card mt-24">
+    <div class="section-title">
+      <div>
+        <h3>Contribution Matrix</h3>
+        <p>Recorded support and resources per partner.</p>
+      </div>
+      <span class="tag">Tracked</span>
+    </div>
+    {% if partners %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Partner</th>
+            <th>Contribution</th>
+            <th>Contact</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for partner in partners %}
+            <tr>
+              <td>{{ partner.name }}</td>
+              <td>{{ partner.contribution }}</td>
+              <td>{{ partner.contact_person|default:"-" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">No contributions logged yet.</div>
+    {% endif %}
+  </div>
+{% endblock content %}

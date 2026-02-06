@@ -1,0 +1,62 @@
+<div class="report-history">
+  <div class="report-history-header">
+    <h3>Recent Reports</h3>
+    <span class="badge badge-default">{{ recent_reports|length }} reports</span>
+  </div>
+  {% if recent_reports %}
+    {% for report in recent_reports %}
+      <div class="report-history-item">
+        <div class="report-history-icon">
+          {% if report.report_type == 'usage' %}
+            {% include "librarymanagement/components/icons/chart-bar.svg" %}
+          {% elif report.report_type == 'circulation' %}
+            {% include "librarymanagement/components/icons/refresh.svg" %}
+          {% elif report.report_type == 'trending' %}
+            {% include "librarymanagement/components/icons/flame.svg" %}
+          {% elif report.report_type == 'user_behavior' %}
+            {% include "librarymanagement/components/icons/users.svg" %}
+          {% elif report.report_type == 'inventory' %}
+            {% include "librarymanagement/components/icons/books.svg" %}
+          {% elif report.report_type == 'acquisition' %}
+            {% include "librarymanagement/components/icons/plus.svg" %}
+          {% else %}
+            {% include "librarymanagement/components/icons/clipboard-list.svg" %}
+          {% endif %}
+        </div>
+        <div class="report-history-content">
+          <div class="report-history-title">{{ report.title }}</div>
+          <div class="report-history-meta">
+            Generated on {{ report.generated_at|date:"M d, Y" }}
+            {% if report.generated_by %}by {{ report.generated_by.username }}{% endif %}
+            • {{ report.period_start|date:"M d" }} - {{ report.period_end|date:"M d, Y" }}
+          </div>
+          {% if report.summary %}<div class="report-history-summary">{{ report.summary|truncatewords:20 }}</div>{% endif %}
+        </div>
+        <div class="report-history-actions">
+          <button class="button button-outline button-sm"
+                  onclick="viewReport('{{ report.id }}')">
+            {% include "librarymanagement/components/icons/eye.svg" %}
+            View
+          </button>
+          {% if report.file %}
+            <a href="{{ report.file.url }}"
+               download
+               class="button button-primary button-sm">
+              {% include "librarymanagement/components/icons/download.svg" %}
+              Download
+            </a>
+          {% endif %}
+          <button class="button button-outline button-sm"
+                  onclick="openReportExportDialog('{{ report.id }}')">
+            {% include "librarymanagement/components/icons/download.svg" %}
+            Export
+          </button>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <p>Generate your first report using the form above.</p>
+    </div>
+  {% endif %}
+</div>

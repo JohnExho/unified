@@ -1,274 +1,39 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description"
-          content="Monitor and manage all book lending activities in the library. View, filter, and manage borrowing transactions." />
-    <meta name="keywords"
-          content="library, transactions, borrowing, books, management, overdue, loans, returns" />
-    <title>Borrowing Transactions - Library Management</title>
-    <link rel="stylesheet"
-          href="{% static "librarymanagement/css/library-base.css" %}" />
-    <link rel="stylesheet"
-          href="{% static "librarymanagement/css/transactions.css" %}" />
-    <style>
-      .hidden-form {
-        display: none;
-      }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  </head>
-  <body>
-    <div class="dashboard-container">
-      {% include "librarymanagement/components/sidebar.html" %}
-      <main class="main-content">
-        <div class="content-wrapper">
-          <!-- Page Header -->
-          <div class="page-header">
-            <h1 class="page-title">Borrowing Transactions</h1>
-            <p class="page-description">Monitor and manage all book lending activities</p>
-          </div>
-          <!-- Transaction Stats -->
-          <div class="transaction-stats">
-            <div class="transaction-stat-card active">
-              <div class="transaction-stat-number">{{ active_count }}</div>
-              <div class="transaction-stat-label">Active Loans</div>
-            </div>
-            <div class="transaction-stat-card overdue">
-              <div class="transaction-stat-number">{{ overdue_count }}</div>
-              <div class="transaction-stat-label">Overdue</div>
-            </div>
-            <div class="transaction-stat-card returned">
-              <div class="transaction-stat-number">{{ returned_today_count }}</div>
-              <div class="transaction-stat-label">Returned Today</div>
-            </div>
-          </div>
-          <!-- Filters -->
-          <div class="transaction-filters">
-            <form method="get" class="filter-row">
-              <div class="form-group mb-0">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-control form-select">
-                  <option value="">All Statuses</option>
-                  <option value="active">Active</option>
-                  <option value="overdue">Overdue</option>
-                  <option value="returned">Returned</option>
-                  <option value="lost">Lost</option>
-                </select>
-              </div>
-              <div class="form-group mb-0">
-                <label class="form-label">User</label>
-                <input type="text"
-                       name="user"
-                       class="form-control"
-                       placeholder="Search by user..." />
-              </div>
-              <div class="form-group mb-0">
-                <label class="form-label">Book</label>
-                <input type="text"
-                       name="book"
-                       class="form-control"
-                       placeholder="Search by book..." />
-              </div>
-              <div class="form-group mb-0">
-                <label class="form-label">&nbsp;</label>
-                <div class="btn-group">
-                  <button type="submit" class="btn btn-primary">Filter</button>
-                  <a href="{% url 'librarymanagement:transactions_list' %}"
-                     class="btn btn-ghost">Reset</a>
-                </div>
-              </div>
-            </form>
-          </div>
-          <!-- Transactions Table -->
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">All Transactions</h3>
-              <div class="btn-group">
-                <button class="btn btn-outline btn-sm">Export</button>
-              </div>
-            </div>
-            <div class="table-container">
-              <table class="table transaction-table">
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Book</th>
-                    <th>Borrowed Date</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
-                    <th>Fine</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for transaction in transactions %}
-                    <tr>
-                      <td>
-                        <div class="user-cell">
-                          <div class="user-avatar-small">{{ transaction.user.username|first|upper }}</div>
-                          <span>{{ transaction.user.username }}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div class="book-cell">
-                          <div class="book-title">{{ transaction.book.title }}</div>
-                          <div class="book-accession">{{ transaction.book.accession_number }}</div>
-                        </div>
-                      </td>
-                      <td class="date-cell">
-                        <div class="date-primary">{{ transaction.borrowed_date|date:"M d, Y" }}</div>
-                        <div class="date-secondary">{{ transaction.borrowed_date|date:"h:i A" }}</div>
-                      </td>
-                      <td class="date-cell">
-                        <div class="date-primary">{{ transaction.due_date|date:"M d, Y" }}</div>
-                        {% if transaction.status == 'overdue' %}
-                          <div class="date-secondary">
-                            <span class="overdue-indicator">⚠️ {{ transaction.days_overdue }} days overdue</span>
-                          </div>
-                        {% endif %}
-                      </td>
-                      <td>
-                        <span class="badge {% if transaction.status == 'active' %}badge-success {% elif transaction.status == 'overdue' %}badge-danger {% elif transaction.status == 'returned' %}badge-info {% else %}badge-warning{% endif %}">
-                          <span class="status-dot {{ transaction.status }}"></span>
-                          {{ transaction.get_status_display }}
-                        </span>
-                        {% if transaction.renewal_count > 0 %}
-                          <span class="renewal-badge">Renewed {{ transaction.renewal_count }}x</span>
-                        {% endif %}
-                      </td>
-                      <td>
-                        {% if transaction.fine_amount > 0 %}
-                          <span class="fine-amount">₱{{ transaction.fine_amount }}</span>
-                        {% else %}
-                          <span class="text-tertiary">—</span>
-                        {% endif %}
-                      </td>
-                      <td>
-                        <div class="transaction-actions">
-                          {% if transaction.status in 'active,overdue' %}
-                            <button class="action-btn return"
-                                    onclick="returnBook('{{ transaction.id }}')">✓ Return</button>
-                            <button class="action-btn renew" onclick="renewBook('{{ transaction.id }}')">🔄 Renew</button>
-                          {% endif %}
-                          <button class="action-btn details"
-                                  onclick="viewDetails('{{ transaction.id }}')">👁 Details</button>
-                        </div>
-                      </td>
-                    </tr>
-                  {% empty %}
-                    <tr>
-                      <td colspan="7">
-                        <div class="empty-state">
-                          <div class="empty-state-icon">📚</div>
-                          <h3>No Transactions Found</h3>
-                          <p>
-                            There are currently no borrowing transactions to
-                            display.
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </main>
+{% block title %}
+  Borrowing Transactions - Library Management
+{% endblock title %}
+{% block meta_description %}
+  Monitor and manage all book lending activities in the library. View, filter, and manage borrowing transactions.
+{% endblock meta_description %}
+{% block meta_keywords %}
+  library, transactions, borrowing, books, management, overdue, loans, returns
+{% endblock meta_keywords %}
+{% block extra_head %}
+  <link rel="stylesheet"
+        href="{% static 'librarymanagement/css/pages/transactions_list.css' %}" />
+{% endblock extra_head %}
+{% block content %}
+  <main class="main-container">
+    {% include "librarymanagement/components/pages/transactions/header.html" %}
+    <div class="reservation-container">
+      {% include "librarymanagement/components/pages/transactions/stats.html" %}
+      {% include "librarymanagement/components/pages/transactions/filters.html" %}
+      {% include "librarymanagement/components/pages/transactions/table.html" %}
     </div>
-    <script>
-      function getCsrfToken() {
-        return document.querySelector('[name=csrfmiddlewaretoken]').value;
-      }
-
-      function returnBook(id) {
-        Swal.fire({
-          title: "Return Book?",
-          text: "Mark this book as returned?",
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonText: "Yes, return it",
-          confirmButtonColor: "#10b981",
-          input: 'checkbox',
-          inputPlaceholder: 'Apply fine for overdue',
-        }).then((result) => {
-          if (result.isConfirmed) {
-            fetch(`/library/transactions/${id}/return/`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': getCsrfToken(),
-              },
-              body: `apply_fine=${result.value ? 'true' : 'false'}`
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                Swal.fire("Success!", "Book has been returned.", "success")
-                  .then(() => window.location.reload());
-              } else {
-                Swal.fire("Error!", data.message, "error");
-              }
-            })
-            .catch(error => {
-              Swal.fire("Error!", "Failed to return book.", "error");
-            });
-          }
-        });
-      }
-
-      function renewBook(id) {
-        Swal.fire({
-          title: "Renew Book?",
-          text: "Extend the due date for this book?",
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonText: "Yes, renew it",
-          confirmButtonColor: "#3b82f6",
-          input: 'number',
-          inputLabel: 'Extend by how many days?',
-          inputValue: 14,
-          inputAttributes: {
-            min: 1,
-            max: 30,
-            step: 1
-          }
-        }).then((result) => {
-          if (result.isConfirmed) {
-            fetch(`/library/transactions/${id}/renew/`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': getCsrfToken(),
-              },
-              body: `extend_days=${result.value || 14}`
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                Swal.fire("Success!", "Book has been renewed.", "success")
-                  .then(() => window.location.reload());
-              } else {
-                Swal.fire("Error!", data.message, "error");
-              }
-            })
-            .catch(error => {
-              Swal.fire("Error!", "Failed to renew book.", "error");
-            });
-          }
-        });
-      }
-
+  </main>
+{% endblock content %}
+{% block extra_scripts %}
+  <script src="{% static 'librarymanagement/js/utils.js' %}"></script>
+  <script src="{% static 'librarymanagement/js/transaction_operations.js' %}"></script>
+  <script>
+      // Alias for compatibility
       function viewDetails(id) {
-        window.location.href = `/library/transactions/${id}/`;
+        viewTransactionDetails(id);
       }
-    </script>
-    <!-- Hidden CSRF token for JavaScript -->
-    <form class="hidden-form">
-      {% csrf_token %}
-    </form>
-  </body>
-</html>
+  </script>
+  <!-- Hidden CSRF token for JavaScript -->
+  <form class="hidden-form">
+    {% csrf_token %}
+  </form>
+{% endblock extra_scripts %}

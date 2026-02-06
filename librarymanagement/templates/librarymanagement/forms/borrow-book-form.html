@@ -1,0 +1,54 @@
+{# Borrow Book Form #}
+<form id="borrowBookForm"
+      method="post"
+      action="{% url 'librarymanagement:create_transaction' %}"
+      class="borrow-book-form">
+  {% csrf_token %}
+  <input type="hidden" id="borrow_book_id" name="book" />
+  <input type="hidden" name="renewal_count" value="0" />
+  <input type="hidden" name="status" value="active" />
+  <div class="form-group">
+    <label for="borrow_book_title" class="label">Book</label>
+    <input type="text" id="borrow_book_title" class="input input-sm" readonly />
+  </div>
+  <div class="form-group">
+    <label for="borrow_user" class="label">
+      Borrower <span class="required">*</span>
+    </label>
+    <select id="borrow_user" name="user" class="select " required>
+      <option value="{{ request.user.id }}" selected>{{ request.user.get_full_name|default:request.user.username }}</option>
+    </select>
+    <small class="form-text">Currently only allows borrowing for yourself</small>
+  </div>
+  <div class="form-group">
+    <label for="borrow_due_date" class="label">
+      Due Date <span class="required">*</span>
+    </label>
+    <input type="datetime-local"
+           id="borrow_due_date"
+           name="due_date"
+           class="input input-sm"
+           required />
+    <small class="form-text">Default loan period is 14 days</small>
+  </div>
+  <div class="form-group">
+    <label for="borrow_fine_amount" class="label">Fine Amount</label>
+    <input type="number"
+           id="borrow_fine_amount"
+           name="fine_amount"
+           class="input input-sm"
+           value="0.00"
+           step="0.01"
+           min="0"
+           readonly
+           placeholder="0.00" />
+    <small class="form-text">Fines are calculated automatically for overdue books</small>
+  </div>
+  {# Footer Buttons #}
+  <div class="dialog-footer">
+    <button type="button"
+            class="button button-outline"
+            onclick="closeDialog('borrowBookDialog')">Cancel</button>
+    <button type="submit" class="button button-default">Borrow Book</button>
+  </div>
+</form>

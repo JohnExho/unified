@@ -1,0 +1,166 @@
+<!-- View Toggle and Results -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Book Collection</h3>
+    <div class="view-toggle">
+      <button class="active" onclick="switchView('grid')">
+        {% include "librarymanagement/components/icons/layout-dashboard.svg" %}
+        Grid
+      </button>
+      <button onclick="switchView('list')">
+        {% include "librarymanagement/components/icons/clipboard-list.svg" %}
+        List
+      </button>
+    </div>
+  </div>
+  <div class="card-body">
+    <!-- Grid View -->
+    <div id="grid-view" class="books-grid">
+      {% if books %}
+        {% for book in books %}
+          <div class="book-card"
+               data-title="{{ book.title }}"
+               data-authors="{% if book.authors.all %}{% for author in book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}Unknown Author{% endif %}"
+               data-isbn="{{ book.isbn|default:'' }}"
+               data-description="{{ book.description|default:'' }}"
+               data-location="{{ book.shelf_location|default:'' }}"
+               data-status="{{ book.get_status_display }}"
+               onclick="viewBookDetails(this)">
+            <div class="book-cover {% if not book.cover_image %}gradient-bg{% endif %}"
+                 {% if book.cover_image %}style="background-image: url('{{ book.cover_image.url }}'); background-size: cover;"{% endif %}>
+              <div class="book-status-badge">
+                <span class="badge {% if book.status == 'available' %}badge-success{% elif book.status == 'borrowed' %}badge-warning{% elif book.status == 'reserved' %}badge-info{% else %}badge-danger{% endif %}">
+                  {{ book.get_status_display }}
+                </span>
+              </div>
+              {% if not book.cover_image %}
+                {% include "librarymanagement/components/icons/book.svg" %}
+              {% endif %}
+            </div>
+            <div class="book-info">
+              <h4 class="book-title">{{ book.title }}</h4>
+              <p class="book-author">
+                {% if book.authors.all %}
+                  by {{ book.authors.all.0.full_name }}
+                  {% if book.authors.count > 1 %}et al.{% endif %}
+                {% else %}
+                  Unknown Author
+                {% endif %}
+              </p>
+              <div class="book-meta">
+                {% if book.isbn %}<span>ISBN: {{ book.isbn }}</span>{% endif %}
+                {% if book.publication_year %}<span>{{ book.publication_year }}</span>{% endif %}
+              </div>
+              <div class="book-meta">
+                {% if book.shelf_location %}<span>📍 {{ book.shelf_location }}</span>{% endif %}
+                <span>Available: {{ book.available_copies }}/{{ book.total_copies }}</span>
+              </div>
+              <div class="book-actions">
+                {% if book.is_available %}
+                  <button class="button button-default"
+                          onclick="event.stopPropagation(); borrowBook('{{ book.id }}', '{{ book.title|escapejs }}')">
+                    Borrow
+                  </button>
+                {% else %}
+                  <button class="button button-destructive"
+                          onclick="event.stopPropagation(); reserveBook('{{ book.id }}')">Reserve</button>
+                {% endif %}
+                <button class="button button-outline"
+                        onclick="event.stopPropagation(); viewBookDetails(this.closest('.book-card'))">Details</button>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">📚</div>
+          <h3>No Books Found</h3>
+          <p>Start adding books to your library collection.</p>
+        </div>
+      {% endif %}
+    </div>
+    <!-- List View (Hidden by default) -->
+    <div id="list-view" class="hidden-view">
+      <div class="table-container">
+        <table class="table">
+          <thead class="table-header">
+            <tr class="table-row">
+              <th class="table-head">Title</th>
+              <th class="table-head">Author</th>
+              <th class="table-head">ISBN</th>
+              <th class="table-head">Location</th>
+              <th class="table-head">Status</th>
+              <th class="table-head">Availability</th>
+              <th class="table-head">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="table-body">
+            {% if books %}
+              {% for book in books %}
+                <tr class="table-row"
+                    data-title="{{ book.title }}"
+                    data-authors="{% if book.authors.all %}{% for author in book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}Unknown Author{% endif %}"
+                    data-isbn="{{ book.isbn|default:'' }}"
+                    data-description="{{ book.description|default:'' }}"
+                    data-location="{{ book.shelf_location|default:'' }}"
+                    data-status="{{ book.get_status_display }}">
+                  <td class="table-cell">
+                    <div class="book-details-cell">
+                      <strong>{{ book.title }}</strong>
+                      {% if book.subtitle %}
+                        <br>
+                        <small>{{ book.subtitle }}</small>
+                      {% endif %}
+                    </div>
+                  </td>
+                  <td class="table-cell">
+                    {% if book.authors.all %}
+                      {{ book.authors.all.0.full_name }}
+                      {% if book.authors.count > 1 %}
+                        <br>
+                        <small>+{{ book.authors.count|add:"-1" }} more</small>
+                      {% endif %}
+                    {% else %}
+                      <span class="text-muted">Unknown</span>
+                    {% endif %}
+                  </td>
+                  <td class="table-cell">{{ book.isbn|default:"—" }}</td>
+                  <td class="table-cell">{{ book.shelf_location|default:"—" }}</td>
+                  <td class="table-cell">
+                    <span class="badge {% if book.status == 'available' %}badge-success{% elif book.status == 'borrowed' %}badge-warning{% elif book.status == 'reserved' %}badge-info{% else %}badge-danger{% endif %}">
+                      {{ book.get_status_display }}
+                    </span>
+                  </td>
+                  <td class="table-cell">{{ book.available_copies }}/{{ book.total_copies }}</td>
+                  <td class="table-cell">
+                    <div class="btn-group">
+                      {% if book.is_available %}
+                        <button class="button button-sm button-default"
+                                onclick="borrowBook('{{ book.id }}', '{{ book.title|escapejs }}')">Borrow</button>
+                      {% else %}
+                        <button class="button button-sm button-desctructive"
+                                onclick="reserveBook('{{ book.id }}')">Reserve</button>
+                      {% endif %}
+                      <button class="button button-sm button-outline"
+                              onclick="viewBookDetails(this.closest('tr'))">Details</button>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="7" class="text-center">
+                  <div class="table-empty">
+                    <div class="empty-state-icon">📚</div>
+                    <h3>No Books Found</h3>
+                    <p>Start adding books to your library collection.</p>
+                  </div>
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

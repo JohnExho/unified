@@ -1,0 +1,161 @@
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  height: auto;
+}
+
+.dashboard-cards-row {
+  display: flex;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.stat-card-header {
+  align-items: center;
+  flex-direction: row !important;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  width: auto;
+}
+.stat-card-body {
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.05rem;
+  font-size: var(--text-lg);
+}
+
+.stat-change {
+  font-size: var(--text-sm);
+  margin-top: var(--spacing-xs);
+  color: var(--muted-foreground);
+}
+
+.stat-icon {
+  width: 3rem;
+  height: 3rem;
+  color: var(--icon-fg, var(--foreground));
+  background: linear-gradient(
+    to top,
+    var(--icon-bg, oklch(from var(--success) calc(l * 0.2) c h)),
+    var(--icon-bg)
+  );
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+}
+
+.stat-icon-success {
+  --icon-bg: oklch(from var(--success) calc(l * 1) c h / 0.3);
+  --icon-fg: oklch(from var(--success) calc(l * 0.9) c h);
+}
+
+.stat-icon-warning {
+  --icon-bg: oklch(from var(--warning) calc(l * 1) c h / 0.3);
+  --icon-fg: oklch(from var(--warning) calc(l * 0.9) c h);
+}
+
+.stat-icon-error {
+  --icon-bg: oklch(from var(--destructive) calc(l * 1) c h / 0.3);
+  --icon-fg: oklch(from var(--destructive) calc(l * 0.9) c h);
+}
+
+.stat-value {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--foreground);
+}
+
+.card-dashboard {
+  width: 100%;
+  flex: 0.5;
+}
+
+.card-dashboard-header {
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.activity-card-header {
+  flex-direction: row !important;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.activity-select {
+  width: auto;
+}
+
+.activity-stat-group {
+  text-align: center;
+}
+
+.activity-stat-label {
+  font-size: var(--text-md);
+  color: var(--foreground);
+  margin-bottom: var(--spacing-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.03rem;
+}
+
+.activity-stat-info {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+  margin-top: var(--spacing-xs);
+  font-weight: var(--font-semibold);
+}
+
+.progress {
+  height: 10px;
+  width: 100%;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: var(--radius-lg);
+  background: var(--primary);
+  transition: width 300ms ease;
+}
+
+.progress-bar.success {
+  background: linear-gradient(
+    90deg,
+    var(--success),
+    oklch(from var(--success) calc(l * 1.1) c h)
+  );
+}
+
+.progress-bar.warning {
+  background: linear-gradient(
+    90deg,
+    var(--warning),
+    oklch(from var(--warning) calc(l * 1.1) c h)
+  );
+}
+
+.progress-bar.error {
+  background: linear-gradient(
+    90deg,
+    var(--destructive),
+    oklch(from var(--destructive) calc(l * 1.1) c h)
+  );
+}

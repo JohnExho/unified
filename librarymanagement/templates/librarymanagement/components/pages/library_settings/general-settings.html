@@ -1,0 +1,57 @@
+<div class="settings-section">
+  <div class="settings-section-header">
+    <h3 class="settings-section-title">General Settings</h3>
+    <p class="settings-section-description">Basic library system configuration</p>
+  </div>
+  <div class="settings-item">
+    <div class="settings-item-info">
+      <div class="settings-item-label">Library Name</div>
+      <div class="settings-item-description">The display name for your library</div>
+    </div>
+    <div class="settings-item-control">
+      <input type="text"
+             class="form-control input-width-300"
+             name="library_name"
+             value="{{ settings.library_name|default:'University Library' }}" />
+    </div>
+  </div>
+  <div class="settings-item">
+    <div class="settings-item-info">
+      <div class="settings-item-label">Default Loan Period</div>
+      <div class="settings-item-description">Number of days for standard book loans</div>
+    </div>
+    <div class="settings-item-control">
+      <input type="number"
+             class="form-control input-width-120"
+             name="default_loan_period_days"
+             min="1"
+             value="{{ settings.default_loan_period_days|default:14 }}" />
+    </div>
+  </div>
+  <div class="settings-item">
+    <div class="settings-item-info">
+      <div class="settings-item-label">Maximum Renewals</div>
+      <div class="settings-item-description">How many times a book can be renewed</div>
+    </div>
+    <div class="settings-item-control">
+      <input type="number"
+             class="form-control input-width-120"
+             name="maximum_renewals"
+             min="0"
+             value="{{ settings.maximum_renewals|default:2 }}" />
+    </div>
+  </div>
+  <div class="settings-item">
+    <div class="settings-item-info">
+      <div class="settings-item-label">Maximum Books Per User</div>
+      <div class="settings-item-description">Concurrent book lending limit</div>
+    </div>
+    <div class="settings-item-control">
+      <input type="number"
+             class="form-control input-width-120"
+             name="maximum_books_per_user"
+             min="1"
+             value="{{ settings.maximum_books_per_user|default:5 }}" />
+    </div>
+  </div>
+</div>

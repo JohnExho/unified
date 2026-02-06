@@ -1,0 +1,64 @@
+<div class="book-details-dialog">
+  <div class="book-detail-row">
+    <span class="book-detail-label">Title</span>
+    <span class="book-detail-value" id="bookDetailsTitle">—</span>
+  </div>
+  <div class="book-detail-row">
+    <span class="book-detail-label">Authors</span>
+    <span class="book-detail-value" id="bookDetailsAuthors">—</span>
+  </div>
+  <div class="book-detail-row">
+    <span class="book-detail-label">ISBN</span>
+    <span class="book-detail-value" id="bookDetailsIsbn">—</span>
+  </div>
+  <div class="book-detail-row">
+    <span class="book-detail-label">Location</span>
+    <span class="book-detail-value" id="bookDetailsLocation">—</span>
+  </div>
+  <div class="book-detail-row">
+    <span class="book-detail-label">Status</span>
+    <span class="book-detail-value" id="bookDetailsStatus">—</span>
+  </div>
+  <div class="book-detail-section">
+    <span class="book-detail-label">Description</span>
+    <p class="book-detail-description" id="bookDetailsDescription">—</p>
+  </div>
+</div>
+<style>
+  .book-details-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    width: 25rem;
+  }
+
+  .book-detail-row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+  }
+
+  .book-detail-label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--color-foreground);
+  }
+
+  .book-detail-value {
+    font-size: var(--text-sm);
+    color: var(--color-muted-foreground);
+    text-align: right;
+  }
+
+  .book-detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .book-detail-description {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-muted-foreground);
+  }
+</style>

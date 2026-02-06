@@ -1,0 +1,41 @@
+<div class="settings-card">
+  <div class="settings-card-header">
+    <h2 class="settings-card-title">
+      {% include "librarymanagement/components/icons/book.svg" with class="icon" %}
+      Library Activity
+    </h2>
+    <p class="settings-card-description">Your reading statistics</p>
+  </div>
+  <div class="settings-card-body">
+    <div class="stats-grid-compact">
+      <div class="stat-item">
+        <div class="stat-icon books">{% include "librarymanagement/components/icons/books.svg" %}</div>
+        <div class="stat-content">
+          <div class="stat-value" id="stat-total-borrowed">{{ user_stats.total_borrowed|default:0 }}</div>
+          <div class="stat-label">Books Borrowed</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon reading">{% include "librarymanagement/components/icons/book-2.svg" %}</div>
+        <div class="stat-content">
+          <div class="stat-value" id="stat-currently-reading">{{ user_stats.currently_reading|default:0 }}</div>
+          <div class="stat-label">Currently Reading</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon bookmarks">{% include "librarymanagement/components/icons/bookmark.svg" %}</div>
+        <div class="stat-content">
+          <div class="stat-value" id="stat-total-reservations">{{ user_stats.total_reservations|default:0 }}</div>
+          <div class="stat-label">Reservations</div>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon overdue">{% include "librarymanagement/components/icons/alert-triangle.svg" %}</div>
+        <div class="stat-content">
+          <div class="stat-value" id="stat-overdue-books">{{ user_stats.overdue_books|default:0 }}</div>
+          <div class="stat-label">Overdue</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

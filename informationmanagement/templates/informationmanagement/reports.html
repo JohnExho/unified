@@ -1,0 +1,99 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Reports · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Reports & Decision Support</div>
+      <div class="page-subtitle">Generate institutional reports for accreditation and planning.</div>
+    </div>
+    <div class="action-group">
+      <a class="button secondary"
+         href="{% url 'informationmanagement:information-report-template-create' %}">New Template</a>
+      <a class="button"
+         href="{% url 'informationmanagement:information-report-create' %}">Generate Report</a>
+    </div>
+  </div>
+  <div class="grid cols-2">
+    <div class="card">
+      <h3>Report Queue</h3>
+      <p>Recent report generation requests.</p>
+      {% if reports %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Report</th>
+              <th>Period</th>
+              <th>Status</th>
+              <th>Owner</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for report in reports %}
+              <tr>
+                <td>{{ report.title }}</td>
+                <td>{{ report.period }}</td>
+                <td>
+                  <span class="badge {% if report.status == 'Generated' %}success{% elif report.status == 'Draft' %}warning{% else %}warning{% endif %}">{{ report.status }}</span>
+                </td>
+                <td>{{ report.owner }}</td>
+                <td>
+                  <div class="table-actions">
+                    <a class="link-btn"
+                       href="{% url 'informationmanagement:information-report-edit' report.id %}">Edit</a>
+                    <a class="link-btn danger"
+                       href="{% url 'informationmanagement:information-report-delete' report.id %}">Delete</a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">No reports generated yet.</div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <h3>Available Templates</h3>
+      <p>Standardized templates for consistent reporting.</p>
+      {% if templates %}
+        <div class="list">
+          {% for template in templates %}
+            <div class="list-item">
+              <div class="text-strong">{{ template.name }}</div>
+              <span class="pill">Template</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">No report templates added yet.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card mt-24">
+    <div class="section-title">
+      <div>
+        <h3>Decision Support Summary</h3>
+        <p>Highlight gaps and recommendations from analytics.</p>
+      </div>
+      <span class="tag">Auto-generated</span>
+    </div>
+    {% if reports %}
+      <div class="list">
+        {% for report in reports|slice:":3" %}
+          <div class="list-item">
+            <div>
+              <div class="text-strong">{{ report.title }}</div>
+              <div class="muted text-small">{{ report.period }} · {{ report.status }}</div>
+            </div>
+            <span class="badge {% if report.status == 'Generated' %}success{% else %}warning{% endif %}">{{ report.status }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">Decision support summaries will appear after reports are generated.</div>
+    {% endif %}
+  </div>
+{% endblock content %}

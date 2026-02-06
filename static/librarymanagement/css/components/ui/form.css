@@ -1,0 +1,106 @@
+/* =========================
+   Form Layout & Structure (shadcn-ui style)
+========================= */
+
+/* Form Item - Container for label + input + description */
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Form Description */
+.form-description {
+  font-size: var(--text-sm);
+  color: var(--color-muted-foreground);
+  line-height: 1.4;
+}
+
+/* Form Message (Error/Success) */
+.form-message {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  line-height: 1.4;
+}
+
+.form-message-error {
+  color: var(--destructive);
+}
+
+.form-message-success {
+  color: var(--success);
+}
+
+/* Form Item States */
+.form-item-error .input,
+.form-item-error .textarea,
+.form-item-error .select {
+  border-color: var(--destructive);
+}
+
+.form-item-error .input:focus,
+.form-item-error .textarea:focus,
+.form-item-error .select:focus {
+  outline-color: var(--destructive);
+}
+
+.form-item-error .label {
+  color: var(--destructive);
+}
+
+.form-item-success .input,
+.form-item-success .textarea,
+.form-item-success .select {
+  border-color: var(--success);
+}
+
+.form-item-success .input:focus,
+.form-item-success .textarea:focus,
+.form-item-success .select:focus {
+  outline-color: var(--success);
+}
+
+/* Fieldset */
+.form-fieldset {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.form-legend {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-foreground);
+  padding: 0 var(--spacing-xs);
+}
+
+/* Input/Checkbox/Radio Groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.form-group-horizontal {
+  flex-direction: row;
+  gap: var(--spacing-lg);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+.form-actions-end {
+  justify-content: flex-end;
+}
+
+.form-actions-space-between {
+  justify-content: space-between;
+}

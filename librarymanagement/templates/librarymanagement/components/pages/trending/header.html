@@ -1,0 +1,40 @@
+<div class="page-header">
+  <h1 class="page-title">Recommendations & Trends</h1>
+  <p class="page-description">AI-powered book suggestions and trending insights</p>
+</div>
+<!-- Tab Navigation -->
+<div class="period-tabs">
+  <button class="period-tab {% if not view_type or view_type == 'recommendations' %}{% endif %}"
+          onclick="window.location.href='{% url 'librarymanagement:recommendations_dashboard' %}'">
+    {% include "librarymanagement/components/icons/star.svg" %}
+    Recommendations
+  </button>
+  <button class="period-tab active"
+          onclick="window.location.href='{% url 'librarymanagement:trending_books' %}'">
+    {% include "librarymanagement/components/icons/chart-line.svg" %}
+    Trending Books
+  </button>
+</div>
+<!-- Period Selector -->
+<div class="period-tabs">
+  <button class="period-tab {% if period_type == 'daily' or not period_type %}active{% endif %}"
+          onclick="filterByPeriod('daily')">
+    {% include "librarymanagement/components/icons/calendar.svg" %}
+    Daily
+  </button>
+  <button class="period-tab {% if period_type == 'weekly' %}active{% endif %}"
+          onclick="filterByPeriod('weekly')">
+    {% include "librarymanagement/components/icons/calendar.svg" %}
+    Weekly
+  </button>
+  <button class="period-tab {% if period_type == 'monthly' %}active{% endif %}"
+          onclick="filterByPeriod('monthly')">
+    {% include "librarymanagement/components/icons/calendar.svg" %}
+    Monthly
+  </button>
+  <button class="period-tab {% if period_type == 'yearly' %}active{% endif %}"
+          onclick="filterByPeriod('yearly')">
+    {% include "librarymanagement/components/icons/chart-bar.svg" %}
+    Yearly
+  </button>
+</div>

@@ -1,0 +1,168 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  ML Lab · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Machine Learning Lab</div>
+      <div class="page-subtitle">Demonstration space for model development and monitoring.</div>
+    </div>
+    <div class="action-group">
+      <a class="button secondary"
+         href="{% url 'informationmanagement:information-ml-experiment-create' %}">New Experiment</a>
+      <a class="button secondary"
+         href="{% url 'informationmanagement:information-ml-pipeline-create' %}">New Pipeline</a>
+      <a class="button"
+         href="{% url 'informationmanagement:information-ml-model-create' %}">New Model</a>
+    </div>
+  </div>
+  {% if models %}
+    <div class="card">
+      <div class="section-title">
+        <div>
+          <h3>Model Registry</h3>
+          <p>Track model versions and metrics.</p>
+        </div>
+        <a class="link-btn"
+           href="{% url 'informationmanagement:information-ml-model-create' %}">Add Model</a>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Metric</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for model in models %}
+            <tr>
+              <td>{{ model.name }}</td>
+              <td>{{ model.model_type }}</td>
+              <td>
+                <span class="badge {% if model.status == 'Ready' %}success{% elif model.status == 'Training' %}warning{% else %}danger{% endif %}">{{ model.status }}</span>
+              </td>
+              <td>{{ model.metric }}</td>
+              <td>
+                <div class="table-actions">
+                  <a class="link-btn"
+                     href="{% url 'informationmanagement:information-ml-model-edit' model.id %}">Edit</a>
+                  <a class="link-btn danger"
+                     href="{% url 'informationmanagement:information-ml-model-delete' model.id %}">Delete</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">No models registered yet.</div>
+  {% endif %}
+  <div class="card mt-24">
+    <div class="section-title">
+      <div>
+        <h3>Model Purpose</h3>
+        <p>When a project is created, the model records predicted success likelihood and expected beneficiary reach.</p>
+      </div>
+      <span class="tag">Prediction Output</span>
+    </div>
+    <div class="list">
+      <div class="list-item">
+        <div>
+          <div class="text-strong">Predicted Success Likelihood</div>
+          <div class="muted text-small">Stored on each project record</div>
+        </div>
+        <span class="pill">% score</span>
+      </div>
+      <div class="list-item">
+        <div>
+          <div class="text-strong">Predicted Beneficiary Reach</div>
+          <div class="muted text-small">Estimated households impacted</div>
+        </div>
+        <span class="pill">count</span>
+      </div>
+    </div>
+  </div>
+  <div class="grid cols-2 mt-24">
+    <div class="card">
+      <h3>Pipeline Readiness</h3>
+      <p>Stages prepared for ML integration.</p>
+      {% if pipelines %}
+        <div class="list">
+          {% for pipeline in pipelines %}
+            <div class="list-item">
+              <div>
+                <div class="text-strong">{{ pipeline.name }}</div>
+                <div class="muted text-small">Workflow stage</div>
+              </div>
+              <div class="table-actions">
+                <span class="badge {% if pipeline.status == 'Operational' %}success{% elif pipeline.status == 'Design' %}warning{% else %}danger{% endif %}">{{ pipeline.status }}</span>
+                <a class="link-btn"
+                   href="{% url 'informationmanagement:information-ml-pipeline-edit' pipeline.id %}">Edit</a>
+                <a class="link-btn danger"
+                   href="{% url 'informationmanagement:information-ml-pipeline-delete' pipeline.id %}">Delete</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">No pipelines added yet.</div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <h3>Experiments</h3>
+      <p>Track iterative modeling work.</p>
+      {% if experiments %}
+        <div class="list">
+          {% for experiment in experiments %}
+            <div class="list-item">
+              <div>
+                <div class="text-strong">{{ experiment.name }}</div>
+                <div class="muted text-small">Owner: {{ experiment.owner }}</div>
+              </div>
+              <div class="table-actions">
+                <span class="pill">{{ experiment.status }}</span>
+                <a class="link-btn"
+                   href="{% url 'informationmanagement:information-ml-experiment-edit' experiment.id %}">Edit</a>
+                <a class="link-btn danger"
+                   href="{% url 'informationmanagement:information-ml-experiment-delete' experiment.id %}">Delete</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">No experiments recorded yet.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="card mt-24">
+    <div class="section-title">
+      <div>
+        <h3>Model Monitoring (Placeholder)</h3>
+        <p>Visualize drift, accuracy, and fairness metrics once models are deployed.</p>
+      </div>
+      <span class="tag">Future-ready</span>
+    </div>
+    <div class="grid cols-3">
+      <div class="card panel-card">
+        <h3>Data Drift</h3>
+        <p>Monitors feature shifts per quarter.</p>
+        <div class="stat-value">Low</div>
+      </div>
+      <div class="card panel-card">
+        <h3>Accuracy</h3>
+        <p>Rolling validation performance.</p>
+        <div class="stat-value">0.82</div>
+      </div>
+      <div class="card panel-card">
+        <h3>Fairness</h3>
+        <p>Outcome parity across segments.</p>
+        <div class="stat-value">Stable</div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

@@ -1,0 +1,26 @@
+<div class="dialog-body">
+  <p>Select the format for exporting books.</p>
+  <div class="button-container">
+    <select id="exportBooksFormat" class="select">
+      <option value="csv">CSV</option>
+      <option value="html">HTML</option>
+      <option value="xls">XLS</option>
+    </select>
+    <button class="button full button-default"
+            type="button"
+            id="exportBooksSubmit">Export</button>
+  </div>
+</div>
+<style>
+  .button.full {
+    width: 100%;
+  }
+
+  .button-container{
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+
+  }
+
+</style>

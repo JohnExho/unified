@@ -1,0 +1,22 @@
+{% extends "communityextensionservices/base.html" %}
+{% block title %}
+  {{ title }} · CES Membership
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ title }}</div>
+      <div class="page-subtitle">This action cannot be undone.</div>
+    </div>
+  </div>
+  <div class="card form-card">
+    <p class="muted">
+      You are about to delete: <span class="text-strong">{{ object }}</span>
+    </p>
+    <form method="post" class="form-actions">
+      {% csrf_token %}
+      <a class="button secondary" href="{% url cancel_url %}">Cancel</a>
+      <button class="button" type="submit">Confirm Delete</button>
+    </form>
+  </div>
+{% endblock content %}

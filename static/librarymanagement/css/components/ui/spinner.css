@@ -1,0 +1,128 @@
+/* =========================
+   Spinner Component (shadcn-ui style)
+========================= */
+
+/* Base Spinner */
+.spinner {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--color-muted);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Spinner Sizes */
+.spinner-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+.spinner-lg {
+  width: 2rem;
+  height: 2rem;
+  border-width: 3px;
+}
+
+.spinner-xl {
+  width: 3rem;
+  height: 3rem;
+  border-width: 4px;
+}
+
+/* Spinner Variants */
+.spinner-primary {
+  border-top-color: var(--color-primary);
+}
+
+.spinner-secondary {
+  border-top-color: var(--color-secondary);
+}
+
+.spinner-destructive {
+  border-top-color: var(--destructive);
+}
+
+.spinner-muted {
+  border-color: var(--color-muted);
+  border-top-color: var(--color-muted-foreground);
+}
+
+/* Dots Spinner */
+.spinner-dots {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.spinner-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background-color: var(--color-primary);
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.spinner-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.spinner-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Pulse Spinner */
+.spinner-pulse {
+  width: 1.5rem;
+  height: 1.5rem;
+  background-color: var(--color-primary);
+  border-radius: 50%;
+  animation: pulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Loading Container */
+.spinner-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.spinner-container-vertical {
+  flex-direction: column;
+}
+
+.spinner-label {
+  font-size: var(--text-sm);
+  color: var(--color-muted-foreground);
+}

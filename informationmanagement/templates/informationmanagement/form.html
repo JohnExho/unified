@@ -1,0 +1,31 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  {{ title }} · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ title }}</div>
+      <div class="page-subtitle">Provide accurate details to keep analytics reliable.</div>
+    </div>
+  </div>
+  <div class="card form-card">
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-grid">
+        {% for field in form %}
+          <label class="form-field">
+            <span class="text-strong">{{ field.label }}</span>
+            {{ field }}
+            {% if field.help_text %}<small class="muted text-small">{{ field.help_text }}</small>{% endif %}
+            {% for error in field.errors %}<small class="badge danger">{{ error }}</small>{% endfor %}
+          </label>
+        {% endfor %}
+      </div>
+      <div class="form-actions">
+        <a class="button secondary" href="{% url cancel_url %}">Cancel</a>
+        <button class="button" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+{% endblock content %}

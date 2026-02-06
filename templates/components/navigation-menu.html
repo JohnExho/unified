@@ -1,0 +1,38 @@
+<nav class="navigation-menu {% if nav_orientation == 'vertical' %}navigation-menu-vertical{% endif %} {{ nav_class|default:'' }}">
+  <ul class="navigation-menu-list">
+    {% include nav_items %}
+  </ul>
+</nav>
+<script>
+  // Navigation menu dropdown toggle
+  document.addEventListener('DOMContentLoaded', function() {
+    const triggers = document.querySelectorAll('.navigation-menu-trigger');
+
+    triggers.forEach(trigger => {
+      trigger.addEventListener('click', function(e) {
+        e.preventDefault();
+        const content = this.nextElementSibling;
+        const isOpen = content && content.classList.contains('active');
+
+        // Close all other dropdowns
+        document.querySelectorAll('.navigation-menu-content').forEach(el => {
+          el.classList.remove('active');
+        });
+
+        // Toggle current dropdown
+        if (content && !isOpen) {
+          content.classList.add('active');
+        }
+      });
+    });
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.navigation-menu')) {
+        document.querySelectorAll('.navigation-menu-content').forEach(content => {
+          content.classList.remove('active');
+        });
+      }
+    });
+  });
+</script>

@@ -1,0 +1,113 @@
+/* Table Container */
+.table-container {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Table */
+.table {
+  width: 100%;
+  caption-side: bottom;
+  font-size: var(--text-sm);
+  border-collapse: collapse;
+}
+
+/* Table Header */
+.table-header {
+}
+
+.table-header .table-row {
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Table Body */
+.table-body {
+  /* Last child row has no border */
+  border: none;
+  overflow-y: auto;
+  max-height: 25rem;
+}
+
+.table-body .table-row:last-child {
+  border-bottom: 0;
+}
+
+/* Table Footer */
+.table-footer {
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-muted);
+  opacity: 0.5;
+  font-weight: var(--font-semibold);
+}
+
+.table-footer .table-cell:last-child {
+  border-bottom: 0;
+}
+
+/* Table Row */
+.table-row {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 150ms;
+}
+
+.table-body .table-row:hover {
+  background: var(--accent);
+}
+
+.table-body .table-row:last-child .table-cell {
+  border-bottom: none;
+}
+
+.table-row[data-state="selected"] {
+  background-color: var(--accent);
+}
+
+/* Table Head Cell */
+.table-head {
+  text-align: left;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--foreground);
+  background: var(--accent);
+  border-bottom: 1px solid var(--border);
+}
+
+.table-head:has([role="checkbox"]) {
+  padding-right: 0;
+}
+
+.table-head [role="checkbox"] {
+  transform: translateY(2px);
+}
+
+/* Table Cell */
+.table-cell {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--text-sm);
+  color: var(--foreground);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.table-cell [role="checkbox"] {
+  transform: translateY(2px);
+}
+
+.table-cell:has([role="checkbox"]) {
+  padding-right: 0;
+}
+
+/* Table Caption */
+.table-caption {
+  margin-top: 1rem;
+  font-size: var(--text-sm);
+  color: var(--color-muted-foreground);
+}
+
+.table-emtpy {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--color-muted-foreground);
+}

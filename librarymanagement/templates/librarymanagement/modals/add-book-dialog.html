@@ -1,0 +1,207 @@
+{# Add Book Dialog Body Content #}
+<form id="addBookForm"
+      method="post"
+      action="{% url 'librarymanagement:add_book' %}"
+      class="form-container">
+  {% csrf_token %}
+  {# Form Errors #}
+  {% if form.errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="add-book-form">
+    {# Library Selection #}
+    <div class="form-group">
+      <label for="library" class="label">
+        Library <span class="required">*</span>
+      </label>
+      <select id="library" name="library" class="select" required>
+        <option value="">Select Library</option>
+        {% for lib in libraries %}<option value="{{ lib.id }}">{{ lib.name }}</option>{% endfor %}
+      </select>
+    </div>
+    {# Title #}
+    <div class="form-group">
+      <label for="title" class="label">
+        Title <span class="required">*</span>
+      </label>
+      <input type="text"
+             id="title"
+             name="title"
+             class="input input-sm"
+             required
+             placeholder="Enter book title" />
+    </div>
+    {# ISBN #}
+    <div class="form-group">
+      <label for="isbn" class="label">ISBN</label>
+      <input type="text"
+             id="isbn"
+             name="isbn"
+             class="input input-sm"
+             placeholder="Enter ISBN" />
+    </div>
+    {# Authors #}
+    <div class="form-group">
+      <label for="authors" class="label">Authors</label>
+      <input id="authors"
+             name="authors"
+             class="input "
+             placeholder="Add authors (type and press Enter)" />
+      <small class="form-text">Type author names to add or select from existing authors</small>
+    </div>
+    {# Publisher #}
+    <div class="form-group">
+      <label for="publisher" class="label">Publisher</label>
+      <select id="publisher" name="publisher" class="select">
+        <option value="">Select Publisher</option>
+        {% for pub in publishers %}<option value="{{ pub.id }}">{{ pub.name }}</option>{% endfor %}
+      </select>
+    </div>
+    {# Publication Year #}
+    <div class="form-group">
+      <label for="publication_year" class="label">Publication Year</label>
+      <input type="number"
+             id="publication_year"
+             name="publication_year"
+             class="input input-sm"
+             min="1000"
+             max="2100"
+             placeholder="YYYY" />
+    </div>
+    {# Edition #}
+    <div class="form-group">
+      <label for="edition" class="label">Edition</label>
+      <input type="text"
+             id="edition"
+             name="edition"
+             class="input input-sm"
+             placeholder="e.g., 1st, 2nd" />
+    </div>
+    {# Language #}
+    <div class="form-group">
+      <label for="language" class="label">Language</label>
+      <input type="text"
+             id="language"
+             name="language"
+             class="input input-sm"
+             value="English"
+             placeholder="Language" />
+    </div>
+    {# Pages #}
+    <div class="form-group">
+      <label for="pages" class="label">Number of Pages</label>
+      <input type="number"
+             id="pages"
+             name="pages"
+             class="input input-sm"
+             min="1"
+             placeholder="Number of pages" />
+    </div>
+    {# Resource Type #}
+    <div class="form-group">
+      <label for="resource_type" class="label">Resource Type</label>
+      <select id="resource_type" name="resource_type" class="select">
+        <option value="physical">Physical Book</option>
+        <option value="digital">Digital Resource</option>
+        <option value="audio">Audio Book</option>
+        <option value="video">Video Resource</option>
+      </select>
+    </div>
+    {# Total Copies #}
+    <div class="form-group">
+      <label for="total_copies" class="label">Total Copies</label>
+      <input type="number"
+             id="total_copies"
+             name="total_copies"
+             class="input input-sm"
+             value="1"
+             min="1"
+             required />
+      <small class="form-text">Available copies will be set to match total copies</small>
+    </div>
+    {# Shelf Location #}
+    <div class="form-group">
+      <label for="shelf_location" class="label">Shelf Location</label>
+      <input type="text"
+             id="shelf_location"
+             name="shelf_location"
+             class="input input-sm"
+             placeholder="e.g., A1-B3" />
+    </div>
+    {# Categories (Tagify) #}
+    <div class="form-group form-group-full">
+      <label for="categories" class="label">Categories</label>
+      <input id="categories"
+             name="categories"
+             class="input"
+             placeholder="Add categories (type and press Enter)" />
+      <small class="form-text">Type to add or select multiple categories</small>
+    </div>
+    {# Tagify JS and CSS for categories #}
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+    <script>
+      // Initialize Tagify when dialog opens
+      document.addEventListener('DOMContentLoaded', function() {
+        // Prepare category whitelist from Django context
+        const categoryWhitelist = [
+          {% for cat in categories %}
+            { value: "{{ cat.name|escapejs }}", id: "{{ cat.id }}" }{% if not forloop.last %},{% endif %}
+          {% endfor %}
+        ];
+
+        // Prepare author whitelist from Django context
+        const authorWhitelist = [
+          {% for author in authors %}
+            { value: "{{ author.full_name|escapejs }}", id: "{{ author.id }}" }{% if not forloop.last %},{% endif %}
+          {% endfor %}
+        ];
+
+        // Initialize Tagify on the categories input
+        const categoriesInput = document.getElementById('categories');
+        if (categoriesInput && !categoriesInput.tagify) {
+          new Tagify(categoriesInput, {
+            whitelist: categoryWhitelist,
+            enforceWhitelist: false,
+            dropdown: {
+              enabled: 0,
+              maxItems: 20,
+              classname: "categories-suggestions",
+              closeOnSelect: false
+            }
+          });
+        }
+
+        // Initialize Tagify on the authors input
+        const authorsInput = document.getElementById('authors');
+        if (authorsInput && !authorsInput.tagify) {
+          new Tagify(authorsInput, {
+            whitelist: authorWhitelist,
+            enforceWhitelist: false,
+            dropdown: {
+              enabled: 0,
+              maxItems: 20,
+              classname: "authors-suggestions",
+              closeOnSelect: false
+            }
+          });
+        }
+      });
+    </script>
+    {# Description #}
+    <div class="form-group form-group-full">
+      <label for="description" class="label">Description</label>
+      <textarea id="description"
+                name="description"
+                class="textarea"
+                rows="3"
+                placeholder="Enter book description"></textarea>
+    </div>
+  </div>
+  {# Footer Buttons #}
+  <div class="dialog-footer">
+    <button type="button"
+            class="button button-ghost"
+            onclick="closeDialog('addBookDialog')">Cancel</button>
+    <button type="submit" class="button button-default">Add Book</button>
+  </div>
+</form>

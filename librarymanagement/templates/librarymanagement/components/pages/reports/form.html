@@ -1,0 +1,66 @@
+<div class="report-form">
+  <div class="report-form-header">
+    <h3 class="report-form-title">Generate New Report</h3>
+    <p class="report-form-description">Select a date range and generate a comprehensive report</p>
+  </div>
+  <form method="post" class="report-form-body">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="form-label">Report Type</label>
+      <select name="report_type" class=" select select-sm">
+        <option value="usage">Usage Report</option>
+        <option value="circulation">Circulation Report</option>
+        <option value="trending">Trending Analysis</option>
+        <option value="user_behavior">User Behavior Analysis</option>
+        <option value="inventory">Inventory Report</option>
+        <option value="acquisition">Acquisition Recommendation</option>
+      </select>
+    </div>
+    <div class="quick-date-buttons">
+      <button type="button"
+              class="button button-outline button-sm quick-date-btn"
+              onclick="setDateRange('today')">Today</button>
+      <button type="button"
+              class="button button-outline button-sm quick-date-btn"
+              onclick="setDateRange('week')">This Week</button>
+      <button type="button"
+              class="button button-outline button-sm quick-date-btn"
+              onclick="setDateRange('month')">This Month</button>
+      <button type="button"
+              class="button button-outline button-sm quick-date-btn"
+              onclick="setDateRange('quarter')">This Quarter</button>
+      <button type="button"
+              class="button button-outline button-sm quick-date-btn"
+              onclick="setDateRange('year')">This Year</button>
+    </div>
+    <div class="date-range-selector">
+      <div class="form-group">
+        <label class="form-label">Start Date</label>
+        <input type="date" name="period_start" class="input input-sm" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">End Date</label>
+        <input type="date" name="period_end" class="input input-sm" required />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Report Title (Optional)</label>
+      <input type="text"
+             name="title"
+             class="input input-sm"
+             placeholder="Enter a custom title for this report" />
+    </div>
+    <div class="btn-group">
+      <button type="submit" class="button button-default button-md">
+        {% include "librarymanagement/components/icons/chart-bar.svg" %}
+        Generate Report
+      </button>
+      <button type="button"
+              class="button button-outline button-md"
+              onclick="scheduleReport()">
+        {% include "librarymanagement/components/icons/calendar.svg" %}
+        Schedule Report
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,23 @@
+<div class="book-page-header">
+  <div class="book-page-header-content">
+    <div>
+      <h1 class="page-title">Books Management</h1>
+      <p class="page-subtitle">Manage your library's book collection</p>
+    </div>
+    <div class="button-group">
+      <button class="button button-outline" onclick="openDialog('exportBooksDialog')">
+        {% include "librarymanagement/components/icons/book-upload.svg" %}
+        Export
+      </button>
+      <button class="button button-secondary"
+              onclick="openDialog('addLibraryDialog')">
+        {% include "librarymanagement/components/icons/books.svg" %}
+        Add Library
+      </button>
+      <button class="button button-default" onclick="openDialog('addBookDialog')">
+        {% include "librarymanagement/components/icons/plus.svg" %}
+        Add New Book
+      </button>
+    </div>
+  </div>
+</div>
