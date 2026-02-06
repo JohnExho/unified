@@ -1,0 +1,39 @@
+<div class="modal" id="addCriteriaModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add Evaluation Criteria</h3>
+            <button type="button" class="modal-close" onclick="closeAddCriteriaModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="addCriteriaForm" method="post" action="{% url 'performanceevaluation:add_criteria' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="criteriaName">Criteria Name</label>
+                    <input type="text" id="criteriaName" name="name" required placeholder="e.g., Teaching Quality" />
+                </div>
+                <div class="form-group">
+                    <label for="criteriaCategory">Category</label>
+                    <select id="criteriaCategory" name="category" required>
+                        <option value="">-- Select Category --</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="criteriaDescription">Description</label>
+                    <textarea id="criteriaDescription" name="description" rows="4" placeholder="Describe this evaluation criteria..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="criteriaWeight">Weight</label>
+                    <input type="number" id="criteriaWeight" name="weight" step="0.01" min="0" placeholder="e.g., 2.5" />
+                </div>
+            </form>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-outline" onclick="closeAddCriteriaModal()">Cancel</button>
+            <button type="submit" class="btn-primary" form="addCriteriaForm">Add Criteria</button>
+        </div>
+    </div>
+</div>
+

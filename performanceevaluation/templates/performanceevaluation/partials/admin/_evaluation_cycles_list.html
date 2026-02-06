@@ -1,0 +1,71 @@
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Cycle Name</th>
+                <th>Academic Term</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cycle in evaluation_cycles %}
+                <tr>
+                    <td>
+                        <div class="cell-content">
+                            <span class="cycle-name">{{ cycle.name }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="cell-content">
+                            {{ cycle.term.name }}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="cell-content">
+                            {{ cycle.start_date|date:"M d, Y" }}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="cell-content">
+                            {{ cycle.end_date|date:"M d, Y" }}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="cell-content">
+                            {% if cycle.is_closed %}
+                                <span class="badge badge-closed">Closed</span>
+                            {% else %}
+                                <span class="badge badge-open">Open</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="cell-actions">
+                            <button class="action-btn" data-toggle="modal" data-target="#editEvaluationCycleModal" data-cycle-id="{{ cycle.id }}" data-cycle-name="{{ cycle.name }}" data-cycle-term="{{ cycle.term.id }}" data-cycle-start="{{ cycle.start_date|date:'Y-m-d' }}" data-cycle-end="{{ cycle.end_date|date:'Y-m-d' }}" data-cycle-closed="{{ cycle.is_closed }}" title="Edit">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                            <button class="action-btn delete-btn" data-toggle="modal" data-target="#deleteEvaluationCycleModal" data-cycle-id="{{ cycle.id }}" data-cycle-name="{{ cycle.name }}" title="Delete">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 30px; color: #999;">
+                        No evaluation cycles found
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

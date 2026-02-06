@@ -15,6 +15,7 @@ class CustomUser(AbstractUser):
     _phone_number = models.CharField(max_length=255, blank=True, db_column='phone_number')
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     avatar_url = models.URLField(max_length=500, blank=True, null=True)
+    
 
     # if email verification is to be used
     # email_verification_token = models.CharField(max_length=64, blank=True, null=True)

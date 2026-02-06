@@ -1,0 +1,39 @@
+<div class="modal fade" id="addAcademicTermModal" tabindex="-1" role="dialog" aria-labelledby="addAcademicTermModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAcademicTermModalLabel">Add Academic Term</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="{% url 'performanceevaluation:add_academic_term' %}" id="addTermForm" data-update-target="tabs-content" data-modal-id="#addAcademicTermModal">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="termName">Term Name (e.g., AY 2025–2026)</label>
+                        <input type="text" class="form-control" id="termName" name="name" required placeholder="e.g., AY 2025–2026">
+                    </div>
+                    <div class="form-group">
+                        <label for="termStartDate">Start Date</label>
+                        <input type="date" class="form-control" id="termStartDate" name="start_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="termEndDate">End Date</label>
+                        <input type="date" class="form-control" id="termEndDate" name="end_date" required>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" id="termIsActive" name="is_active" checked>
+                            <label for="termIsActive">Active</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Term</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

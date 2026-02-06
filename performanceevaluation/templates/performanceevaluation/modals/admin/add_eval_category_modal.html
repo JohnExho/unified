@@ -1,0 +1,30 @@
+<!-- Add Evaluation Category Modal -->
+<div id="addEvalCategoryModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add Evaluation Category</h3>
+            <button class="modal-close" type="button" onclick="closeAddEvalCategoryModal()">&times;</button>
+        </div>
+        <form id="addEvalCategoryForm" method="post" action="{% url 'performanceevaluation:add_eval_category' %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="evalCategoryName">Category Name *</label>
+                    <input type="text" id="evalCategoryName" name="name" placeholder="e.g., Teaching Effectiveness" required />
+                </div>
+                <div class="form-group">
+                    <label for="evalCategoryDescription">Description</label>
+                    <textarea id="evalCategoryDescription" name="description" placeholder="Describe this category..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="evalCategoryWeight">Weight *</label>
+                    <input type="number" id="evalCategoryWeight" name="weight" step="0.01" min="0" value="1.0" required />
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-outline" onclick="closeAddEvalCategoryModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Create Category</button>
+            </div>
+        </form>
+    </div>
+</div>

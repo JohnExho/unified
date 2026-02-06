@@ -1,0 +1,443 @@
+/* Criteria & Rubrics Page Styles */
+
+:root {
+    --pastel-pink: #FFCBE1;
+    --pastel-green: #D6E5BD;
+    --pastel-peach: #F9E1A8;
+    --pastel-blue: #BCD8EC;
+    --pastel-purple: #DCCCEC;
+    --pastel-orange: #FFDAB4;
+}
+
+.main-content {
+    margin-left: 280px;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #faf9fc 0%, #f5f1f8 100%);
+}
+
+.top-bar {
+    background: linear-gradient(135deg, #ffffff 0%, #faf8f6 100%);
+    padding: 24px 32px;
+    border-bottom: 1px solid #e8dff5;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.page-header h1 {
+    font-size: 26px;
+    color: #1f1235;
+    margin: 4px 0 0;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #7a6c85;
+    margin: 0;
+}
+
+.breadcrumb {
+    font-size: 12px;
+    color: #9c8fb0;
+}
+
+.top-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #e8dff5;
+    border-radius: 10px;
+    padding: 8px 12px;
+    min-width: 260px;
+}
+
+.search-box input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    width: 100%;
+    color: #1f1235;
+}
+
+.content-wrap {
+    padding: 24px 32px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.content-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f9f5fc 100%);
+    border: 1px solid #e8dff5;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    font-size: 18px;
+    color: #1f1235;
+    margin: 0;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #FFCBE1 0%, #FFB8D6 100%);
+    color: #8b2f4d;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #FFA8CE 0%, #FF95C5 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 203, 225, 0.3);
+}
+
+.criteria-container {
+    margin-top: 1.5rem;
+}
+
+.table-wrap {
+    overflow-x: auto;
+    border-radius: 0.5rem;
+    background: #fff;
+    border: 1px solid #e8dff5;
+}
+
+.table-wrap table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-wrap thead {
+    background: linear-gradient(135deg, #f5f1f8 0%, #f0ebf7 100%);
+    border-bottom: 2px solid #e8dff5;
+}
+
+.table-wrap th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #2d1f3f;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table-wrap td {
+    padding: 1rem;
+    border-bottom: 1px solid #f0ebf7;
+    color: #3d2f4f;
+    font-size: 0.9375rem;
+}
+
+.table-wrap tbody tr:hover {
+    background-color: #faf9fc;
+}
+
+.table-wrap tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.criteria-name {
+    font-weight: 600;
+    color: #1a0f2e;
+    min-width: 150px;
+}
+
+.criteria-description {
+    color: #7a6c85;
+    font-size: 0.875rem;
+    max-width: 200px;
+    word-break: break-word;
+}
+
+.weight-value {
+    text-align: center;
+    font-weight: 500;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.badge-info {
+    background-color: #BCD8EC;
+    color: #0a4d7c;
+}
+
+.table-wrap .actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-outline {
+    padding: 0.5rem 1rem;
+    border: 1px solid #e8dff5;
+    border-radius: 0.375rem;
+    background: #fff;
+    color: #2d1f3f;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+    border-color: #DCCCEC;
+    background-color: #faf9fc;
+}
+
+.btn-danger {
+    border-color: #ffb3ba;
+    color: #d9003e;
+}
+
+.btn-danger:hover {
+    background-color: #fff0f2;
+    border-color: #ff8a94;
+}
+
+.empty {
+    text-align: center;
+    padding: 2rem !important;
+    color: #7a6c85;
+    font-style: italic;
+}
+
+.pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 1px solid #e8dff5;
+    background: #faf9fc;
+    font-size: 0.9375rem;
+}
+
+.pagination a {
+    padding: 0.5rem 1rem;
+    border: 1px solid #e8dff5;
+    border-radius: 0.375rem;
+    background: #fff;
+    color: #2d1f3f;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.pagination a:hover {
+    border-color: #DCCCEC;
+    background-color: #f5f1f8;
+}
+
+.pagination span {
+    color: #7a6c85;
+    font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+    }
+
+    .table-wrap {
+        font-size: 0.875rem;
+    }
+
+    .table-wrap th,
+    .table-wrap td {
+        padding: 0.75rem 0.5rem;
+    }
+
+    .table-wrap .actions {
+        flex-direction: column;
+    }
+
+    .btn-outline {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8125rem;
+    }
+}
+
+/* ===================== ACADEMIC TERMS SECTION ===================== */
+
+.terms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.term-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f9f7fc 100%);
+    border: 1px solid #e8dff5;
+    border-radius: 10px;
+    padding: 16px;
+    transition: all 0.2s ease;
+}
+
+.term-card:hover {
+    border-color: var(--pastel-blue);
+    box-shadow: 0 4px 12px rgba(188, 216, 236, 0.15);
+}
+
+.term-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.term-header h4 {
+    margin: 0;
+    color: #1f1235;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.badge-active {
+    background: linear-gradient(135deg, var(--pastel-green) 0%, #c8daa8 100%);
+    color: #4a5f2f;
+}
+
+.badge-inactive {
+    background: linear-gradient(135deg, #ede9f0 0%, #e0d9eb 100%);
+    color: #7a6c85;
+}
+
+.term-dates {
+    font-size: 13px;
+    color: #5a524a;
+}
+
+.term-dates p {
+    margin: 4px 0;
+}
+
+.term-dates strong {
+    color: #3d2f4f;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 32px 24px;
+    color: #7a6c85;
+    font-size: 14px;
+}
+
+/* ===================== EVALUATION CATEGORIES SECTION ===================== */
+
+.categories-table {
+    overflow-x: auto;
+}
+
+.categories-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.categories-table thead {
+    background: linear-gradient(135deg, var(--pastel-purple) 0%, #cfc0de 100%);
+}
+
+.categories-table th {
+    padding: 12px 16px;
+    text-align: left;
+    color: #2d1f3f;
+    font-weight: 600;
+    border-bottom: 2px solid #e8dff5;
+}
+
+.categories-table tbody tr {
+    border-bottom: 1px solid #e8dff5;
+    transition: background-color 0.2s ease;
+}
+
+.categories-table tbody tr:hover {
+    background-color: #faf9fc;
+}
+
+.categories-table td {
+    padding: 12px 16px;
+    color: #3d2f4f;
+}
+
+.weight-badge {
+    background: linear-gradient(135deg, var(--pastel-peach) 0%, #f5d493 100%);
+    color: #a67e1f;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.criteria-count {
+    background: linear-gradient(135deg, var(--pastel-blue) 0%, #a8cfe0 100%);
+    color: #1a5f7f;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+@media (max-width: 768px) {
+    .terms-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .categories-table {
+        font-size: 12px;
+    }
+
+    .categories-table th,
+    .categories-table td {
+        padding: 8px 12px;
+    }
+    
+    .top-bar {
+        padding: 16px 20px;
+    }
+
+    .content-wrap {
+        padding: 16px 20px 20px;
+    }
+}

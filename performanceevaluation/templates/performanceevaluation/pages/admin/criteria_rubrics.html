@@ -1,0 +1,275 @@
+{% extends 'performanceevaluation/base.html' %}
+{% load static %}
+
+{% block title %}Criteria & Rubrics - Performance Evaluation{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'performanceevaluation/css/pages/admin/criteria_rubrics.css' %}">
+<link rel="stylesheet" href="{% static 'performanceevaluation/css/modals/admin/criteria_rubrics_modal.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+    <div class="top-bar">
+        <div class="page-header">
+            <div class="breadcrumb">Admin</div>
+            <h1>Criteria & Rubrics</h1>
+            <p class="subtitle">Define evaluation standards and performance rubrics</p>
+        </div>
+        <div class="top-actions">
+            <form class="search-box" method="get" action="">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="M21 21l-4.35-4.35"></path>
+                </svg>
+                <input type="text" placeholder="Search criteria..." name="search" value="{{ search_query }}" />
+            </form>
+        </div>
+    </div>
+
+    <div class="content-wrap">
+        <!-- Academic Terms Section -->
+        <section class="content-card">
+            <div class="section-header">
+                <h2>Academic Terms</h2>
+                <button class="btn-primary" type="button" id="addAcademicTermBtn">+ Add Term</button>
+            </div>
+
+            <div class="academic-terms-container">
+                {% if academic_terms %}
+                    <div class="terms-grid">
+                        {% for term in academic_terms %}
+                            <div class="term-card">
+                                <div class="term-header">
+                                    <h4>{{ term.name }}</h4>
+                                    {% if term.is_active %}
+                                        <span class="badge badge-active">Active</span>
+                                    {% else %}
+                                        <span class="badge badge-inactive">Inactive</span>
+                                    {% endif %}
+                                </div>
+                                <div class="term-dates">
+                                    <p><strong>Start:</strong> {{ term.start_date|date:"M d, Y" }}</p>
+                                    <p><strong>End:</strong> {{ term.end_date|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No academic terms created yet. Create one to get started.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Evaluation Categories Section -->
+        <section class="content-card">
+            <div class="section-header">
+                <h2>Evaluation Categories</h2>
+                <button class="btn-primary" type="button" id="addEvalCategoryBtn">+ Add Category</button>
+            </div>
+
+            <div class="eval-categories-container">
+                {% if categories %}
+                    <div class="categories-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Weight</th>
+                                    <th>Criteria Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in categories %}
+                                    <tr>
+                                        <td><strong>{{ category.name }}</strong></td>
+                                        <td>{{ category.description|default:"—" }}</td>
+                                        <td><span class="weight-badge">{{ category.weight }}</span></td>
+                                        <td>
+                                            <span class="criteria-count">
+                                                {{ category.evaluationcriterion_set.count }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No evaluation categories created yet. Create one to organize your criteria.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Evaluation Criteria Section -->
+        <section class="content-card">
+            <div class="section-header">
+                <h2>Evaluation Criteria</h2>
+                <button class="btn-primary" type="button" id="addCriteriaBtn">+ Add Criteria</button>
+            </div>
+
+            <div class="criteria-container">
+                {% include 'performanceevaluation/partials/admin/_criteria_list.html' %}
+            </div>
+        </section>
+    </div>
+</main>
+
+{% include 'performanceevaluation/modals/admin/add_academic_term_modal.html' %}
+{% include 'performanceevaluation/modals/admin/add_eval_category_modal.html' %}
+{% include 'performanceevaluation/modals/admin/add_criteria_modal.html' %}
+{% include 'performanceevaluation/modals/admin/edit_criteria_modal.html' %}
+{% include 'performanceevaluation/modals/admin/delete_criteria_modal.html' %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // ==================== ACADEMIC TERM MODAL ====================
+    function openAddAcademicTermModal() {
+        const modal = document.getElementById('addAcademicTermModal');
+        document.getElementById('addAcademicTermForm').reset();
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+    }
+
+    function closeAddAcademicTermModal() {
+        const modal = document.getElementById('addAcademicTermModal');
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+
+    // ==================== EVALUATION CATEGORY MODAL ====================
+    function openAddEvalCategoryModal() {
+        const modal = document.getElementById('addEvalCategoryModal');
+        document.getElementById('addEvalCategoryForm').reset();
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+    }
+
+    function closeAddEvalCategoryModal() {
+        const modal = document.getElementById('addEvalCategoryModal');
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+
+    // ==================== CRITERIA MODALS ====================
+    function openAddCriteriaModal() {
+        const modal = document.getElementById('addCriteriaModal');
+        document.getElementById('addCriteriaForm').reset();
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+    }
+
+    function closeAddCriteriaModal() {
+        const modal = document.getElementById('addCriteriaModal');
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+
+    function openEditCriteriaModal(criteriaId, name, description, category, weight) {
+        const modal = document.getElementById('editCriteriaModal');
+        const form = document.getElementById('editCriteriaForm');
+
+        form.action = `/performanceevaluation/admin/criteria/${criteriaId}/`;
+        document.getElementById('editCriteriaName').value = name;
+        document.getElementById('editCriteriaDescription').value = description;
+        document.getElementById('editCriteriaCategory').value = category;
+        document.getElementById('editCriteriaWeight').value = weight;
+
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+    }
+
+    function closeEditCriteriaModal() {
+        const modal = document.getElementById('editCriteriaModal');
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+
+    function openDeleteCriteriaModal(criteriaId, criteriaName) {
+        const modal = document.getElementById('deleteCriteriaModal');
+        const form = document.getElementById('deleteCriteriaForm');
+
+        form.action = `/performanceevaluation/admin/criteria/${criteriaId}/delete/`;
+        document.getElementById('deleteCriteriaName').textContent = criteriaName;
+
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+    }
+
+    function closeDeleteCriteriaModal() {
+        const modal = document.getElementById('deleteCriteriaModal');
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const addAcademicTermBtn = document.getElementById('addAcademicTermBtn');
+        if (addAcademicTermBtn) {
+            addAcademicTermBtn.addEventListener('click', openAddAcademicTermModal);
+        }
+
+        const addEvalCategoryBtn = document.getElementById('addEvalCategoryBtn');
+        if (addEvalCategoryBtn) {
+            addEvalCategoryBtn.addEventListener('click', openAddEvalCategoryModal);
+        }
+
+        const addBtn = document.getElementById('addCriteriaBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', openAddCriteriaModal);
+        }
+
+        // Attach edit/delete listeners to buttons
+        document.querySelectorAll('.edit-criteria-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                openEditCriteriaModal(
+                    this.dataset.criteriaId,
+                    this.dataset.name,
+                    this.dataset.description,
+                    this.dataset.category,
+                    this.dataset.weight
+                );
+            });
+        });
+
+        document.querySelectorAll('.delete-criteria-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                openDeleteCriteriaModal(
+                    this.dataset.criteriaId,
+                    this.dataset.name
+                );
+            });
+        });
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+            const addAcademicTermModal = document.getElementById('addAcademicTermModal');
+            const addEvalCategoryModal = document.getElementById('addEvalCategoryModal');
+            const addModal = document.getElementById('addCriteriaModal');
+            const editModal = document.getElementById('editCriteriaModal');
+            const deleteModal = document.getElementById('deleteCriteriaModal');
+
+            if (addAcademicTermModal && event.target === addAcademicTermModal) {
+                closeAddAcademicTermModal();
+            }
+            if (addEvalCategoryModal && event.target === addEvalCategoryModal) {
+                closeAddEvalCategoryModal();
+            }
+            if (addModal && event.target === addModal) {
+                closeAddCriteriaModal();
+            }
+            if (editModal && event.target === editModal) {
+                closeEditCriteriaModal();
+            }
+            if (deleteModal && event.target === deleteModal) {
+                closeDeleteCriteriaModal();
+            }
+        });
+    });
+</script>
+{% endblock %}

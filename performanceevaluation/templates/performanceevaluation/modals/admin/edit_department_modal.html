@@ -1,0 +1,35 @@
+<div class="modal fade" id="editDepartmentModal" tabindex="-1" role="dialog" aria-labelledby="editDepartmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editDepartmentModalLabel">Edit Department</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="" id="editDepartmentForm" data-update-target="tabs-content" data-modal-id="#editDepartmentModal">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editDepartmentName">Department Name</label>
+                        <input type="text" class="form-control" id="editDepartmentName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDepartmentCode">Department Code</label>
+                        <input type="text" class="form-control" id="editDepartmentCode" name="code" required>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" id="editDepartmentIsActive" name="is_active">
+                            <label for="editDepartmentIsActive">Active</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

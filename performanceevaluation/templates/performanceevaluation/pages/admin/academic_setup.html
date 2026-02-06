@@ -1,0 +1,157 @@
+{% extends 'performanceevaluation/base.html' %}
+{% load static %}
+
+{% block title %}Academic Setup - Performance Evaluation{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'performanceevaluation/css/pages/admin/academic_setup.css' %}?v=1.0">
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    {% include 'performanceevaluation/components/sidebar.html' %}
+
+    <main class="main-content">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1>Academic Setup</h1>
+                <p>Manage academic terms, evaluation cycles, and departments</p>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs-wrapper">
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="academic-terms">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    Academic Terms
+                </button>
+                <button class="tab-btn" data-tab="evaluation-cycles">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Evaluation Cycles
+                </button>
+                <button class="tab-btn" data-tab="departments">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Departments
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="tabs-content" id="tabs-content">
+            <!-- Academic Terms Tab -->
+            <div class="tab-pane active" id="academic-terms" data-tab="academic-terms">
+                <div class="section-header">
+                    <h2>Academic Terms</h2>
+                    <button class="btn btn-primary" data-toggle="modal" data-target="#addAcademicTermModal">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Academic Term
+                    </button>
+                </div>
+
+                <div id="academic-terms-list">
+                    {% if academic_terms %}
+                        {% include 'performanceevaluation/partials/admin/_academic_terms_list.html' %}
+                    {% else %}
+                        <div class="empty-state">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                            <h3>No Academic Terms</h3>
+                            <p>Create your first academic term to get started</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Evaluation Cycles Tab -->
+            <div class="tab-pane" id="evaluation-cycles" data-tab="evaluation-cycles">
+                <div class="section-header">
+                    <h2>Evaluation Cycles</h2>
+                    <button class="btn btn-primary" data-toggle="modal" data-target="#addEvaluationCycleModal" {% if not academic_terms %}disabled title="Create an academic term first"{% endif %}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Evaluation Cycle
+                    </button>
+                </div>
+
+                <div id="evaluation-cycles-list">
+                    {% if evaluation_cycles %}
+                        {% include 'performanceevaluation/partials/admin/_evaluation_cycles_list.html' %}
+                    {% else %}
+                        <div class="empty-state">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <h3>No Evaluation Cycles</h3>
+                            <p>Add evaluation cycles to your academic terms</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Departments Tab -->
+            <div class="tab-pane" id="departments" data-tab="departments">
+                <div class="section-header">
+                    <h2>Departments</h2>
+                    <button class="btn btn-primary" data-toggle="modal" data-target="#addDepartmentModal">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Department
+                    </button>
+                </div>
+
+                <div id="departments-list">
+                    {% if departments %}
+                        {% include 'performanceevaluation/partials/admin/_departments_list.html' %}
+                    {% else %}
+                        <div class="empty-state">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                            <h3>No Departments</h3>
+                            <p>Create your first department</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modals -->
+{% include 'performanceevaluation/modals/admin/add_academic_term_modal.html' %}
+{% include 'performanceevaluation/modals/admin/add_evaluation_cycle_modal.html' %}
+{% include 'performanceevaluation/modals/admin/add_department_modal.html' %}
+{% include 'performanceevaluation/modals/admin/edit_academic_term_modal.html' %}
+{% include 'performanceevaluation/modals/admin/edit_evaluation_cycle_modal.html' %}
+{% include 'performanceevaluation/modals/admin/edit_department_modal.html' %}
+{% include 'performanceevaluation/modals/admin/delete_academic_term_modal.html' %}
+{% include 'performanceevaluation/modals/admin/delete_evaluation_cycle_modal.html' %}
+{% include 'performanceevaluation/modals/admin/delete_department_modal.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
+<script src="{% static 'performanceevaluation/js/academic_setup.js' %}"></script>
+{% endblock %}

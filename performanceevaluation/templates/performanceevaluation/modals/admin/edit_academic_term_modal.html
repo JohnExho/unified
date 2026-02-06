@@ -1,0 +1,40 @@
+<div class="modal fade" id="editAcademicTermModal" tabindex="-1" role="dialog" aria-labelledby="editAcademicTermModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAcademicTermModalLabel">Edit Academic Term</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="" id="editTermForm" data-update-target="tabs-content" data-modal-id="#editAcademicTermModal">
+                {% csrf_token %}
+                <input type="hidden" id="editTermId" name="term_id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editTermName">Term Name</label>
+                        <input type="text" class="form-control" id="editTermName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTermStartDate">Start Date</label>
+                        <input type="date" class="form-control" id="editTermStartDate" name="start_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTermEndDate">End Date</label>
+                        <input type="date" class="form-control" id="editTermEndDate" name="end_date" required>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" id="editTermIsActive" name="is_active">
+                            <label for="editTermIsActive">Active</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Term</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
