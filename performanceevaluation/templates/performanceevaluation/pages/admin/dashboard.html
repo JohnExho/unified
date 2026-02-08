@@ -13,7 +13,6 @@
 <main class="main-content">
     <div class="top-bar">
         <div class="page-header">
-            <div class="breadcrumb">Admin</div>
             <h1>Admin Performance Dashboard</h1>
             <p class="subtitle">Users with access to the performance evaluation system</p>
         </div>
@@ -63,13 +62,28 @@
 
 {% block extra_scripts %}
 <script>
-    function openManageAccessModal(userId, username, role) {
+    function openManageAccessModal(userId, username, role, departmentId, departmentName) {
         const modal = document.getElementById('manageAccessModal');
         const form = document.getElementById('manageAccessForm');
+        const departmentSelect = document.getElementById('departmentSelect');
 
         form.action = `/performanceevaluation/admin/manage-user-access/${userId}/`;
         document.getElementById('accessUsername').value = username;
         document.getElementById('systemRole').value = role;
+        if (departmentSelect) {
+            if (departmentId) {
+                let option = departmentSelect.querySelector(`option[value="${departmentId}"]`);
+                if (!option) {
+                    option = document.createElement('option');
+                    option.value = departmentId;
+                    option.textContent = departmentName ? `${departmentName} (inactive)` : 'Assigned Department (inactive)';
+                    departmentSelect.appendChild(option);
+                }
+                departmentSelect.value = departmentId;
+            } else {
+                departmentSelect.value = '';
+            }
+        }
 
         modal.style.display = 'flex';
         modal.classList.add('active');
@@ -87,7 +101,9 @@
                 openManageAccessModal(
                     this.dataset.userId,
                     this.dataset.username,
-                    this.dataset.role
+                    this.dataset.role,
+                    this.dataset.departmentId,
+                    this.dataset.departmentName
                 );
             });
         });

@@ -11,7 +11,8 @@ from .models import (
     EvaluationComment,
     ComputedResult,
     Recommendation,
-    Notification,
+    Department,
+    UserDepartmentAssignment
 )
 
 @admin.register(AcademicTerm)
@@ -86,9 +87,13 @@ class RecommendationAdmin(admin.ModelAdmin):
     list_filter = ('recommendation_type',)
     search_fields = ('description',)
 
-@admin.register(Notification)
-class NotificationAdmin(admin.ModelAdmin):
-    list_display = ('recipient', 'is_read', 'created_at')
-    list_filter = ('is_read',)
-    search_fields = ('recipient__username', 'message')
-    date_hierarchy = 'created_at'
+
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code')
+    search_fields = ('name', 'code')
+
+@admin.register(UserDepartmentAssignment)
+class UserDepartmentAssignmentAdmin(admin.ModelAdmin):
+    list_display = ('user', 'department')
+    search_fields = ('user__username', 'department__name')

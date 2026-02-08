@@ -13,8 +13,17 @@
                 <label for="systemRole">Role</label>
                 <select id="systemRole" name="system_role" required>
                     <option value="user">User</option>
+                    <option value="instructor">Instructor</option>
                     <option value="admin">Admin</option>
                     <option value="superadmin">Superadmin</option>
+                </select>
+
+                <label for="departmentSelect">Department</label>
+                <select id="departmentSelect" name="department">
+                    <option value="">Select a department</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="modal-actions">

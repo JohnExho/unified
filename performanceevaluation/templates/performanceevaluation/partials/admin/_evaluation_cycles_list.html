@@ -69,3 +69,15 @@
         </tbody>
     </table>
 </div>
+
+{% if evaluation_cycles.has_other_pages %}
+<div class="pagination">
+    {% if evaluation_cycles.has_previous %}
+        <a href="?terms_page={{ academic_terms.number }}&cycles_page={{ evaluation_cycles.previous_page_number }}&departments_page={{ departments.number }}" class="pagination-link" data-target="evaluation-cycles-list">Previous</a>
+    {% endif %}
+    <span>Page {{ evaluation_cycles.number }} of {{ evaluation_cycles.paginator.num_pages }}</span>
+    {% if evaluation_cycles.has_next %}
+        <a href="?terms_page={{ academic_terms.number }}&cycles_page={{ evaluation_cycles.next_page_number }}&departments_page={{ departments.number }}" class="pagination-link" data-target="evaluation-cycles-list">Next</a>
+    {% endif %}
+</div>
+{% endif %}

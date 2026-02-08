@@ -1,0 +1,100 @@
+{% if results %}
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>
+                    <button type="button" class="sort-btn {% if current_sort == 'evaluatee' %}active{% endif %}" data-sort="evaluatee" data-dir="{% if current_sort == 'evaluatee' and current_dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Evaluatee
+                        <span class="sort-indicator">{% if current_sort == 'evaluatee' %}{{ current_dir|upper }}{% endif %}</span>
+                    </button>
+                </th>
+                <th>
+                    <button type="button" class="sort-btn {% if current_sort == 'cycle' %}active{% endif %}" data-sort="cycle" data-dir="{% if current_sort == 'cycle' and current_dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Cycle
+                        <span class="sort-indicator">{% if current_sort == 'cycle' %}{{ current_dir|upper }}{% endif %}</span>
+                    </button>
+                </th>
+                <th>
+                    <button type="button" class="sort-btn {% if current_sort == 'score' %}active{% endif %}" data-sort="score" data-dir="{% if current_sort == 'score' and current_dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Total Score
+                        <span class="sort-indicator">{% if current_sort == 'score' %}{{ current_dir|upper }}{% endif %}</span>
+                    </button>
+                </th>
+                <th>
+                    <button type="button" class="sort-btn {% if current_sort == 'level' %}active{% endif %}" data-sort="level" data-dir="{% if current_sort == 'level' and current_dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Performance Level
+                        <span class="sort-indicator">{% if current_sort == 'level' %}{{ current_dir|upper }}{% endif %}</span>
+                    </button>
+                </th>
+                <th>
+                    <button type="button" class="sort-btn {% if current_sort == 'computed' %}active{% endif %}" data-sort="computed" data-dir="{% if current_sort == 'computed' and current_dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Computed At
+                        <span class="sort-indicator">{% if current_sort == 'computed' %}{{ current_dir|upper }}{% endif %}</span>
+                    </button>
+                </th>
+                <th>
+                    <button type="button" class="sort-btn {% if current_sort == 'recommendations' %}active{% endif %}" data-sort="recommendations" data-dir="{% if current_sort == 'recommendations' and current_dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Recommendations
+                        <span class="sort-indicator">{% if current_sort == 'recommendations' %}{{ current_dir|upper }}{% endif %}</span>
+                    </button>
+                </th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+                <tr class="report-row" data-result-id="{{ result.id }}">
+                    <td>{{ result.evaluatee.get_full_name|default:result.evaluatee.username }}</td>
+                    <td>{{ result.cycle.term.name }} - {{ result.cycle.name }}</td>
+                    <td>{{ result.total_score }}</td>
+                    <td>
+                        <span class="badge badge-level">{{ result.performance_level }}</span>
+                    </td>
+                    <td>{{ result.computed_at|date:"M d, Y H:i" }}</td>
+                    <td>{{ result.recommendations_count }}</td>
+                    <td>
+                        <button
+                            type="button"
+                            class="btn-icon view-report-btn"
+                            data-toggle="modal"
+                            data-target="#viewReportModal"
+                            data-evaluatee="{{ result.evaluatee.get_full_name|default:result.evaluatee.username }}"
+                            data-cycle="{{ result.cycle.term.name }} - {{ result.cycle.name }}"
+                            data-score="{{ result.total_score }}"
+                            data-level="{{ result.performance_level }}"
+                            data-computed="{{ result.computed_at|date:'M d, Y H:i' }}"
+                            data-recommendations="{{ result.recommendations_count }}"
+                            title="View"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"></path>
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-row">No results found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if results.has_other_pages %}
+<div class="pagination">
+    {% if results.has_previous %}
+        <a href="?page={{ results.previous_page_number }}&search={{ search_query }}&cycle={{ cycle_filter }}&performance_level={{ level_filter }}&sort={{ current_sort }}&dir={{ current_dir }}" class="pagination-link" data-target="results-analytics-table">Previous</a>
+    {% endif %}
+    <span>Page {{ results.number }} of {{ results.paginator.num_pages }}</span>
+    {% if results.has_next %}
+        <a href="?page={{ results.next_page_number }}&search={{ search_query }}&cycle={{ cycle_filter }}&performance_level={{ level_filter }}&sort={{ current_sort }}&dir={{ current_dir }}" class="pagination-link" data-target="results-analytics-table">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+{% else %}
+<div class="empty-state">
+    <p>No results available.</p>
+</div>
+{% endif %}

@@ -1,0 +1,30 @@
+.evaluation-form.read-only .scale-option {
+    cursor: default;
+}
+
+.evaluation-form.read-only .scale-option input {
+    pointer-events: none;
+}
+
+.evaluation-form.read-only .scale-option.selected {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.evaluation-form.read-only textarea {
+    background: var(--surface-muted);
+    color: var(--muted);
+}
+
+.submitted-meta {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.missing-score {
+    margin: 0 0 12px 0;
+    color: #b45309;
+    font-size: 13px;
+    font-weight: 600;
+}

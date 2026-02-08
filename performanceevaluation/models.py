@@ -133,13 +133,6 @@ class Recommendation(models.Model):
     def __str__(self):
         return self.recommendation_type
 
-
-class Notification(models.Model):
-    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    message = models.TextField()
-    is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
 class Department(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=20, unique=True)

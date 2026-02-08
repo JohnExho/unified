@@ -1,0 +1,71 @@
+{% if evaluation_comments %}
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Evaluation</th>
+                <th>Comment</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for comment in evaluation_comments %}
+                <tr>
+                    <td>{{ comment.evaluation.evaluatee.get_full_name|default:comment.evaluation.evaluatee.username }} ({{ comment.evaluation.form.get_evaluator_type_display }})</td>
+                    <td><span class="truncate" title="{{ comment.comment }}">{{ comment.comment }}</span></td>
+                    <td>
+                        <button
+                            type="button"
+                            class="btn-icon edit-comment-btn"
+                            data-toggle="modal"
+                            data-target="#editEvaluationCommentModal"
+                            data-comment-id="{{ comment.id }}"
+                            data-evaluation-id="{{ comment.evaluation.id }}"
+                            data-comment="{{ comment.comment|escape }}"
+                            title="Edit"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            class="btn-icon delete-comment-btn"
+                            data-toggle="modal"
+                            data-target="#deleteEvaluationCommentModal"
+                            data-comment-id="{{ comment.id }}"
+                            data-title="{{ comment.evaluation.evaluatee.get_full_name|default:comment.evaluation.evaluatee.username }}"
+                            title="Delete"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" class="empty-row">No comments found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if evaluation_comments.has_other_pages %}
+<div class="pagination">
+    {% if evaluation_comments.has_previous %}
+        <a href="?evaluations_page={{ evaluations.number }}&scores_page={{ evaluation_scores.number }}&comments_page={{ evaluation_comments.previous_page_number }}" class="pagination-link" data-target="evaluation-comments-list">Previous</a>
+    {% endif %}
+    <span>Page {{ evaluation_comments.number }} of {{ evaluation_comments.paginator.num_pages }}</span>
+    {% if evaluation_comments.has_next %}
+        <a href="?evaluations_page={{ evaluations.number }}&scores_page={{ evaluation_scores.number }}&comments_page={{ evaluation_comments.next_page_number }}" class="pagination-link" data-target="evaluation-comments-list">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+{% else %}
+<div class="empty-state">
+    <p>No comments created yet.</p>
+</div>
+{% endif %}

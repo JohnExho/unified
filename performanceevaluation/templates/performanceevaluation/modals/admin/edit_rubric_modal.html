@@ -1,0 +1,36 @@
+<div class="modal" id="editRubricModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Rubric</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="post" action="#" id="editRubricForm" data-modal-id="#editRubricModal" data-ajax="true">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editRubricCriterion">Criterion</label>
+                        <select id="editRubricCriterion" name="criterion" required>
+                            <option value="">Select criterion</option>
+                            {% for criteria in evaluation_criteria %}
+                                <option value="{{ criteria.id }}">{{ criteria.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editRubricLevel">Level</label>
+                        <input type="number" id="editRubricLevel" name="level" min="1" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="editRubricDescription">Description</label>
+                        <textarea id="editRubricDescription" name="description" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-submit">Update Rubric</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

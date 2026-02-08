@@ -1,0 +1,70 @@
+{% if evaluation_forms %}
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Cycle</th>
+                <th>Evaluator Type</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for form in evaluation_forms %}
+            <tr>
+                <td>{{ form.cycle.term.name }} - {{ form.cycle.name }}</td>
+                <td>{{ form.get_evaluator_type_display }}</td>
+                <td>
+                    {% if form.is_active %}
+                        <span class="badge badge-active">Active</span>
+                    {% else %}
+                        <span class="badge badge-inactive">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <button
+                        type="button"
+                        class="btn-icon edit-form-btn"
+                        data-form-id="{{ form.id }}"
+                        data-cycle-id="{{ form.cycle.id }}"
+                        data-evaluator-type="{{ form.evaluator_type }}"
+                        data-active="{{ form.is_active }}"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
+                        class="btn-icon delete-form-btn"
+                        data-form-id="{{ form.id }}"
+                        data-title="{{ form.get_evaluator_type_display }}"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if evaluation_forms.has_other_pages %}
+<div class="pagination">
+    {% if evaluation_forms.has_previous %}
+        <a href="?forms_page={{ evaluation_forms.previous_page_number }}" class="pagination-link" data-target="evaluation-forms-list">Previous</a>
+    {% endif %}
+    <span>Page {{ evaluation_forms.number }} of {{ evaluation_forms.paginator.num_pages }}</span>
+    {% if evaluation_forms.has_next %}
+        <a href="?forms_page={{ evaluation_forms.next_page_number }}" class="pagination-link" data-target="evaluation-forms-list">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+{% else %}
+<div class="empty-state">
+    <p>No evaluation forms created yet.</p>
+</div>
+{% endif %}

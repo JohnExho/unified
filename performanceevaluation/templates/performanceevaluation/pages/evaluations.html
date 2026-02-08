@@ -1,0 +1,65 @@
+{% extends 'performanceevaluation/base.html' %}
+{% load static %}
+
+{% block title %}Evaluations - Performance Evaluation{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'performanceevaluation/css/pages/evaluations.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content evaluations-page">
+    <header class="dash-header">
+        <div class="dash-copy">
+            <div class="eyebrow">Evaluations Dashboard</div>
+            <h1>Your Evaluations</h1>
+            <p class="dash-subtitle">
+                {{ active_forms|length }} forms available • {{ evaluatees|length }} evaluatees
+            </p>
+        </div>
+        <div class="dash-actions">
+            <a class="ghost-btn" href="{% url 'performanceevaluation:user_results_analytics' %}">View My Submissions</a>
+        </div>
+    </header>
+
+    <section class="toolbar">
+        <form method="get" class="toolbar-form" id="evaluationsFilterForm">
+            <div class="search-pill">
+                <span class="search-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="7"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </span>
+                <input
+                    type="search"
+                    name="search"
+                    value="{{ search_query }}"
+                    placeholder="Search by form or cycle..."
+                    aria-label="Search evaluations"
+                />
+            </div>
+            <div class="toolbar-actions">
+                <label for="sort-by">Sort</label>
+                <select id="sort-by" name="sort">
+                    <option value="cycle" {% if sort_by == 'cycle' %}selected{% endif %}>Cycle</option>
+                    <option value="type" {% if sort_by == 'type' %}selected{% endif %}>Form type</option>
+                    <option value="term" {% if sort_by == 'term' %}selected{% endif %}>Term</option>
+                </select>
+                <button type="submit" class="ghost-btn">Apply</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="evaluation-picker" id="evaluationsFormsSection">
+        {% include 'performanceevaluation/partials/user/_evaluations_forms_list.html' %}
+    </section>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'performanceevaluation/js/evaluations.js' %}"></script>
+{% endblock %}

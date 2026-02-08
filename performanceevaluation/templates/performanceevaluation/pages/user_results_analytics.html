@@ -1,0 +1,50 @@
+{% extends 'performanceevaluation/base.html' %}
+{% load static %}
+
+{% block title %}My Evaluations - Performance Evaluation{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'performanceevaluation/css/pages/user_results_analytics.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content results-analytics-page">
+    <div class="page-header">
+        <div class="header-content">
+            <h1>My Evaluations</h1>
+            <p>Forms you have submitted and their responses.</p>
+        </div>
+    </div>
+
+    <div class="filters-bar">
+        <form method="get" class="filters-form" id="userResultsFilterForm">
+            <div class="filters-group">
+                <input
+                    type="text"
+                    name="search"
+                    placeholder="Search evaluatee"
+                    value="{{ search_query }}"
+                    autocomplete="off"
+                />
+                <select name="cycle">
+                    <option value="">All cycles</option>
+                    {% for cycle in cycles %}
+                        <option value="{{ cycle.id }}" {% if cycle_filter == cycle.id|stringformat:'s' %}selected{% endif %}>
+                            {{ cycle.term.name }} - {{ cycle.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </form>
+    </div>
+
+    <div id="user-results-table">
+        {% include 'performanceevaluation/partials/user/_user_results_analytics_table.html' %}
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'performanceevaluation/js/user_results_analytics.js' %}"></script>
+{% endblock %}

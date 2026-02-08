@@ -12,16 +12,8 @@
 <main class="main-content">
     <div class="top-bar">
         <div class="page-header">
-            <div class="breadcrumb">Dashboard</div>
-            <h1>Performance Evaluation Dashboard</h1>
-            <p class="subtitle">Active Academic Term & Evaluation Cycle</p>
-        </div>
-        <div class="top-actions">
-            <select class="year-select">
-                <option>2025-2026 Academic Year</option>
-                <option>2024-2025 Academic Year</option>
-                <option>2023-2024 Academic Year</option>
-            </select>
+            <h1>{% if is_admin %}Performance Evaluation Admin Dashboard{% else %}My Performance Dashboard{% endif %}</h1>
+            <p class="subtitle">{% if is_admin %}System-wide evaluation overview{% else %}Your evaluations and results{% endif %}</p>
         </div>
     </div>
 
@@ -35,12 +27,12 @@
                     </svg>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ total_teachers|default:247 }}</div>
+                    <div class="stat-value">{{ total_teachers|default_if_none:"0" }}</div>
                     <div class="stat-label">Total Teachers Evaluated</div>
-                    <div class="stat-change positive">+12 from last term</div>
                 </div>
             </div>
 
+            {% if is_admin %}
             <div class="stat-card">
                 <div class="stat-icon icon-pending">
                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,11 +40,11 @@
                     </svg>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ pending_evaluations|default:34 }}</div>
+                    <div class="stat-value">{{ pending_evaluations|default_if_none:"0" }}</div>
                     <div class="stat-label">Pending Evaluations</div>
-                    <div class="stat-due">Due by Feb 15</div>
                 </div>
             </div>
+            {% endif %}
 
             <div class="stat-card">
                 <div class="stat-icon icon-score">
@@ -61,12 +53,12 @@
                     </svg>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ avg_score|default:"4.2" }}</div>
+                    <div class="stat-value">{{ avg_score|default_if_none:"0.0" }}</div>
                     <div class="stat-label">Average Performance Score</div>
-                    <div class="stat-change positive">+0.3 from last term</div>
                 </div>
             </div>
 
+            {% if is_admin %}
             <div class="stat-card">
                 <div class="stat-icon icon-high">
                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,11 +66,12 @@
                     </svg>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value">{{ high_performers|default:89 }}</div>
+                    <div class="stat-value">{{ high_performers|default_if_none:"0" }}</div>
                     <div class="stat-label">High Performers</div>
-                    <div class="stat-percentage">36% of total</div>
+                    <div class="stat-percentage">{{ high_performer_percent|default_if_none:"0" }}% of total</div>
                 </div>
             </div>
+            {% endif %}
         </div>
 
         <!-- Charts Grid -->
@@ -108,232 +101,150 @@
         <div class="content-grid">
             <!-- Recent Evaluations -->
             <div class="content-card">
-                <h3 class="card-title">Recent Teacher Evaluations</h3>
+                <h3 class="card-title">{% if is_admin %}Recent Evaluations Submitted{% else %}My Recent Evaluations{% endif %}</h3>
                 <div class="evaluations-list">
-                    {% for evaluation in recent_evaluations %}
-                    <div class="evaluation-item">
-                        <div class="evaluation-info">
-                            <h4>{{ evaluation.teacher_name|default:"Dr. Sarah Mitchell" }}</h4>
-                            <div class="evaluation-meta">
-                                <span class="badge badge-{{ evaluation.performance_level|lower|default:'high' }}">{{ evaluation.performance_level|default:"High" }}</span>
-                                <span class="subject">{{ evaluation.subject|default:"Mathematics" }}</span>
-                                <span class="score">Score: {{ evaluation.score|default:"4.8/5.0" }}</span>
+                    {% if recent_evaluations %}
+                        {% for evaluation in recent_evaluations %}
+                        <div class="evaluation-item">
+                            <div class="evaluation-info">
+                                <h4>{% if is_admin %}{{ evaluation.evaluator }}{% else %}{{ evaluation.evaluatee }} - {{ evaluation.cycle }}{% endif %}</h4>
+                                <div class="evaluation-meta">
+                                    {% if is_admin %}
+                                        <span class="subject">{{ evaluation.cycle }}</span>
+                                        <span class="time">{{ evaluation.submitted_at|date:"M d, Y" }}</span>
+                                    {% else %}
+                                        <span class="subject">By {{ evaluation.evaluator }}</span>
+                                        <span class="time">{{ evaluation.submitted_at|date:"M d, Y H:i" }}</span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
-                        <button class="btn-view">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                            View Profile
-                        </button>
+                        {% endfor %}
+                    {% else %}
+                    <div class="empty-state">
+                        <p>{% if is_admin %}No evaluations submitted yet{% else %}No evaluations submitted for you yet{% endif %}</p>
                     </div>
-                    {% empty %}
-                    <div class="evaluation-item">
-                        <div class="evaluation-info">
-                            <h4>Dr. Sarah Mitchell</h4>
-                            <div class="evaluation-meta">
-                                <span class="badge badge-high">High</span>
-                                <span class="subject">Mathematics</span>
-                                <span class="score">Score: 4.8/5.0</span>
-                            </div>
-                        </div>
-                        <button class="btn-view">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                            View Profile
-                        </button>
-                    </div>
-                    <div class="evaluation-item">
-                        <div class="evaluation-info">
-                            <h4>Prof. James Chen</h4>
-                            <div class="evaluation-meta">
-                                <span class="badge badge-high">High</span>
-                                <span class="subject">Science</span>
-                                <span class="score">Score: 4.6/5.0</span>
-                            </div>
-                        </div>
-                        <button class="btn-view">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                            View Profile
-                        </button>
-                    </div>
-                    <div class="evaluation-item">
-                        <div class="evaluation-info">
-                            <h4>Ms. Emily Rodriguez</h4>
-                            <div class="evaluation-meta">
-                                <span class="badge badge-average">Average</span>
-                                <span class="subject">English</span>
-                                <span class="score">Score: 4.2/5.0</span>
-                            </div>
-                        </div>
-                        <button class="btn-view">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                            View Profile
-                        </button>
-                    </div>
-                    <div class="evaluation-item">
-                        <div class="evaluation-info">
-                            <h4>Mr. David Thompson</h4>
-                            <div class="evaluation-meta">
-                                <span class="badge badge-average">Average</span>
-                                <span class="subject">History</span>
-                                <span class="score">Score: 4/5.0</span>
-                            </div>
-                        </div>
-                        <button class="btn-view">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                            View Profile
-                        </button>
-                    </div>
-                    <div class="evaluation-item">
-                        <div class="evaluation-info">
-                            <h4>Ms. Rachel Green</h4>
-                            <div class="evaluation-meta">
-                                <span class="badge badge-needs-improvement">Needs Improvement</span>
-                                <span class="subject">Arts</span>
-                                <span class="score">Score: 3.5/5.0</span>
-                            </div>
-                        </div>
-                        <button class="btn-view">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
-                            View Profile
-                        </button>
-                    </div>
-                    {% endfor %}
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Recent Notifications -->
+            <!-- Recent Results & Recommendations -->
             <div class="content-card notifications-card">
                 <h3 class="card-title">
                     <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                     </svg>
-                    Recent Notifications
+                    Performance Results
                 </h3>
                 <div class="notifications-list">
-                    {% for notification in recent_notifications %}
-                    <div class="notification-item">
-                        <div class="notification-dot"></div>
-                        <div class="notification-content">
-                            <p>{{ notification.message }}</p>
-                            <span class="notification-time">{{ notification.time_ago }}</span>
+                    {% if recent_results %}
+                        {% for result in recent_results %}
+                        <div class="notification-item">
+                            <div class="notification-dot {% if result.performance_level == 'Very High' or result.performance_level == 'High' %}success{% elif result.performance_level == 'Medium' %}warning{% else %}danger{% endif %}"></div>
+                            <div class="notification-content">
+                                <p>
+                                    {% if is_admin %}{{ result.evaluatee }}{% else %}Your result{% endif %} for {{ result.cycle }}:
+                                    <strong>{{ result.performance_level }}</strong> ({{ result.total_score }}/5.0)
+                                </p>
+                                <span class="notification-time">{{ result.computed_at|date:"M d, Y" }}</span>
+                            </div>
                         </div>
-                    </div>
-                    {% empty %}
+                        {% endfor %}
+                    {% else %}
                     <div class="notification-item">
-                        <div class="notification-dot"></div>
-                        <div class="notification-content">
-                            <p>New evaluation submitted by Dr. Sarah Mitchell</p>
-                            <span class="notification-time">2 hours ago</span>
-                        </div>
+                        <p>No results available yet</p>
                     </div>
-                    <div class="notification-item">
-                        <div class="notification-dot"></div>
-                        <div class="notification-content">
-                            <p>Evaluation cycle deadline approaching (5 days)</p>
-                            <span class="notification-time">5 hours ago</span>
-                        </div>
-                    </div>
-                    <div class="notification-item">
-                        <div class="notification-dot"></div>
-                        <div class="notification-content">
-                            <p>Department report generated for Mathematics</p>
-                            <span class="notification-time">1 day ago</span>
-                        </div>
-                    </div>
-                    <div class="notification-item">
-                        <div class="notification-dot"></div>
-                        <div class="notification-content">
-                            <p>Performance review meeting scheduled</p>
-                            <span class="notification-time">2 days ago</span>
-                        </div>
-                    </div>
-                    {% endfor %}
+                    {% endif %}
                 </div>
             </div>
         </div>
 
+        <!-- Pending Evaluations to Submit -->
+        {% if pending_to_submit %}
+        <div class="pending-evaluations-section">
+            <div class="section-header">
+                <h2>Pending Evaluations to Complete</h2>
+                <span class="badge badge-warning">{{ pending_to_submit|length }} pending</span>
+            </div>
+            <div class="pending-list">
+                {% for evaluation in pending_to_submit %}
+                <div class="pending-item">
+                    <div class="pending-info">
+                        <h4>Evaluate {{ evaluation.evaluatee.get_full_name }}</h4>
+                        <p class="text-muted">Form: {{ evaluation.form.name }} | Cycle: {{ evaluation.form.cycle.name }}</p>
+                    </div>
+                    <a href="{% url 'performanceevaluation:edit_evaluation' evaluation.id %}" class="btn btn-primary btn-sm">
+                        Continue Evaluation
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Decision Support Section -->
+        {% if recent_recommendations %}
         <div class="decision-support">
-            <h3 class="section-title">Decision Support & Recommendations</h3>
+            <h3 class="section-title">Your Recommendations</h3>
             
             <div class="recommendations-grid">
+                {% for recommendation in recent_recommendations %}
                 <div class="recommendation-card">
                     <div class="recommendation-header">
-                        <div class="recommendation-icon icon-training">
+                        <div class="recommendation-icon icon-{{ recommendation.type|lower|slugify }}">
+                            {% if 'training' in recommendation.type|lower %}
                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                             </svg>
-                        </div>
-                        <h4>Training</h4>
-                    </div>
-                    <ul class="recommendation-list">
-                        <li>12 teachers recommended for classroom management training</li>
-                        <li>8 teachers need technology integration workshop</li>
-                    </ul>
-                </div>
-
-                <div class="recommendation-card">
-                    <div class="recommendation-header">
-                        <div class="recommendation-icon icon-recognition">
+                            {% elif 'recognition' in recommendation.type|lower %}
                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
                             </svg>
-                        </div>
-                        <h4>Recognition</h4>
-                    </div>
-                    <ul class="recommendation-list">
-                        <li>15 teachers eligible for excellence awards</li>
-                        <li>23 teachers showing significant improvement</li>
-                    </ul>
-                </div>
-
-                <div class="recommendation-card">
-                    <div class="recommendation-header">
-                        <div class="recommendation-icon icon-improvement">
+                            {% else %}
                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
+                            {% endif %}
                         </div>
-                        <h4>Improvement Plan</h4>
+                        <div>
+                            <h4>{{ recommendation.type }}</h4>
+                            <span class="text-muted text-sm">{{ recommendation.cycle }}</span>
+                        </div>
                     </div>
-                    <ul class="recommendation-list">
-                        <li>6 teachers require performance improvement plan</li>
-                        <li>4 teachers need mentorship assignment</li>
-                    </ul>
+                    <p class="recommendation-text">{{ recommendation.description }}</p>
                 </div>
+                {% endfor %}
             </div>
         </div>
+        {% else %}
+        <div class="decision-support">
+            <h3 class="section-title">Recommendations</h3>
+            <div class="empty-state">
+                <p>No recommendations available yet. Check back after results are computed.</p>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </main>
 {% endblock %}
 
 {% block extra_scripts %}
+{{ trend_chart_json|json_script:"trend-chart-data" }}
+{{ dept_chart_json|json_script:"dept-chart-data" }}
 <script>
+    const trendPayload = document.getElementById('trend-chart-data');
+    const deptPayload = document.getElementById('dept-chart-data');
+    const trendData = trendPayload ? JSON.parse(trendPayload.textContent) : { labels: [], values: [] };
+    const deptData = deptPayload ? JSON.parse(deptPayload.textContent) : { labels: [], values: [] };
+
     // Performance Trend Chart
     const trendCtx = document.getElementById('trendChart').getContext('2d');
     const trendChart = new Chart(trendCtx, {
         type: 'line',
         data: {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'],
+            labels: trendData.labels,
             datasets: [{
-                data: [4.0, 4.1, 4.15, 4.18, 4.2],
+                data: trendData.values,
                 borderColor: '#8b5cf6',
                 backgroundColor: 'rgba(139, 92, 246, 0.1)',
                 tension: 0.4,
@@ -381,16 +292,10 @@
     const departmentChart = new Chart(deptCtx, {
         type: 'bar',
         data: {
-            labels: ['Mathematics', 'Science', 'English', 'History', 'Arts'],
+            labels: deptData.labels,
             datasets: [{
-                data: [4.5, 4.3, 4.4, 4.1, 4.0],
-                backgroundColor: [
-                    '#8b5cf6',
-                    '#a78bfa',
-                    '#8b5cf6',
-                    '#a78bfa',
-                    '#8b5cf6'
-                ],
+                data: deptData.values,
+                backgroundColor: '#8b5cf6',
                 borderRadius: 6,
                 barThickness: 40
             }]

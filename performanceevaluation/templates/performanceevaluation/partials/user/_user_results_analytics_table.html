@@ -1,0 +1,32 @@
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Evaluatee</th>
+                <th>Cycle</th>
+                <th>Form Type</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if evaluations %}
+                {% for evaluation in evaluations %}
+                <tr>
+                    <td>{{ evaluation.evaluatee.get_full_name|default:evaluation.evaluatee.username }}</td>
+                    <td>{{ evaluation.form.cycle.term.name }} - {{ evaluation.form.cycle.name }}</td>
+                    <td>{{ evaluation.form.get_evaluator_type_display }}</td>
+                    <td>{{ evaluation.submitted_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <a class="btn btn-primary btn-sm" href="{% url 'performanceevaluation:user_evaluation_review' evaluation.id %}">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+            <tr>
+                <td class="empty-cell" colspan="5">No evaluations submitted yet.</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>

@@ -528,6 +528,102 @@
         padding: 16px 20px;
     }
 
+/* Pending Evaluations Section */
+.pending-evaluations-section {
+    margin: 32px 32px 0 32px;
+    padding: 24px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e8dff5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.pending-evaluations-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e8dff5;
+}
+
+.pending-evaluations-section h2 {
+    font-size: 18px;
+    color: #1a202c;
+    margin: 0;
+    font-weight: 600;
+}
+
+.badge-warning {
+    background: #fff5e6;
+    color: #d97706;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.pending-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pending-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f9fafb;
+    border: 1px solid #e8dff5;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.pending-item:hover {
+    background: #f3f0f8;
+    border-color: #d4c9e8;
+}
+
+.pending-item h4 {
+    font-size: 14px;
+    color: #1a202c;
+    margin: 0 0 6px 0;
+    font-weight: 600;
+}
+
+.pending-item .text-muted {
+    font-size: 12px;
+    color: #718096;
+    margin: 0;
+}
+
+.pending-info {
+    flex: 1;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* Text Utilities */
+.text-muted {
+    color: #718096;
+}
+
+.text-sm {
+    font-size: 12px;
+}
+
+.recommendation-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #4a5568;
+    margin: 12px 0 0 0;
+}
+
     .content-wrap {
         padding: 16px 20px;
     }

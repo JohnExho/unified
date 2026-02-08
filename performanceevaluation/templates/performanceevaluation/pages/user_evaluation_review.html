@@ -1,0 +1,90 @@
+{% extends 'performanceevaluation/base.html' %}
+{% load static %}
+
+{% block title %}Evaluation Review - Performance Evaluation{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'performanceevaluation/css/pages/evaluation_form.css' %}">
+<link rel="stylesheet" href="{% static 'performanceevaluation/css/pages/evaluation_readonly.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content evaluation-form-page">
+    <div class="form-shell">
+        <header class="form-header">
+            <a class="back-link" href="{% url 'performanceevaluation:user_results_analytics' %}">← Back to My Evaluations</a>
+            <div class="header-copy">
+                <div class="eyebrow">Evaluation Review</div>
+                <h1>{{ evaluation_form.cycle.term.name }} - {{ evaluation_form.cycle.name }}</h1>
+                <p>{{ evaluation_form.get_evaluator_type_display }} evaluation for {{ evaluatee.get_full_name|default:evaluatee.username }}</p>
+                <p class="submitted-meta">Submitted {{ evaluation.submitted_at|date:"M d, Y H:i" }}</p>
+            </div>
+        </header>
+
+        <div class="evaluation-form read-only">
+            {% for entry in categories %}
+            <section class="form-section">
+                <div class="section-header">
+                    <h2>{{ entry.category.name }}</h2>
+                    <p>Weight: {{ entry.category.weight }}</p>
+                </div>
+
+                {% for item in entry.criteria %}
+                <div class="question-card">
+                    <div class="question-title">{{ item.criterion.name }}</div>
+                    {% if item.criterion.description %}
+                    <p class="question-desc">{{ item.criterion.description }}</p>
+                    {% endif %}
+
+                    {% if not item.selected_score %}
+                    <p class="missing-score">No score recorded.</p>
+                    {% endif %}
+
+                    <div class="scale-grid">
+                        {% if item.rubrics %}
+                            {% for rubric in item.rubrics %}
+                            {% with rubric_value=rubric.level|stringformat:"s" %}
+                            <label class="scale-option {% if rubric_value == item.selected_score %}selected{% endif %}">
+                                <input
+                                    type="radio"
+                                    disabled
+                                    {% if rubric_value == item.selected_score %}checked{% endif %}
+                                />
+                                <span class="scale-value">{{ rubric.level }}</span>
+                                <span class="scale-label">{{ rubric.description }}</span>
+                            </label>
+                            {% endwith %}
+                            {% endfor %}
+                        {% else %}
+                            {% for level in "12345" %}
+                            <label class="scale-option {% if level == item.selected_score %}selected{% endif %}">
+                                <input
+                                    type="radio"
+                                    disabled
+                                    {% if level == item.selected_score %}checked{% endif %}
+                                />
+                                <span class="scale-value">{{ level }}</span>
+                                <span class="scale-label">Level {{ level }}</span>
+                            </label>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+            {% endfor %}
+
+            <section class="form-section">
+                <div class="section-header">
+                    <h2>Overall Comment</h2>
+                    <p>Notes provided during submission.</p>
+                </div>
+                <textarea rows="4" readonly>{% if comment %}{{ comment }}{% else %}No comment provided.{% endif %}</textarea>
+            </section>
+        </div>
+    </div>
+</main>
+{% endblock %}

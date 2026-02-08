@@ -1,0 +1,100 @@
+{% extends 'performanceevaluation/base.html' %}
+{% load static %}
+
+{% block title %}Evaluation Structure - Performance Evaluation{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'performanceevaluation/css/pages/admin/evaluation_structure.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    {% include 'performanceevaluation/components/sidebar.html' %}
+
+    <main class="main-content">
+        <div class="page-header">
+            <div class="header-content">
+                <h1>Evaluation Structure</h1>
+                <p>Manage forms, categories, criteria, and rubrics</p>
+            </div>
+        </div>
+
+        <div class="tabs-wrapper">
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="evaluation-forms">
+                    Evaluation Forms
+                </button>
+                <button class="tab-btn" data-tab="evaluation-categories">
+                    Evaluation Categories
+                </button>
+                <button class="tab-btn" data-tab="evaluation-criteria">
+                    Evaluation Criteria
+                </button>
+                <button class="tab-btn" data-tab="rubrics">
+                    Rubrics
+                </button>
+            </div>
+        </div>
+
+        <div class="tabs-content" id="tabs-content">
+            <div class="tab-pane active" id="evaluation-forms" data-tab="evaluation-forms">
+                <div class="section-header">
+                    <h2>Evaluation Forms</h2>
+                    <button class="btn btn-primary" type="button" id="addEvaluationFormBtn">+ Add Form</button>
+                </div>
+                <div id="evaluation-forms-list">
+                    {% include 'performanceevaluation/partials/admin/_evaluation_forms_list.html' %}
+                </div>
+            </div>
+
+            <div class="tab-pane" id="evaluation-categories" data-tab="evaluation-categories">
+                <div class="section-header">
+                    <h2>Evaluation Categories</h2>
+                    <button class="btn btn-primary" type="button" id="addEvaluationCategoryBtn">+ Add Category</button>
+                </div>
+                <div id="evaluation-categories-list">
+                    {% include 'performanceevaluation/partials/admin/_evaluation_categories_list.html' %}
+                </div>
+            </div>
+
+            <div class="tab-pane" id="evaluation-criteria" data-tab="evaluation-criteria">
+                <div class="section-header">
+                    <h2>Evaluation Criteria</h2>
+                    <button class="btn btn-primary" type="button" id="addEvaluationCriteriaBtn">+ Add Criteria</button>
+                </div>
+                <div id="evaluation-criteria-list">
+                    {% include 'performanceevaluation/partials/admin/_evaluation_criteria_list.html' %}
+                </div>
+            </div>
+
+            <div class="tab-pane" id="rubrics" data-tab="rubrics">
+                <div class="section-header">
+                    <h2>Rubrics</h2>
+                    <button class="btn btn-primary" type="button" id="addRubricBtn">+ Add Rubric</button>
+                </div>
+                <div id="rubrics-list">
+                    {% include 'performanceevaluation/partials/admin/_rubrics_list.html' %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+{% include 'performanceevaluation/modals/admin/add_evaluation_form_modal.html' %}
+{% include 'performanceevaluation/modals/admin/edit_evaluation_form_modal.html' %}
+{% include 'performanceevaluation/modals/admin/delete_evaluation_form_modal.html' %}
+
+{% include 'performanceevaluation/modals/admin/add_evaluation_category_modal.html' %}
+{% include 'performanceevaluation/modals/admin/edit_evaluation_category_modal.html' %}
+{% include 'performanceevaluation/modals/admin/delete_evaluation_category_modal.html' %}
+
+{% include 'performanceevaluation/modals/admin/add_evaluation_criteria_modal.html' %}
+{% include 'performanceevaluation/modals/admin/edit_evaluation_criteria_modal.html' %}
+{% include 'performanceevaluation/modals/admin/delete_evaluation_criteria_modal.html' %}
+
+{% include 'performanceevaluation/modals/admin/add_rubric_modal.html' %}
+{% include 'performanceevaluation/modals/admin/edit_rubric_modal.html' %}
+{% include 'performanceevaluation/modals/admin/delete_rubric_modal.html' %}
+
+<script src="{% static 'performanceevaluation/js/evaluation_structure.js' %}"></script>
+{% endblock %}

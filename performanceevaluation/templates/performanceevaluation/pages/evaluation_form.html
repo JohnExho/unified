@@ -1,0 +1,92 @@
+{% extends 'performanceevaluation/base.html' %}
+{% load static %}
+
+{% block title %}Evaluation Form - Performance Evaluation{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'performanceevaluation/css/pages/evaluation_form.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content evaluation-form-page">
+    <div class="form-shell">
+        <header class="form-header">
+            <a class="back-link" href="{% url 'performanceevaluation:user_evaluations' %}">← Back to Evaluations</a>
+            <div class="header-copy">
+                <div class="eyebrow">Evaluation Form</div>
+                <h1>{{ evaluation_form.cycle.term.name }} - {{ evaluation_form.cycle.name }}</h1>
+                <p>{{ evaluation_form.get_evaluator_type_display }} evaluation for {{ evaluatee.get_full_name|default:evaluatee.username }}</p>
+            </div>
+        </header>
+
+        <form method="post" class="evaluation-form">
+            {% csrf_token %}
+            <input type="hidden" name="evaluatee" value="{{ evaluatee.id }}">
+
+            {% for category in categories %}
+            <section class="form-section">
+                <div class="section-header">
+                    <h2>{{ category.name }}</h2>
+                    <p>Weight: {{ category.weight }}</p>
+                </div>
+
+                {% for criterion in category.evaluationcriterion_set.all %}
+                <div class="question-card">
+                    <div class="question-title">{{ criterion.name }}</div>
+                    {% if criterion.description %}
+                    <p class="question-desc">{{ criterion.description }}</p>
+                    {% endif %}
+
+                    <div class="scale-grid">
+                        {% if criterion.rubric_set.all %}
+                            {% for rubric in criterion.rubric_set.all %}
+                            <label class="scale-option">
+                                <input
+                                    type="radio"
+                                    name="criterion_{{ criterion.id }}"
+                                    value="{{ rubric.level }}"
+                                    {% if forloop.first %}required{% endif %}
+                                />
+                                <span class="scale-value">{{ rubric.level }}</span>
+                                <span class="scale-label">{{ rubric.description }}</span>
+                            </label>
+                            {% endfor %}
+                        {% else %}
+                            {% for level in "12345" %}
+                            <label class="scale-option">
+                                <input
+                                    type="radio"
+                                    name="criterion_{{ criterion.id }}"
+                                    value="{{ level }}"
+                                    {% if forloop.first %}required{% endif %}
+                                />
+                                <span class="scale-value">{{ level }}</span>
+                                <span class="scale-label">Level {{ level }}</span>
+                            </label>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+            {% endfor %}
+
+            <section class="form-section">
+                <div class="section-header">
+                    <h2>Overall Comment</h2>
+                    <p>Optional notes to support your evaluation.</p>
+                </div>
+                <textarea name="overall_comment" rows="4" placeholder="Share any additional feedback..."></textarea>
+            </section>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Submit Evaluation</button>
+                <p class="privacy-note">Your responses will be recorded for evaluation processing.</p>
+            </div>
+        </form>
+    </div>
+</main>
+{% endblock %}

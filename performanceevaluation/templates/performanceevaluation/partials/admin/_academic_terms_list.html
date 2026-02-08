@@ -63,3 +63,15 @@
         </tbody>
     </table>
 </div>
+
+{% if academic_terms.has_other_pages %}
+<div class="pagination">
+    {% if academic_terms.has_previous %}
+        <a href="?terms_page={{ academic_terms.previous_page_number }}&cycles_page={{ evaluation_cycles.number }}&departments_page={{ departments.number }}" class="pagination-link" data-target="academic-terms-list">Previous</a>
+    {% endif %}
+    <span>Page {{ academic_terms.number }} of {{ academic_terms.paginator.num_pages }}</span>
+    {% if academic_terms.has_next %}
+        <a href="?terms_page={{ academic_terms.next_page_number }}&cycles_page={{ evaluation_cycles.number }}&departments_page={{ departments.number }}" class="pagination-link" data-target="academic-terms-list">Next</a>
+    {% endif %}
+</div>
+{% endif %}

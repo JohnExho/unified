@@ -1,0 +1,57 @@
+<div class="section-header">
+    <h2>Available Forms</h2>
+    <span class="helper-text">Pick an evaluatee from your department.</span>
+</div>
+
+{% if not evaluatees %}
+<div class="empty-state">
+    <h3>No evaluatees found</h3>
+    <p>You are not assigned to a department or no eligible users are available.</p>
+</div>
+{% elif active_forms %}
+<div class="form-grid">
+    {% for form in active_forms %}
+    <article class="form-card">
+        <div class="form-card-header">
+            <div class="form-title">
+                <h3>{{ form.cycle.term.name }} - {{ form.cycle.name }}</h3>
+                <span class="badge badge-{{ form.evaluator_type }}">{{ form.get_evaluator_type_display }}</span>
+            </div>
+            <p class="form-meta">Active cycle • {{ form.cycle.start_date }} to {{ form.cycle.end_date }}</p>
+        </div>
+
+        <div class="form-stats">
+            {% if form.evaluator_type == 'self' %}
+                <span>1 evaluatee</span>
+            {% else %}
+                <span>{{ evaluatees|length }} evaluatees</span>
+            {% endif %}
+            <span class="status-chip">Active</span>
+        </div>
+
+        <form method="get" action="{% url 'performanceevaluation:user_evaluation_form' form.id %}" class="form-action">
+            <label for="evaluatee-{{ form.id }}">Evaluatee</label>
+            {% if form.evaluator_type == 'self' %}
+                <div class="self-evaluatee">
+                    {{ current_user.get_full_name|default:current_user.username }} (You)
+                </div>
+                <input type="hidden" name="evaluatee" value="{{ current_user.id }}">
+            {% else %}
+                <select id="evaluatee-{{ form.id }}" name="evaluatee" required>
+                    <option value="">Select evaluatee</option>
+                    {% for evaluatee in evaluatees %}
+                    <option value="{{ evaluatee.id }}">{{ evaluatee.get_full_name|default:evaluatee.username }}</option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+            <button type="submit" class="btn-primary">Open Form</button>
+        </form>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <h3>No active forms</h3>
+    <p>There are no active evaluation forms available right now.</p>
+</div>
+{% endif %}

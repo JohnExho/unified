@@ -106,7 +106,12 @@ class SystemMembership(models.Model):
         max_length=50,
         blank=True,
         null=True,
-        choices=[('admin', 'Admin'), ('user', 'User'), ('superadmin', 'Super Admin')],
+        choices=[
+            ('admin', 'Admin'),
+            ('user', 'User'),
+            ('instructor', 'Instructor'),
+            ('superadmin', 'Super Admin'),
+        ],
     )
     joined_at = models.DateTimeField(auto_now_add=True)
 

@@ -1,0 +1,68 @@
+{% if rubrics %}
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Criterion</th>
+                <th>Level</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rubric in rubrics %}
+            <tr>
+                <td>{{ rubric.criterion.name }}</td>
+                <td><span class="weight-badge">{{ rubric.level }}</span></td>
+                <td>
+                    <span class="truncate" title="{{ rubric.description }}">
+                        {{ rubric.description }}
+                    </span>
+                </td>
+                <td>
+                    <button
+                        type="button"
+                        class="btn-icon edit-rubric-btn"
+                        data-rubric-id="{{ rubric.id }}"
+                        data-criterion-id="{{ rubric.criterion.id }}"
+                        data-level="{{ rubric.level }}"
+                        data-description="{{ rubric.description|escapejs }}"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
+                        class="btn-icon delete-rubric-btn"
+                        data-rubric-id="{{ rubric.id }}"
+                        data-title="{{ rubric.criterion.name }} (Level {{ rubric.level }})"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if rubrics.has_other_pages %}
+<div class="pagination">
+    {% if rubrics.has_previous %}
+        <a href="?rubrics_page={{ rubrics.previous_page_number }}" class="pagination-link" data-target="rubrics-list">Previous</a>
+    {% endif %}
+    <span>Page {{ rubrics.number }} of {{ rubrics.paginator.num_pages }}</span>
+    {% if rubrics.has_next %}
+        <a href="?rubrics_page={{ rubrics.next_page_number }}" class="pagination-link" data-target="rubrics-list">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+{% else %}
+<div class="empty-state">
+    <p>No rubrics created yet.</p>
+</div>
+{% endif %}

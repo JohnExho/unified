@@ -29,15 +29,19 @@
                     {% endif %}
                 </td>
                 <td>
+                    {% with dept_assignments=membership.user.userdepartmentassignment_set.all %}
                     <button
                         type="button"
                         class="btn-outline manage-access-btn"
                         data-user-id="{{ membership.user.id }}"
                         data-username="{{ membership.user.username }}"
                         data-role="{{ membership.system_role }}"
+                        data-department-id="{% if dept_assignments %}{{ dept_assignments.0.department_id }}{% endif %}"
+                        data-department-name="{% if dept_assignments %}{{ dept_assignments.0.department.name }}{% endif %}"
                     >
                         Manage
                     </button>
+                    {% endwith %}
                 </td>
             </tr>
             {% empty %}

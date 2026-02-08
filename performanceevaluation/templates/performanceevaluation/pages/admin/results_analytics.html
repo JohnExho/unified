@@ -1,0 +1,69 @@
+{% extends 'performanceevaluation/base.html' %}
+{% load static %}
+
+{% block title %}Results & Analytics - Performance Evaluation{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'performanceevaluation/css/pages/admin/results_analytics.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    {% include 'performanceevaluation/components/sidebar.html' %}
+
+    <main class="main-content">
+        <div class="page-header">
+            <div class="header-content">
+                <h1>Results & Analytics</h1>
+                <p>Computed results and performance summaries</p>
+            </div>
+        </div>
+
+        <div class="filters-bar">
+            <form method="get" class="filters-form" id="resultsAnalyticsFilterForm">
+                <div class="filters-group">
+                    <div class="search-field">
+                        <input
+                            type="text"
+                            name="search"
+                            placeholder="Search evaluatee"
+                            value="{{ search_query }}"
+                            autocomplete="off"
+                        />
+                        <button type="button" class="clear-search" aria-label="Clear search">&times;</button>
+                    </div>
+                    <select name="cycle">
+                        <option value="">All cycles</option>
+                        {% for cycle in cycles %}
+                            <option value="{{ cycle.id }}" {% if cycle_filter == cycle.id|stringformat:'s' %}selected{% endif %}>
+                                {{ cycle.term.name }} - {{ cycle.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <select name="performance_level">
+                        <option value="">All levels</option>
+                        <option value="Very High" {% if level_filter == 'Very High' %}selected{% endif %}>Very High</option>
+                        <option value="High" {% if level_filter == 'High' %}selected{% endif %}>High</option>
+                        <option value="Medium" {% if level_filter == 'Medium' %}selected{% endif %}>Medium</option>
+                        <option value="Low" {% if level_filter == 'Low' %}selected{% endif %}>Low</option>
+                        <option value="Very Low" {% if level_filter == 'Very Low' %}selected{% endif %}>Very Low</option>
+                    </select>
+                </div>
+            </form>
+            <form method="post" action="{% url 'performanceevaluation:compute_results' %}" class="compute-form">
+                {% csrf_token %}
+                <input type="hidden" name="cycle" value="{{ cycle_filter }}" />
+                <button type="submit" class="btn btn-primary">Compute Results</button>
+            </form>
+        </div>
+
+        <div id="results-analytics-table">
+            {% include 'performanceevaluation/partials/admin/_results_analytics_table.html' %}
+        </div>
+    </main>
+</div>
+
+{% include 'performanceevaluation/modals/admin/view_report_modal.html' %}
+
+<script src="{% static 'performanceevaluation/js/results_analytics.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% if evaluations %}
+<div class="card-grid">
+    {% for evaluation in evaluations %}
+        <div class="card">
+            <div class="card-header">
+                <h3>{{ evaluation.form.cycle.term.name }} - {{ evaluation.form.cycle.name }}</h3>
+                <span class="badge badge-inactive">{{ evaluation.form.get_evaluator_type_display }}</span>
+            </div>
+            <p class="card-meta">
+                Evaluatee: {{ evaluation.evaluatee.get_full_name|default:evaluation.evaluatee.username }}
+            </p>
+            <p class="card-meta">
+                Status: {% if evaluation.is_submitted %}Submitted{% else %}Draft{% endif %}
+            </p>
+            <div class="card-actions">
+                <button type="button" class="btn btn-primary" disabled>Answer (GForm-style)</button>
+                <span class="hint-text">Answer flow UI coming next.</span>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>No evaluations available to answer.</p>
+</div>
+{% endif %}

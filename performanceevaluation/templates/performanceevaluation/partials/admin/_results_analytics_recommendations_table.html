@@ -1,0 +1,27 @@
+<div class="recommendations-wrapper">
+    <h4>Recommendations for {{ result.evaluatee.get_full_name|default:result.evaluatee.username }}</h4>
+    {% if recommendations %}
+        <table class="data-table inner-table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in recommendations %}
+                    <tr>
+                        <td>{{ rec.get_recommendation_type_display }}</td>
+                        <td>{{ rec.description }}</td>
+                        <td>{{ rec.created_at|date:"M d, Y H:i" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <p>No recommendations available for this result.</p>
+        </div>
+    {% endif %}
+</div>

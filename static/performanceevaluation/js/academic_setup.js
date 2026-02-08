@@ -48,10 +48,44 @@
             });
     }
 
+    function showModal(modalId) {
+        const modal = document.querySelector(modalId);
+        if (!modal) return;
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+    }
+
+    function hideModal(modalId) {
+        const modal = document.querySelector(modalId);
+        if (!modal) return;
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+    }
+
+    function notify(message, type = 'success') {
+        if (window.Swal) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: type,
+                title: message,
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true,
+                background: '#fff'
+            });
+            return;
+        }
+        alert(message);
+    }
+
     function submitAjaxForm(form) {
         const modalId = form.dataset.modalId;
         const url = form.action;
         const data = new FormData(form);
+        const formId = form.id || '';
 
         fetch(url, {
             method: 'POST',
@@ -62,10 +96,19 @@
             body: data,
             credentials: 'same-origin',
         })
-            .then(() => refreshAcademicSetupLists())
+            .then(response => {
+                if (!response.ok) throw new Error('Request failed');
+                let message = 'Changes saved successfully.';
+                if (formId.startsWith('add')) message = 'Created successfully.';
+                if (formId.startsWith('edit')) message = 'Updated successfully.';
+                if (formId.startsWith('delete')) message = 'Deleted successfully.';
+                notify(message, 'success');
+                refreshAcademicSetupLists();
+            })
+            .catch(() => notify('Something went wrong. Please try again.', 'error'))
             .finally(() => {
-                if (modalId && typeof $ !== 'undefined' && $.fn.modal) {
-                    $(modalId).modal('hide');
+                if (modalId) {
+                    hideModal(modalId);
                 }
                 if (form.id && form.id.startsWith('add')) {
                     form.reset();
@@ -86,6 +129,23 @@
     });
 
     document.addEventListener('click', function(e) {
+        const openTrigger = e.target.closest('[data-toggle="modal"]');
+        const target = openTrigger ? openTrigger.getAttribute('data-target') : null;
+
+        const closeTrigger = e.target.closest('[data-dismiss="modal"]');
+        if (closeTrigger) {
+            e.preventDefault();
+            const modal = closeTrigger.closest('.modal');
+            if (modal && modal.id) hideModal(`#${modal.id}`);
+            return;
+        }
+
+        const backdrop = e.target.classList.contains('modal') ? e.target : null;
+        if (backdrop && backdrop.id) {
+            hideModal(`#${backdrop.id}`);
+            return;
+        }
+
         const editTermBtn = e.target.closest('[data-target="#editAcademicTermModal"]');
         if (editTermBtn) {
             const button = editTermBtn;
@@ -111,6 +171,7 @@
         if (form && termId) {
             form.action = `/performanceevaluation/admin/academic-term/${termId}/`;
         }
+            if (target) showModal(target);
             return;
         }
 
@@ -127,6 +188,7 @@
         if (form && termId) {
             form.action = `/performanceevaluation/admin/academic-term/${termId}/delete/`;
         }
+            if (target) showModal(target);
             return;
         }
 
@@ -156,6 +218,7 @@
         if (form && cycleId) {
             form.action = `/performanceevaluation/admin/evaluation-cycle/${cycleId}/`;
         }
+            if (target) showModal(target);
             return;
         }
 
@@ -172,6 +235,7 @@
         if (form && cycleId) {
             form.action = `/performanceevaluation/admin/evaluation-cycle/${cycleId}/delete/`;
         }
+            if (target) showModal(target);
             return;
         }
 
@@ -195,6 +259,7 @@
         if (form && deptId) {
             form.action = `/performanceevaluation/admin/department/${deptId}/`;
         }
+            if (target) showModal(target);
             return;
         }
 
@@ -211,33 +276,82 @@
         if (form && deptId) {
             form.action = `/performanceevaluation/admin/department/${deptId}/delete/`;
         }
+            if (target) showModal(target);
             return;
+        }
+
+        const paginationLink = e.target.closest('.pagination-link');
+        if (paginationLink) {
+            e.preventDefault();
+            const targetId = paginationLink.dataset.target;
+            const url = paginationLink.getAttribute('href');
+            if (!targetId || !url) return;
+
+            fetch(url, { method: 'GET' })
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const updated = doc.getElementById(targetId);
+                    const current = document.getElementById(targetId);
+                    if (current && updated) {
+                        current.innerHTML = updated.innerHTML;
+                    }
+                })
+                .catch(() => window.location.reload());
+            return;
+        }
+
+        if (openTrigger && target) {
+            e.preventDefault();
+            showModal(target);
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Escape') return;
+        const openModal = document.querySelector('.modal.show');
+        if (openModal && openModal.id) {
+            hideModal(`#${openModal.id}`);
         }
     });
 
     // Tab switching functionality
+    function switchTab(tabName) {
+        // Remove active class from all tabs and buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+
+        // Add active class to matching button and corresponding pane
+        const button = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+        if (button) button.classList.add('active');
+        
+        const pane = document.getElementById(tabName);
+        if (pane) pane.classList.add('active');
+    }
+
     const tabButtons = document.querySelectorAll('.tab-btn');
     tabButtons.forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             const tabName = this.getAttribute('data-tab');
-
-            // Remove active class from all tabs and buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
-
-            // Add active class to clicked button and corresponding pane
-            this.classList.add('active');
-            const pane = document.getElementById(tabName);
-            if (pane) {
-                pane.classList.add('active');
-            }
+            switchTab(tabName);
         });
     });
 
-    // Initialize Bootstrap modals if Bootstrap is available
-    if (typeof $ !== 'undefined' && $.fn.modal) {
-        // Bootstrap is loaded
-        console.log('Bootstrap modals initialized');
-    }
+    // Submenu link switching
+    const submenuLinks = document.querySelectorAll('.nav-submenu-link');
+    submenuLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const tabName = this.getAttribute('data-tab');
+            switchTab(tabName);
+        });
+    });
+
+    // Ensure modals are hidden on load
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+    });
 })();

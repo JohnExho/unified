@@ -1,0 +1,20 @@
+<div class="modal" id="deleteEvaluationScoreModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Score</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="post" action="" id="deleteEvaluationScoreForm" data-modal-id="#deleteEvaluationScoreModal" data-ajax="true">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the score for <strong id="deleteScoreName"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-submit danger">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

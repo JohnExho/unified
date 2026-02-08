@@ -4,7 +4,6 @@
 {% block title %}Academic Setup - Performance Evaluation{% endblock %}
 
 {% block extra_head %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{% static 'performanceevaluation/css/pages/admin/academic_setup.css' %}?v=1.0">
 {% endblock %}
 
@@ -64,7 +63,7 @@
                 </div>
 
                 <div id="academic-terms-list">
-                    {% if academic_terms %}
+                    {% if academic_terms.paginator.count %}
                         {% include 'performanceevaluation/partials/admin/_academic_terms_list.html' %}
                     {% else %}
                         <div class="empty-state">
@@ -93,7 +92,7 @@
                 </div>
 
                 <div id="evaluation-cycles-list">
-                    {% if evaluation_cycles %}
+                    {% if evaluation_cycles.paginator.count %}
                         {% include 'performanceevaluation/partials/admin/_evaluation_cycles_list.html' %}
                     {% else %}
                         <div class="empty-state">
@@ -122,7 +121,7 @@
                 </div>
 
                 <div id="departments-list">
-                    {% if departments %}
+                    {% if departments.paginator.count %}
                         {% include 'performanceevaluation/partials/admin/_departments_list.html' %}
                     {% else %}
                         <div class="empty-state">
@@ -151,7 +150,5 @@
 {% include 'performanceevaluation/modals/admin/delete_evaluation_cycle_modal.html' %}
 {% include 'performanceevaluation/modals/admin/delete_department_modal.html' %}
 
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
 <script src="{% static 'performanceevaluation/js/academic_setup.js' %}"></script>
 {% endblock %}

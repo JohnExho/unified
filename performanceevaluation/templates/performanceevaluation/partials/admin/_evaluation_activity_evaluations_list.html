@@ -1,0 +1,98 @@
+{% if evaluations %}
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Form</th>
+                <th>Evaluatee</th>
+                <th>Evaluator</th>
+                <th>Status</th>
+                <th>Submitted At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for evaluation in evaluations %}
+                <tr>
+                    <td>{{ evaluation.form.cycle.term.name }} - {{ evaluation.form.cycle.name }} ({{ evaluation.form.get_evaluator_type_display }})</td>
+                    <td>{{ evaluation.evaluatee.get_full_name|default:evaluation.evaluatee.username }}</td>
+                    <td>
+                        {% if evaluation.evaluator %}
+                            {{ evaluation.evaluator.get_full_name|default:evaluation.evaluator.username }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if evaluation.is_submitted %}
+                            <span class="badge badge-active">Submitted</span>
+                        {% else %}
+                            <span class="badge badge-inactive">Draft</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if evaluation.submitted_at %}
+                            {{ evaluation.submitted_at|date:"M d, Y H:i" }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button
+                            type="button"
+                            class="btn-icon edit-evaluation-btn"
+                            data-toggle="modal"
+                            data-target="#editEvaluationModal"
+                            data-evaluation-id="{{ evaluation.id }}"
+                            data-form-id="{{ evaluation.form.id }}"
+                            data-evaluatee-id="{{ evaluation.evaluatee.id }}"
+                            data-evaluator-id="{% if evaluation.evaluator %}{{ evaluation.evaluator.id }}{% endif %}"
+                            data-submitted-at="{% if evaluation.submitted_at %}{{ evaluation.submitted_at|date:'Y-m-d\TH:i' }}{% endif %}"
+                            data-is-submitted="{{ evaluation.is_submitted }}"
+                            title="Edit"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            class="btn-icon delete-evaluation-btn"
+                            data-toggle="modal"
+                            data-target="#deleteEvaluationModal"
+                            data-evaluation-id="{{ evaluation.id }}"
+                            data-title="{{ evaluation.evaluatee.get_full_name|default:evaluation.evaluatee.username }}"
+                            title="Delete"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="empty-row">No evaluations found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if evaluations.has_other_pages %}
+<div class="pagination">
+    {% if evaluations.has_previous %}
+        <a href="?evaluations_page={{ evaluations.previous_page_number }}&scores_page={{ evaluation_scores.number }}&comments_page={{ evaluation_comments.number }}" class="pagination-link" data-target="evaluations-list">Previous</a>
+    {% endif %}
+    <span>Page {{ evaluations.number }} of {{ evaluations.paginator.num_pages }}</span>
+    {% if evaluations.has_next %}
+        <a href="?evaluations_page={{ evaluations.next_page_number }}&scores_page={{ evaluation_scores.number }}&comments_page={{ evaluation_comments.number }}" class="pagination-link" data-target="evaluations-list">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+{% else %}
+<div class="empty-state">
+    <p>No evaluations created yet.</p>
+</div>
+{% endif %}
