@@ -1005,16 +1005,19 @@ def manage_user_access(request, user_id):
 @require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def update_tos(request):
-    current_system = request.current_system
+    current_system = getattr(request, 'current_system', None) or 'performanceevaluation'
     tos_content = request.POST.get('tos_text', '').strip()
 
-    system = get_object_or_404(Systems, name='performanceevaluation')
+    system, created = Systems.objects.get_or_create(
+        name=current_system,
+        defaults={}
+    )
     system.terms_of_service = tos_content
     system.save(update_fields=['terms_of_service'])
 
     Logs.objects.create(
         user=request.user,
-        system_name='performanceevaluation',
+        system_name=current_system,
         action='UPDATE',
         target_model='Systems',
         target_id=system.id,

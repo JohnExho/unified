@@ -840,7 +840,7 @@ def delete_address(request, address_id):
 @require_system_role(['admin', 'superadmin'])
 def admin_dashboard(request):
     """Admin dashboard for inventory management system"""
-    current_system = request.current_system
+    current_system = request.current_system or 'inventorymanagement'
     
     systems = request.session.get('accessible_systems', [])
     search_query = request.GET.get('search', '').strip()
@@ -869,8 +869,20 @@ def admin_dashboard(request):
     page_number = request.GET.get('page') or 1
     users_page = paginator.get_page(page_number)
     
-    # Get Terms of Service for the current system
-    tos_text = Systems.objects.filter(name=current_system).values_list('terms_of_service', flat=True).first() or ''
+    # Get or create Terms of Service for the current system
+    tos_text = ''
+    if current_system:
+        try:
+            system_record, created = Systems.objects.get_or_create(
+                name=current_system,
+                defaults={
+                    'description': 'Inventory Management System',
+                    'terms_of_service': 'Default Terms of Service for Inventory Management System. Please update this content.'
+                }
+            )
+            tos_text = system_record.terms_of_service if system_record.terms_of_service else ''
+        except Exception:
+            tos_text = ''
     
     # Fetch roles for users in this system
     ROLE_LABELS = {
@@ -1048,16 +1060,20 @@ def activate_user(request, user_id):
     return redirect('inventorymanagement:admin_dashboard')
 
 @login_required
+@require_system_access
 @require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def update_tos(request):
     """Update the Terms of Service for the current system"""
-    current_system = request.current_system
+    current_system = getattr(request, 'current_system', None) or 'inventorymanagement'
     
     from core.models import Systems
     tos_text = request.POST.get('tos_text', '')
     
-    system = Systems.objects.get(name=current_system)
+    system, created = Systems.objects.get_or_create(
+        name=current_system,
+        defaults={}
+    )
     system.terms_of_service = tos_text
     system.save()
     

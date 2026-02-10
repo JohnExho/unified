@@ -378,7 +378,7 @@ def reports(request):
 @login_required
 @require_system_role(['admin', 'superadmin'])
 def admin_dashboard(request):
-    current_system = request.current_system  # set by middleware
+    current_system = request.current_system or 'projectmanagement'
 
     ROLE_LABELS = {
         'superadmin': 'Super Admin',
@@ -387,8 +387,20 @@ def admin_dashboard(request):
         # add other roles as needed
     }
 
-    # Fetch the Terms of Service for the current system
-    tos_text = Systems.objects.filter(name=current_system).values_list('terms_of_service', flat=True).first() or ''
+    # Get or create the system record with default ToS
+    tos_text = ''
+    if current_system:
+        try:
+            system_record, created = Systems.objects.get_or_create(
+                name=current_system,
+                defaults={
+                    'description': 'Project Management System',
+                    'terms_of_service': 'Default Terms of Service for Project Management System. Please update this content.'
+                }
+            )
+            tos_text = system_record.terms_of_service if system_record.terms_of_service else ''
+        except Exception:
+            tos_text = ''
 
     # ---- Get search query ----
     search_query = request.GET.get('search', '').strip()
@@ -658,30 +670,20 @@ def manage_user_access(request, user_id):
     return redirect("projectmanagement:pm_admin_dashboard")
 
 @login_required
+@require_system_access
 @require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def update_tos(request):
     """
     Update the Terms of Service for the current system.
     """
-
-    current_system = request.current_system  # set by middleware
-
-    # Get system membership for the current user
-    system_membership = SystemMembership.objects.filter(
-        user=request.user,
-        system_name=current_system
-    ).first()
-
-    allowed_roles = ['superadmin', 'admin']
-
-    # Allow if superuser OR membership role is allowed
-    if not (request.user.is_superuser or (system_membership and system_membership.system_role in allowed_roles)):
-        return render(request, '404.html', status=404)
-
+    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
     tos_text = request.POST.get('tos_text', '')
 
-    system = Systems.objects.get(name=current_system)
+    system, created = Systems.objects.get_or_create(
+        name=current_system,
+        defaults={}
+    )
     system.terms_of_service = tos_text
     system.save()
 
