@@ -235,6 +235,7 @@ def core_login(request, system_name=None):
             target_system = next(
                 s for s in accessible_systems if s["url"] == system_name
             )
+            request.session["current_system"] = target_system["url"]
             Logs.objects.create(
                 user=user,
                 target_model="User",
@@ -252,6 +253,7 @@ def core_login(request, system_name=None):
         # 2. User has only one system
         elif len(accessible_systems) == 1:
             target_system = accessible_systems[0]
+            request.session["current_system"] = target_system["url"]
             Logs.objects.create(
                 user=user,
                 target_model="User",
