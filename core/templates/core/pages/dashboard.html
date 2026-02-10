@@ -69,7 +69,7 @@
                                             <div class="system-tags">
                                                 {% for membership in memberships %}
                                                     {% with system=membership.system_name|lookup_system %}
-                                                        <span class="system-tag">{{ system.description }}</span>
+                                                        <span class="system-tag">{{ system.name }}</span>
                                                     {% endwith %}
                                                 {% endfor %}
                                             </div>
