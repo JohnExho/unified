@@ -9,6 +9,8 @@
 <link rel="stylesheet" type="text/css" href="{% static 'projectmanagement/css/pages/register.css' %}" />
 {% elif system_name == 'inventorymanagement' %}
 <link rel="stylesheet" type="text/css" href="{% static 'inventorymanagement/css/pages/register.css' %}" />
+{% elif system_name == 'performanceevaluation' %}
+<link rel="stylesheet" type="text/css" href="{% static 'performanceevaluation/css/pages/register.css' %}" />
 {% elif system_name == 'librarymanagement' %}
 <link rel="stylesheet" type="text/css" href="{% static 'core/css/library_register_styles.css' %}" />
 {% else %}
@@ -177,6 +179,8 @@
 {% include 'projectmanagement/modals/terms_modal.html' %}
 {% elif system_name == 'inventorymanagement' %}
 {% include 'inventorymanagement/modals/terms_modal.html' %}
+{% elif system_name == 'performanceevaluation' %}
+{% include 'performanceevaluation/modals/terms_modal.html' %}
 {% elif system_name == 'librarymanagement' %}
 {% include 'librarymanagement/modals/terms_modal.html' %}
 {% else %}

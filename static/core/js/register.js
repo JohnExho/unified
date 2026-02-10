@@ -4,7 +4,7 @@
 function openTermsModal() {
   const modal = document.getElementById('termsModal');
   if (modal) {
-    modal.classList.add('show');
+    modal.classList.add('active');
     document.body.style.overflow = 'hidden';
   }
 }
@@ -15,7 +15,7 @@ function closeTermsModal() {
   const agreeCheckbox = document.getElementById('agreeCheckbox');
   
   if (modal) {
-    modal.classList.remove('show');
+    modal.classList.remove('active');
     document.body.style.overflow = 'auto';
     
     // Reset checkbox when closing
@@ -96,7 +96,7 @@ window.addEventListener('click', function(event) {
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape') {
     const modal = document.getElementById('termsModal');
-    if (modal && modal.classList.contains('show')) {
+    if (modal && modal.classList.contains('active')) {
       closeTermsModal();
     }
   }

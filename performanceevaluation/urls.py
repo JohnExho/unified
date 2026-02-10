@@ -1,9 +1,17 @@
 from django.urls import path
 from . import views
+from django.shortcuts import redirect
 
 app_name = "performanceevaluation"
 
+def root_redirect(request):
+    if request.user.is_authenticated:
+        return redirect('performanceevaluation:dashboard')
+    else:
+        return redirect('/performanceevaluation/login')
+
 urlpatterns = [
+    path('',  root_redirect, name='pe_root'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('evaluations/', views.user_evaluations, name='user_evaluations'),
     path('evaluations/form/<int:form_id>/', views.user_evaluation_form, name='user_evaluation_form'),

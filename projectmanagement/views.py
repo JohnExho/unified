@@ -1141,7 +1141,7 @@ def projects(request):
 @require_http_methods(["GET", "POST"])
 def create_project(request):
     """Create a new project via modal"""
-    current_system = request.current_system
+    current_system = reque
     
     if request.method == 'POST':
         try:

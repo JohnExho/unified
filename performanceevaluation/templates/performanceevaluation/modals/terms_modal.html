@@ -1,0 +1,68 @@
+<!-- Terms and Conditions Modal - Performance Evaluation -->
+<div id="termsModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Terms and Conditions - {{ system_info.description }}</h2>
+      <button class="close-btn" onclick="closeTermsModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Terms of Service -->
+      {% if system_info.terms_of_service %}
+        <div class="terms-text">
+          {{ system_info.terms_of_service|linebreaks }}
+        </div>
+      {% else %}
+        <div class="terms-text">
+          <h3>Performance Evaluation System - Terms and Conditions</h3>
+          
+          <h4>1. Acceptance of Terms</h4>
+          <p>By accessing and using the Performance Evaluation System, you accept and agree to be bound by the terms and provisions of this agreement.</p>
+          
+          <h4>2. Authorized Use</h4>
+          <p>This system is intended for official performance evaluation activities within the organization. Use of the system for any other purpose is prohibited.</p>
+          
+          <h4>3. User Responsibilities</h4>
+          <ul>
+            <li>Maintain the confidentiality of your account credentials</li>
+            <li>Provide fair, accurate, and professional evaluations</li>
+            <li>Respect confidentiality of evaluation data</li>
+            <li>Use the system in accordance with organizational policies</li>
+            <li>Report any system issues or inaccuracies promptly</li>
+          </ul>
+          
+          <h4>4. Data Privacy</h4>
+          <p>Evaluation records may contain sensitive information. Users must comply with applicable data privacy laws and organizational policies regarding data handling and disclosure.</p>
+          
+          <h4>5. Evaluation Integrity</h4>
+          <p>All evaluations should be completed honestly and without bias. Tampering with evaluation outcomes or falsifying information is strictly prohibited.</p>
+          
+          <h4>6. Access Levels</h4>
+          <p>Access privileges are assigned based on role. Users must not attempt to access or modify data outside their authorization.</p>
+          
+          <h4>7. Prohibited Activities</h4>
+          <ul>
+            <li>Unauthorized access to evaluation data</li>
+            <li>Sharing evaluation content with unauthorized parties</li>
+            <li>Attempting to bypass approval or review workflows</li>
+            <li>Introducing malicious code or disrupting system operations</li>
+          </ul>
+          
+          <h4>8. Modifications to Terms</h4>
+          <p>We reserve the right to modify these terms at any time. Users will be notified of significant changes, and continued use constitutes acceptance of modified terms.</p>
+          
+          <h4>9. Contact Information</h4>
+          <p>For questions or concerns regarding these terms, please contact the system administrator.</p>
+        </div>
+      {% endif %}
+    </div>
+    <div class="modal-footer">
+      <div class="checkbox-wrapper">
+        <input type="checkbox" id="agreeCheckbox" onchange="toggleAcceptButton()">
+        <label for="agreeCheckbox">I have read and agree to the Terms and Conditions</label>
+      </div>
+      <div class="modal-buttons">
+        <button type="button" class="btn-accept" id="acceptBtn" disabled onclick="acceptTerms()">Accept &amp; Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
