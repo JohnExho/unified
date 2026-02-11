@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from core.decorators import require_system_role
 
+from core.services import Services
 from librarymanagement.services import (
     BookServices,
     TransactionServices,
@@ -29,7 +30,12 @@ from .models import (
 )
 
 
+@login_required(login_url="/librarymanagement/login")
+@require_system_role(["admin", "superadmin"])
 def authors_publishers_management(request):
+    if not Services.has_access(request.user, "librarymanagement"):
+        return render(request, "404.html", status=404)
+
     """Manage authors and publishers"""
     authors = Author.objects.all()
     publishers = Publisher.objects.all()
@@ -54,12 +60,18 @@ def authors_publishers_management(request):
     )
 
 
+@login_required(login_url="/librarymanagement/login")
+@require_system_role(["admin", "superadmin"])
 def dashboard(request):
     """Library dashboard"""
+
     system_name = "librarymanagement"
 
     libraries = Library.objects.all()
     systems = request.session.get("accessible_systems", [])
+
+    if not Services.has_access(request.user, "librarymanagement"):
+        return render(request, "404.html", status=404)
 
     # Get activity days from query params, default to 7
     activity_days = int(request.GET.get("days", 7))
@@ -93,6 +105,7 @@ def dashboard(request):
 
 
 # Main Modules
+@login_required(login_url="/librarymanagement/login")
 def books_list(request):
     """List all books"""
     books = (
@@ -125,6 +138,7 @@ def books_list(request):
     return render(request, "librarymanagement/pages/books_list.html", context)
 
 
+@login_required(login_url="/librarymanagement/login")
 def transactions_list(request):
     """List borrowing transactions"""
     from django.utils import timezone
@@ -159,6 +173,7 @@ def transactions_list(request):
     )
 
 
+@login_required(login_url="/librarymanagement/login")
 def reservations_list(request):
     """List reservations"""
     reservations = (
@@ -186,6 +201,7 @@ def reservations_list(request):
     )
 
 
+@login_required(login_url="/librarymanagement/login")
 def user_activities(request):
     """Track user activity"""
     activities = (
@@ -211,6 +227,7 @@ def user_activities(request):
     )
 
 
+@login_required(login_url="/librarymanagement/login")
 def recommendations_dashboard(request):
     """Book recommendations"""
     recommendations = (
@@ -235,6 +252,8 @@ def recommendations_dashboard(request):
     )
 
 
+@login_required(login_url="/librarymanagement/login")
+@require_system_role(["admin", "superadmin"])
 def trending_books(request):
     """Trending / popular books"""
     # Get period type from query params, default to weekly
@@ -257,6 +276,8 @@ def trending_books(request):
     )
 
 
+@login_required(login_url="/librarymanagement/login")
+@require_system_role(["admin", "superadmin"])
 def reports_dashboard(request):
     """Reports dashboard with report generation"""
     from librarymanagement.models import LibraryReport
@@ -296,7 +317,7 @@ def reports_dashboard(request):
     return render(request, "librarymanagement/pages/reports_dashboard.html", context)
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 def download_report(request, report_id):
     """Download generated report in the requested format."""
@@ -318,6 +339,8 @@ def download_report(request, report_id):
     return response
 
 
+@login_required(login_url="/librarymanagement/login")
+@require_system_role(["admin", "superadmin"])
 def library_settings(request):
     """Library configuration settings page"""
     library = Library.objects.first()
@@ -438,7 +461,7 @@ def user_settings(request):
     return render(request, "librarymanagement/pages/user-settings.html", context)
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 def user_profile_data(request):
     """Return current user's profile data as JSON."""
     user = request.user
@@ -470,7 +493,7 @@ def user_profile_data(request):
     )
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 def user_activity_stats(request):
     """Return current user's activity stats as JSON."""
     stats = {
@@ -846,7 +869,7 @@ from librarymanagement.services import (
 )
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 def edit_book(request, book_id):
     """Edit book details"""
@@ -879,7 +902,7 @@ def edit_book(request, book_id):
     )
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 @require_POST
 def delete_book(request, book_id):
@@ -896,7 +919,7 @@ def delete_book(request, book_id):
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 @require_POST
 def toggle_book_status(request, book_id):
@@ -914,7 +937,7 @@ def toggle_book_status(request, book_id):
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 def bulk_import_books(request):
     """Bulk import books from CSV"""
@@ -969,7 +992,7 @@ def bulk_import_books(request):
     )
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 def export_books(request):
     """Export books to the requested format"""
@@ -993,7 +1016,7 @@ def export_books(request):
 
 
 # Category Management Views
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 def categories_list(request):
     """List all categories"""
@@ -1006,7 +1029,7 @@ def categories_list(request):
     )
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 def add_category(request):
     """Add new category"""
@@ -1032,7 +1055,7 @@ def add_category(request):
     return render(request, "librarymanagement/pages/add_category.html", {"form": form})
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 def edit_category(request, category_id):
     """Edit category"""
@@ -1064,7 +1087,7 @@ def edit_category(request, category_id):
     )
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 @require_POST
 def delete_category(request, category_id):
@@ -1082,7 +1105,7 @@ def delete_category(request, category_id):
 
 
 # Author Management Views
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 def edit_author(request, author_id):
     """Edit author"""
@@ -1114,7 +1137,7 @@ def edit_author(request, author_id):
     )
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 @require_POST
 def delete_author(request, author_id):
@@ -1131,7 +1154,7 @@ def delete_author(request, author_id):
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 @require_POST
 def toggle_author_status(request, author_id):
@@ -1148,7 +1171,7 @@ def toggle_author_status(request, author_id):
 
 
 # Publisher Management Views
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 def edit_publisher(request, publisher_id):
     """Edit publisher"""
@@ -1180,7 +1203,7 @@ def edit_publisher(request, publisher_id):
     )
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 @require_POST
 def delete_publisher(request, publisher_id):
@@ -1197,7 +1220,7 @@ def delete_publisher(request, publisher_id):
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 @require_POST
 def toggle_publisher_status(request, publisher_id):
@@ -1214,7 +1237,7 @@ def toggle_publisher_status(request, publisher_id):
 
 
 # Transaction Management Views
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 @require_POST
 def mark_book_lost(request, transaction_id):
@@ -1230,7 +1253,7 @@ def mark_book_lost(request, transaction_id):
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 @require_POST
 def waive_fine(request, transaction_id):
@@ -1263,7 +1286,7 @@ def waive_fine(request, transaction_id):
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 @require_POST
 def pay_fine(request, transaction_id):
@@ -1298,7 +1321,7 @@ def pay_fine(request, transaction_id):
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 @require_POST
 def extend_due_date(request, transaction_id):
@@ -1321,7 +1344,7 @@ def extend_due_date(request, transaction_id):
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 @require_POST
 def bulk_return_books(request):
@@ -1352,7 +1375,7 @@ def bulk_return_books(request):
 
 
 # Library Settings Views
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_system_role(["admin", "superadmin"])
 def manage_library_settings(request):
     """Manage library settings"""
@@ -1381,7 +1404,7 @@ def manage_library_settings(request):
 
 
 # Advanced Search Views
-@login_required
+@login_required(login_url="/librarymanagement/login")
 def advanced_search(request):
     """Advanced book search"""
     from librarymanagement.forms import AdvancedSearchForm
@@ -1414,7 +1437,7 @@ def advanced_search(request):
 
 
 # User Profile Views
-@login_required
+@login_required(login_url="/librarymanagement/login")
 def user_borrowing_history(request):
     """View user's borrowing history"""
     transactions = UserProfileServices.get_borrowing_history(request.user)
@@ -1426,7 +1449,7 @@ def user_borrowing_history(request):
     )
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 def user_reservation_history(request):
     """View user's reservation history"""
     reservations = UserProfileServices.get_reservation_history(request.user)
@@ -1438,7 +1461,7 @@ def user_reservation_history(request):
     )
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 def export_user_data(request):
     """Export user's library data"""
     try:
@@ -1456,7 +1479,7 @@ def export_user_data(request):
 
 
 # Notification Views
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_POST
 def mark_notification_read(request, notification_id):
     """Mark notification as read"""
@@ -1467,7 +1490,7 @@ def mark_notification_read(request, notification_id):
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 @require_POST
 def delete_notification(request, notification_id):
     """Delete notification"""
@@ -1478,7 +1501,7 @@ def delete_notification(request, notification_id):
         return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
-@login_required
+@login_required(login_url="/librarymanagement/login")
 def user_notifications(request):
     """View user's notifications"""
     notifications = NotificationServices.get_user_notifications(request.user, limit=50)

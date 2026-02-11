@@ -1,9 +1,19 @@
+from django.shortcuts import redirect
 from django.urls import path
 from . import views
 
 app_name = "informationmanagement"
 
+
+def root_redirect(request):
+    if request.user.is_authenticated:
+        return redirect("informationmanagement:information-dashboard")
+    else:
+        return redirect("/informationmanagement/login")
+
+
 urlpatterns = [
+    path("", root_redirect, name="root-redirect"),
     path("dashboard/", views.dashboard, name="information-dashboard"),
     path("projects/", views.projects, name="information-projects"),
     path("projects/new/", views.project_create, name="information-project-create"),

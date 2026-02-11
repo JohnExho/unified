@@ -5,7 +5,16 @@ from . import views
 
 app_name = "librarymanagement"
 
+
+def root_redirect(request):
+    if request.user.is_authenticated:
+        return redirect("librarymanagement:library_dashboard")
+    else:
+        return redirect("/librarymanagement/login")
+
+
 urlpatterns = [
+    path("", root_redirect, name="library_root"),
     path(
         "",
         lambda request: redirect("librarymanagement:library_dashboard"),
