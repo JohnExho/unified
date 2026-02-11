@@ -23,10 +23,13 @@
                             <label class="checkbox-label">
                                 <input type="checkbox" name="system_access" value="{{ system.name }}" class="checkbox-input">
                                 <span class="checkbox-custom"></span>
-                                <span class="checkbox-text">{{ system.description }}</span>
+                                <span class="checkbox-text">{{ system.name }}</span>
                             </label>
                         {% endif %}
                     {% endfor %}
+                </div>
+                <div id="systemError" class="error-message" style="display: none;">
+                    Please select at least one system
                 </div>
             </div>
 
@@ -373,6 +376,31 @@
     height: 20px;
 }
 
+/* Error message styling */
+.error-message {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background-color: #fee2e2;
+    border: 1px solid #ef4444;
+    border-radius: 6px;
+    color: #dc2626;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.error-message::before {
+    content: "⚠";
+    margin-right: 6px;
+    font-size: 1rem;
+}
+
+.checkbox-grid.error {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
 </style>
 
 <script>
@@ -446,6 +474,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
         });
+    });
+
+    // Form validation for system selection
+    const form = modal.querySelector('form');
+    const systemError = document.getElementById('systemError');
+    const checkboxGrid = document.querySelector('.checkbox-grid');
+    const systemCheckboxes = document.querySelectorAll('input[name="system_access"]');
+
+    // Hide error when user selects a checkbox
+    systemCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            const anyChecked = Array.from(systemCheckboxes).some(cb => cb.checked);
+            if (anyChecked) {
+                systemError.style.display = 'none';
+                checkboxGrid.classList.remove('error');
+            }
+        });
+    });
+
+    // Validate form on submit
+    form.addEventListener('submit', (e) => {
+        const anyChecked = Array.from(systemCheckboxes).some(cb => cb.checked);
+        
+        if (!anyChecked) {
+            e.preventDefault();
+            systemError.style.display = 'block';
+            checkboxGrid.classList.add('error');
+            
+            // Scroll to the error message
+            systemError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
     });
 });
 </script>

@@ -198,20 +198,51 @@ def core_login(request, system_name=None):
         username = form.cleaned_data["username"]
         password = form.cleaned_data["password"]
 
-        user = authenticate(request, username=username, password=password)
-
-        if not user:
-            form.add_error(None, "Invalid username or password.")
+        # Check if user exists
+        try:
+            user_obj = User.objects.get(username=username)
+        except User.DoesNotExist:
+            form.add_error(None, "No account found with this username.")
             return render(
                 request,
                 "core/pages/login.html",
                 {"form": form, "system_name": system_name, "system_info": system_info},
             )
 
+        # User exists, now authenticate
+        user = authenticate(request, username=username, password=password)
+
+        if not user:
+            form.add_error(None, "Invalid password.")
+            return render(
+                request,
+                "core/pages/login.html",
+                {"form": form, "system_name": system_name, "system_info": system_info},
+            )
+
+        # Check if user has access to the specific system
+        if system_name:
+            has_access = SystemMembership.objects.filter(
+                user=user, 
+                system_name=system_name
+            ).exists()
+            
+            if not has_access:
+                form.add_error(None, "No account found with this username.")
+                return render(
+                    request,
+                    "core/pages/login.html",
+                    {"form": form, "system_name": system_name, "system_info": system_info},
+                )
+
         # Superuser-only check for /login
         if not system_name and not user.is_superuser:
-            messages.error(request, "Oopps! You do not have access to the core system.")
-            return redirect("core:core_login")
+            form.add_error(None, "No account found with this username.")
+            return render(
+                request,
+                "core/pages/login.html",
+                {"form": form, "system_name": system_name, "system_info": system_info},
+            )
 
         login(request, user)
 
@@ -329,9 +360,14 @@ def system_selection(request):
 
 
 def core_logout(request, system_name=None):
-    # Resolve current system
-    current_system = system_name or request.session.get("current_system", "core")
-
+    # Capture current system BEFORE any session changes
+    # Priority: URL parameter > request attribute > session
+    current_system = (
+        system_name or 
+        getattr(request, 'current_system', None) or 
+        request.session.get('current_system', 'core')
+    )
+    
     # Capture user state BEFORE logout
     is_admin = request.user.is_authenticated and request.user.is_superuser
 

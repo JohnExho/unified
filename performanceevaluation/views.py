@@ -31,7 +31,7 @@ import uuid
 @require_system_access
 @require_system_role(['user', 'instructor', 'superadmin'])
 def dashboard(request):
-    current_system = request.current_system
+    current_system = getattr(request, 'current_system', None) or 'performanceevaluation'
     systems = request.session.get('accessible_systems', [])
     user = request.user
     
@@ -230,7 +230,7 @@ def dashboard(request):
 @require_system_access
 @require_system_role(['user', 'instructor', 'admin', 'superadmin'])
 def user_evaluations(request):
-    current_system = request.current_system
+    current_system = getattr(request, 'current_system', None) or 'performanceevaluation'
     systems = request.session.get('accessible_systems', [])
     user = request.user
     search_query = request.GET.get('search', '').strip()
@@ -309,7 +309,7 @@ def user_evaluations(request):
 @require_system_role(['user', 'instructor', 'admin', 'superadmin'])
 @require_http_methods(["GET", "POST"])
 def user_evaluation_form(request, form_id):
-    current_system = request.current_system
+    current_system = getattr(request, 'current_system', None) or 'performanceevaluation'
     systems = request.session.get('accessible_systems', [])
     user = request.user
 
@@ -430,7 +430,7 @@ def user_evaluation_form(request, form_id):
 @require_system_access
 @require_system_role(['user', 'instructor', 'admin', 'superadmin'])
 def user_results_analytics(request):
-    current_system = request.current_system
+    current_system = getattr(request, 'current_system', None) or 'performanceevaluation'
     systems = request.session.get('accessible_systems', [])
     user = request.user
 
@@ -484,7 +484,7 @@ def user_results_analytics(request):
 @require_system_access
 @require_system_role(['user', 'instructor', 'admin', 'superadmin'])
 def user_evaluation_review(request, evaluation_id):
-    current_system = request.current_system
+    current_system = getattr(request, 'current_system', None) or 'performanceevaluation'
     systems = request.session.get('accessible_systems', [])
     user = request.user
 
@@ -543,7 +543,7 @@ def user_evaluation_review(request, evaluation_id):
 @login_required
 @require_system_access
 def settings(request):
-    current_system = request.current_system
+    current_system = getattr(request, 'current_system', None) or 'performanceevaluation'
     systems = request.session.get('accessible_systems', [])
 
     home_address = Address.objects.filter(user=request.user, type='home').first()

@@ -27,7 +27,7 @@
     </div>
   </div>
 
-  <form method="post" action="{% url 'core:core_logout' %}" class="logout-form">
+  <form method="post" action="{% if current_system and current_system != 'core' %}{% url 'core:core_system_logout' current_system %}{% else %}{% url 'core:core_logout' %}{% endif %}" class="logout-form">
     {% csrf_token %}
     <button type="submit" class="logout-btn">
       <svg

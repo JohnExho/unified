@@ -213,7 +213,7 @@
 
       <form
         method="post"
-        action="{% url 'core:core_logout' %}"
+        action="{% url 'core:core_system_logout' 'inventorymanagement' %}"
         class="logout-form"
       >
         {% csrf_token %}

@@ -11,8 +11,10 @@ class ProjectManagementSystemMiddleware:
     def __call__(self, request):
         # Only set for projectmanagement URLs
         if request.path.startswith('/projectmanagement/'):
-            request.current_system = request.session.get('current_system', 'projectmanagement')
-            request.session['current_system'] = request.current_system
+            request.current_system = 'projectmanagement'
+            # Don't override session during logout to preserve origin system
+            if not request.path.endswith('/logout/'):
+                request.session['current_system'] = 'projectmanagement'
         else:
             request.current_system = None
 
@@ -28,6 +30,10 @@ class ProjectManagementAdminMiddleware:
 
     def __call__(self, request):
         if request.path.startswith('/projectmanagement/admin/'):
+            # Check if user is authenticated first
+            if not request.user.is_authenticated:
+                return render(request, 'projectmanagement/404.html', status=404)
+            
             current_system = request.session.get('current_system', 'projectmanagement')
             if not request.user.is_superuser and not SystemMembership.objects.filter(
                 user=request.user,

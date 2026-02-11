@@ -26,6 +26,20 @@ def require_system_access(view_func):
             user=request.user,
             system_name=current_system
         ).exists():
+            # Find which system the user actually has access to and use that 404 page
+            user_system = SystemMembership.objects.filter(
+                user=request.user
+            ).values_list('system_name', flat=True).first()
+            
+            # Use the user's system 404 page if they have one, otherwise generic
+            if user_system:
+                system_404_template = f'{user_system}/404.html'
+                try:
+                    return render(request, system_404_template, status=404)
+                except:
+                    pass
+            
+            # Fallback to generic 404
             return render(request, '404.html', status=404)
         
         return view_func(request, *args, **kwargs)

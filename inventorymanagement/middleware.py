@@ -12,7 +12,9 @@ class InventoryManagementSystemMiddleware:
         # Only set for inventorymanagement URLs
         if request.path.startswith('/inventorymanagement/'):
             request.current_system = 'inventorymanagement'
-            request.session['current_system'] = 'inventorymanagement'
+            # Don't override session during logout to preserve origin system
+            if not request.path.endswith('/logout/'):
+                request.session['current_system'] = 'inventorymanagement'
         else:
             request.current_system = None
 
@@ -28,6 +30,10 @@ class InventoryManagementAdminMiddleware:
 
     def __call__(self, request):
         if request.path.startswith('/inventorymanagement/admin/'):
+            # Check if user is authenticated first
+            if not request.user.is_authenticated:
+                return render(request, 'inventorymanagement/404.html', status=404)
+            
             current_system = request.session.get('current_system', 'inventorymanagement')
             if not request.user.is_superuser and not SystemMembership.objects.filter(
                 user=request.user,
