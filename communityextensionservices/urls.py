@@ -2,14 +2,19 @@ from django.shortcuts import redirect
 from django.urls import path
 from . import views
 
+
 app_name = "communityextensionservices"
 
+
+def root_redirect(request):
+    if request.user.is_authenticated:
+        return redirect("communityextensionservices:ces-dashboard")
+    else:
+        return redirect("/communityextensionservices/login")
+
+
 urlpatterns = [
-    path(
-        "",
-        lambda request: redirect("communityextensionservices:ces-dashboard"),
-        name="ces-root",
-    ),
+    path("", root_redirect, name="ces-root"),
     path("dashboard/", views.dashboard, name="ces-dashboard"),
     path("members/", views.members, name="ces-members"),
     path("members/new/", views.member_create, name="ces-member-create"),

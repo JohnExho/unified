@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.contrib import messages
 from core.decorators import require_system_access, require_system_role
+from core.services import Services
 from .models import (
     Project,
     BeneficiaryGroup,
@@ -57,11 +58,11 @@ def _sector_coverage(projects):
     return coverage
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def dashboard(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
 
     projects_qs = Project.objects.all()
@@ -112,11 +113,11 @@ def dashboard(request):
     return render(request, "informationmanagement/dashboard.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def projects(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
 
     context = {
@@ -127,11 +128,11 @@ def projects(request):
     return render(request, "informationmanagement/projects.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def beneficiaries(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
 
     context = {
@@ -142,11 +143,11 @@ def beneficiaries(request):
     return render(request, "informationmanagement/beneficiaries.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def partners(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
 
     partners_qs = Partner.objects.order_by("name")
@@ -163,11 +164,11 @@ def partners(request):
     return render(request, "informationmanagement/partners.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activities(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
 
     context = {
@@ -178,11 +179,11 @@ def activities(request):
     return render(request, "informationmanagement/activities.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def analytics(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
 
     project_total = Project.objects.count() or 1
@@ -230,11 +231,11 @@ def analytics(request):
     return render(request, "informationmanagement/analytics.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def reports(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
 
     context = {
@@ -245,11 +246,11 @@ def reports(request):
     return render(request, "informationmanagement/reports.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_lab(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
 
     context = {
@@ -261,11 +262,11 @@ def ml_lab(request):
     return render(request, "informationmanagement/ml_lab.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def project_create(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     form = ProjectForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -281,11 +282,11 @@ def project_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def project_edit(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     project = get_object_or_404(Project, pk=pk)
     form = ProjectForm(request.POST or None, instance=project)
@@ -302,11 +303,11 @@ def project_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def project_delete(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     project = get_object_or_404(Project, pk=pk)
     if request.method == "POST":
@@ -322,11 +323,11 @@ def project_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def beneficiary_create(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     form = BeneficiaryGroupForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -342,11 +343,11 @@ def beneficiary_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def beneficiary_edit(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     group = get_object_or_404(BeneficiaryGroup, pk=pk)
     form = BeneficiaryGroupForm(request.POST or None, instance=group)
@@ -363,11 +364,11 @@ def beneficiary_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def beneficiary_delete(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     group = get_object_or_404(BeneficiaryGroup, pk=pk)
     if request.method == "POST":
@@ -383,11 +384,11 @@ def beneficiary_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def partner_create(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     form = PartnerForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -403,11 +404,11 @@ def partner_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def partner_edit(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     partner = get_object_or_404(Partner, pk=pk)
     form = PartnerForm(request.POST or None, instance=partner)
@@ -424,11 +425,11 @@ def partner_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def partner_delete(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     partner = get_object_or_404(Partner, pk=pk)
     if request.method == "POST":
@@ -444,11 +445,11 @@ def partner_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activity_create(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     form = ActivityForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -464,11 +465,11 @@ def activity_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activity_edit(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     activity = get_object_or_404(Activity, pk=pk)
     form = ActivityForm(request.POST or None, instance=activity)
@@ -485,11 +486,11 @@ def activity_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activity_delete(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     activity = get_object_or_404(Activity, pk=pk)
     if request.method == "POST":
@@ -505,11 +506,11 @@ def activity_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def report_create(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     form = ReportForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -525,11 +526,11 @@ def report_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def report_edit(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     report = get_object_or_404(Report, pk=pk)
     form = ReportForm(request.POST or None, instance=report)
@@ -546,11 +547,11 @@ def report_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def report_delete(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     report = get_object_or_404(Report, pk=pk)
     if request.method == "POST":
@@ -566,11 +567,11 @@ def report_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def report_template_create(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     form = ReportTemplateForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -586,11 +587,11 @@ def report_template_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_model_create(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     form = MLModelForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -606,11 +607,11 @@ def ml_model_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_model_edit(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     model = get_object_or_404(MLModel, pk=pk)
     form = MLModelForm(request.POST or None, instance=model)
@@ -627,11 +628,11 @@ def ml_model_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_model_delete(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     model = get_object_or_404(MLModel, pk=pk)
     if request.method == "POST":
@@ -647,11 +648,11 @@ def ml_model_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_pipeline_create(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     form = MLPipelineForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -667,11 +668,11 @@ def ml_pipeline_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_pipeline_edit(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     pipeline = get_object_or_404(MLPipeline, pk=pk)
     form = MLPipelineForm(request.POST or None, instance=pipeline)
@@ -688,11 +689,11 @@ def ml_pipeline_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_pipeline_delete(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     pipeline = get_object_or_404(MLPipeline, pk=pk)
     if request.method == "POST":
@@ -708,11 +709,11 @@ def ml_pipeline_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_experiment_create(request):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     form = MLExperimentForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -728,11 +729,11 @@ def ml_experiment_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_experiment_edit(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     experiment = get_object_or_404(MLExperiment, pk=pk)
     form = MLExperimentForm(request.POST or None, instance=experiment)
@@ -749,11 +750,11 @@ def ml_experiment_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required
+@login_required(login_url="/informationmanagement/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_experiment_delete(request, pk):
-    if not _has_information_access(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
         return render(request, "404.html", status=404)
     experiment = get_object_or_404(MLExperiment, pk=pk)
     if request.method == "POST":
