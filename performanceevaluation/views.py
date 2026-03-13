@@ -2803,3 +2803,134 @@ def delete_department(request, dept_id):
         messages.error(request, f'Error creating category: {str(e)}')
     
     return redirect('performanceevaluation:criteria_rubrics')
+
+
+@login_required
+@require_system_access
+@require_system_role(['admin', 'superadmin'])
+def ml_lab(request):
+    """ML Lab for performance evaluation — SVM performance level classifier."""
+    from .models import MLInsight, ComputedResult, EvaluationCycle, Department, Evaluation
+    from .svm_classifier import OvRLinearSVM
+    from django.db.models import Avg
+
+    current_system = request.current_system
+    systems = request.session.get('accessible_systems', [])
+
+    ml_models = MLInsight.objects.all()
+
+    # Core stats
+    total_evaluations = Evaluation.objects.count()
+    submitted_evaluations = Evaluation.objects.filter(is_submitted=True).count()
+    cycles = EvaluationCycle.objects.order_by('start_date')
+    departments = Department.objects.all()
+    computed_results = ComputedResult.objects.select_related('evaluatee', 'cycle').all()
+
+    avg_score = computed_results.aggregate(avg=Avg('total_score'))['avg'] or 0
+
+    # Performance level breakdown (for doughnut chart)
+    performance_levels = computed_results.values('performance_level').annotate(
+        count=Count('id')
+    ).order_by('performance_level')
+    perf_labels = [p['performance_level'] or 'Unrated' for p in performance_levels]
+    perf_values = [p['count'] for p in performance_levels]
+
+    # Department average scores (for bar chart)
+    dept_scores = []
+    for dept in departments:
+        dept_users = dept.userdepartmentassignment_set.values_list('user_id', flat=True)
+        dept_avg = computed_results.filter(evaluatee_id__in=dept_users).aggregate(
+            avg=Avg('total_score')
+        )['avg']
+        if dept_avg is not None:
+            dept_scores.append({'name': dept.name, 'avg': round(float(dept_avg), 2)})
+    dept_labels = [d['name'] for d in dept_scores]
+    dept_values = [d['avg'] for d in dept_scores]
+
+    # ---------------------------------------------------------------
+    # SVM — Performance Level Classifier
+    # Features: [total_score, evaluations_received, cycle_index]
+    # Target  : performance_level
+    # ---------------------------------------------------------------
+    cycle_ordinal = {c.id: i + 1 for i, c in enumerate(cycles)}
+
+    X, y_labels, result_ids = [], [], []
+    for r in computed_results:
+        n_evals = Evaluation.objects.filter(
+            evaluatee=r.evaluatee, form__cycle=r.cycle, is_submitted=True
+        ).count()
+        X.append([float(r.total_score), float(n_evals), float(cycle_ordinal.get(r.cycle_id, 1))])
+        y_labels.append(r.performance_level or 'Unrated')
+        result_ids.append(r.id)
+
+    FEATURE_NAMES = ['Total Score', 'Evaluations Received', 'Cycle Index']
+
+    svm_data         = {'trained': False, 'reason': 'Not enough labelled data (need ≥ 4 results with ≥ 2 distinct levels).'}
+    svm_predictions  = []
+    svm_weights      = []
+
+    if len(X) >= 4 and len(set(y_labels)) >= 2:
+        try:
+            model = OvRLinearSVM(C=1.0, lr=0.01, epochs=200)
+            model.fit(X, y_labels)
+
+            acc = model.accuracy(X, y_labels)
+
+            # Predict on the latest cycle's results
+            latest_cycle = cycles.order_by('-end_date').first()
+            latest_results = ComputedResult.objects.filter(
+                cycle=latest_cycle
+            ).select_related('evaluatee') if latest_cycle else []
+
+            preds_X, preds_meta = [], []
+            for r in latest_results:
+                n_evals = Evaluation.objects.filter(
+                    evaluatee=r.evaluatee, form__cycle=r.cycle, is_submitted=True
+                ).count()
+                preds_X.append([float(r.total_score), float(n_evals), float(cycle_ordinal.get(r.cycle_id, 1))])
+                preds_meta.append(r)
+
+            if preds_X:
+                conf_pairs = model.confidence(preds_X)
+                for r, (pred_label, conf_pct) in zip(preds_meta, conf_pairs):
+                    svm_predictions.append({
+                        'evaluatee': r.evaluatee,
+                        'actual_level': r.performance_level or 'Unrated',
+                        'predicted_level': pred_label,
+                        'score': float(r.total_score),
+                        'confidence': conf_pct,
+                        'match': (r.performance_level or 'Unrated') == pred_label,
+                    })
+
+            svm_weights = model.feature_weights(FEATURE_NAMES)
+            svm_data = {
+                'trained':   True,
+                'accuracy':  acc,
+                'n_samples': len(X),
+                'n_classes': len(model.classes_),
+                'classes':   ', '.join(model.classes_),
+                'cycle_name': latest_cycle.name if latest_cycle else '—',
+            }
+        except Exception:
+            svm_data['reason'] = 'Training failed — check data consistency.'
+
+    context = {
+        'systems':           systems,
+        'current_system':    current_system,
+        'ml_models':         ml_models,
+        'total_evaluations': total_evaluations,
+        'submitted_evaluations': submitted_evaluations,
+        'avg_score':         round(float(avg_score), 2),
+        'total_cycles':      cycles.count(),
+        'total_departments': departments.count(),
+        'perf_labels':       json.dumps(perf_labels),
+        'perf_values':       json.dumps(perf_values),
+        'dept_labels':       json.dumps(dept_labels),
+        'dept_values':       json.dumps(dept_values),
+        'svm_data':          svm_data,
+        'svm_predictions':   svm_predictions,
+        'svm_weights':       svm_weights,
+        'fi_labels':         json.dumps([w['name'] for w in svm_weights]),
+        'fi_values':         json.dumps([w['importance'] for w in svm_weights]),
+    }
+    return render(request, 'performanceevaluation/pages/admin/ml_lab.html', context)

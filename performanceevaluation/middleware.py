@@ -15,8 +15,6 @@ class PerformanceEvaluationSystemMiddleware:
             # Don't override session during logout to preserve origin system
             if not request.path.endswith('/logout/'):
                 request.session['current_system'] = 'performanceevaluation'
-        else:
-            request.current_system = None
 
         return self.get_response(request)
 

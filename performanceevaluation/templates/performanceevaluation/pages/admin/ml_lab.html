@@ -1,0 +1,259 @@
+{% extends 'performanceevaluation/base.html' %}
+{% load static %}
+
+{% block title %}ML Lab - Performance Evaluation{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="{% static 'performanceevaluation/css/pages/admin/ml_lab.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="top-bar">
+        <div class="page-header">
+            <div class="breadcrumb">Admin <span class="breadcrumb-sep">›</span> ML Lab</div>
+            <h1>Machine Learning Lab</h1>
+            <p>Decision support models for teacher performance evaluation.</p>
+        </div>
+        <span class="badge badge-info">Decision Support</span>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Evaluations</h3>
+            <div class="stat-value">{{ total_evaluations }}</div>
+            <div class="stat-meta">{{ submitted_evaluations }} submitted</div>
+        </div>
+        <div class="stat-card">
+            <h3>Average Score</h3>
+            <div class="stat-value">{{ avg_score }}</div>
+            <div class="stat-meta">Across all results</div>
+        </div>
+        <div class="stat-card">
+            <h3>Evaluation Cycles</h3>
+            <div class="stat-value">{{ total_cycles }}</div>
+            <div class="stat-meta">Academic periods</div>
+        </div>
+        <div class="stat-card">
+            <h3>Departments</h3>
+            <div class="stat-value">{{ total_departments }}</div>
+            <div class="stat-meta">Organizational units</div>
+        </div>
+    </div>
+    <!-- SVM Classifier -->
+    <div class="section-card">
+        <div class="section-header">
+            <div>
+                <h2>SVM &mdash; Performance Level Classifier</h2>
+                <p class="section-subtitle">Linear Support Vector Machine trained to classify teachers into performance levels using total score, evaluations received, and cycle index.</p>
+            </div>
+            {% if svm_data.trained %}
+            <span class="badge badge-success">Trained &amp; Ready</span>
+            {% else %}
+            <span class="badge badge-default">Needs Data</span>
+            {% endif %}
+        </div>
+
+        {% if svm_data.trained %}
+        <div class="svm-meta">
+            <span class="tag">Accuracy: {{ svm_data.accuracy }}%</span>
+            <span class="tag">Trained on {{ svm_data.n_samples }} results</span>
+            <span class="tag">{{ svm_data.n_classes }} performance levels</span>
+            <span class="tag">OvR · Linear kernel · L2 reg</span>
+        </div>
+
+        {% if svm_predictions %}
+        <h3 class="subsection-title">Predictions — {{ svm_data.cycle_name }}</h3>
+        <div class="svm-table-wrap">
+            <table class="svm-table">
+                <thead>
+                    <tr>
+                        <th>Evaluatee</th>
+                        <th>Score</th>
+                        <th>Actual Level</th>
+                        <th>Predicted Level</th>
+                        <th>Confidence</th>
+                        <th>Match</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pred in svm_predictions %}
+                    <tr>
+                        <td>{{ pred.evaluatee.get_full_name|default:pred.evaluatee.username }}</td>
+                        <td>{{ pred.score }}</td>
+                        <td>{{ pred.actual_level }}</td>
+                        <td>{{ pred.predicted_level }}</td>
+                        <td>{{ pred.confidence }}%</td>
+                        <td>
+                            {% if pred.match %}
+                            <span class="badge badge-success">&#10003;</span>
+                            {% else %}
+                            <span class="badge badge-warning">&#10007;</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="svm-no-data">No results available for the latest cycle to predict.</p>
+        {% endif %}
+
+        {% if svm_weights %}
+        <h3 class="subsection-title">Feature Weights</h3>
+        <div class="feature-importances">
+            {% for w in svm_weights %}
+            <div class="fi-row">
+                <span class="fi-name">{{ w.name }}</span>
+                <div class="fi-bar-wrap">
+                    <div class="fi-bar" style="width: {{ w.importance }}%;"></div>
+                </div>
+                <span class="fi-value">{{ w.importance }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <h3>Model Not Yet Trained</h3>
+            <p>{{ svm_data.reason }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+        <div class="section-card">
+            <h2>Department Average Scores</h2>
+            <div class="chart-container">
+                <canvas id="deptChart"></canvas>
+            </div>
+        </div>
+        <div class="section-card">
+            <h2>SVM Feature Weights</h2>
+            <p class="section-subtitle" style="margin-bottom:0">Relative importance of each input feature in the trained SVM (mean absolute weight across all OvR classifiers).</p>
+            <div class="chart-container">
+                <canvas id="featureWeightChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="section-card">
+            <h2>Performance Level Distribution</h2>
+            <div class="chart-container">
+                <canvas id="perfChart"></canvas>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+}
+
+// Performance Level Distribution
+const perfLabels = {{ perf_labels|safe }};
+const perfValues = {{ perf_values|safe }};
+
+if (perfLabels.length > 0) {
+    new Chart(document.getElementById('perfChart'), {
+        type: 'doughnut',
+        data: {
+            labels: perfLabels,
+            datasets: [{
+                data: perfValues,
+                backgroundColor: ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6'],
+                borderWidth: 2,
+                borderColor: '#fff',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+}
+
+// Department Average Scores
+const deptLabels = {{ dept_labels|safe }};
+const deptValues = {{ dept_values|safe }};
+
+if (deptLabels.length > 0) {
+    new Chart(document.getElementById('deptChart'), {
+        type: 'bar',
+        data: {
+            labels: deptLabels,
+            datasets: [{
+                label: 'Average Score',
+                data: deptValues,
+                backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                borderColor: '#6366f1',
+                borderWidth: 1,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// SVM Feature Weights Chart
+const fiLabels = {{ fi_labels|safe }};
+const fiValues = {{ fi_values|safe }};
+
+if (fiLabels.length > 0) {
+    new Chart(document.getElementById('featureWeightChart'), {
+        type: 'bar',
+        data: {
+            labels: fiLabels,
+            datasets: [{
+                label: 'Weight (%)',
+                data: fiValues,
+                backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                borderColor: '#6366f1',
+                borderWidth: 1,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, max: 100, grid: { color: '#f3f4f6' }, ticks: { callback: v => v + '%' } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

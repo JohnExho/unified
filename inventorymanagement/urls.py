@@ -70,4 +70,5 @@ urlpatterns = [
     path('admin/activate-user/<uuid:user_id>/', views.activate_user, name='activate_user'),
     path('admin/update-tos/', views.update_tos, name='update_tos'),
     path('admin/manage-user-access/<uuid:user_id>/', views.manage_user_access, name='manage_user_access'),
+    path('admin/ml-lab/', views.ml_lab, name='ml_lab'),
 ]

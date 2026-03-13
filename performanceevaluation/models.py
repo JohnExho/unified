@@ -141,6 +141,28 @@ class Department(models.Model):
     def __str__(self):
         return self.name
 
+class MLInsight(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('training', 'Training'),
+        ('ready', 'Ready'),
+    ]
+
+    name = models.CharField(max_length=120)
+    target = models.CharField(max_length=120)
+    algorithm = models.CharField(max_length=120)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    score = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.name
+
+
 class UserDepartmentAssignment(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)

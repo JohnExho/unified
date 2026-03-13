@@ -18,6 +18,7 @@ from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 import json
 import csv
+from datetime import timedelta
 
 now = timezone.now()
 User = get_user_model()
@@ -2405,3 +2406,185 @@ def calendar(request):
         context['month_names'] = {i: cal_module.month_name[i] for i in range(1, 13)}
     
     return render(request, 'projectmanagement/pages/calendar.html', context)
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+def ml_lab(request):
+    """ML Lab — Random Forest task deadline risk classifier."""
+    from .random_forest import RandomForestClassifier
+    from .models import MLInsight
+    from django.db.models.functions import TruncDate
+
+    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    systems = request.session.get('accessible_systems', [])
+    today = timezone.now().date()
+
+    # ---- Feature extraction ----
+    feature_names = [
+        'Priority', 'Days Until Due', 'Assignee Count',
+        'Has Team', 'Project Duration (days)', 'Task Age (days)',
+    ]
+
+    def extract_features(task):
+        assignee_count = task.assigned_to.count()
+        has_team = 1 if task.assigned_team_id else 0
+        project_duration = (task.project.end_date - task.project.start_date).days
+        days_until_due = (task.due_date - today).days
+        task_age = (today - task.created_at.date()).days
+        return [task.priority, days_until_due, assignee_count, has_team, project_duration, task_age]
+
+    all_tasks_rf = list(
+        Task.objects
+        .select_related('project', 'assigned_team')
+        .prefetch_related('assigned_to')
+        .all()
+    )
+
+    # ---- Build labeled training set ----
+    # Label 0: completed tasks (successful)
+    # Label 1: active tasks past their due date (at-risk / overdue)
+    X_train, y_train = [], []
+    for task in all_tasks_rf:
+        if task.status == 'completed':
+            X_train.append(extract_features(task))
+            y_train.append(0)
+        elif task.status in ('todo', 'in_progress') and task.due_date < today:
+            X_train.append(extract_features(task))
+            y_train.append(1)
+
+    rf_trained = len(X_train) >= 5 and len(set(y_train)) >= 2
+    rf_data = {}
+    rf_predictions = []
+    feature_importance_list = []
+
+    if rf_trained:
+        clf = RandomForestClassifier(n_estimators=100, random_state=42)
+        clf.fit(X_train, y_train)
+        rf_accuracy = round(clf.score(X_train, y_train) * 100, 1)
+
+        # Predict risk for all active (non-completed) tasks
+        active_tasks_rf = [t for t in all_tasks_rf if t.status in ('todo', 'in_progress')]
+        for task in active_tasks_rf:
+            feats = [extract_features(task)]
+            prob = clf.predict_proba(feats)[0][1]
+            rf_predictions.append({
+                'task': task,
+                'risk_score': round(prob * 100, 1),
+                'risk_label': 'High' if prob > 0.66 else 'Medium' if prob > 0.33 else 'Low',
+            })
+        rf_predictions.sort(key=lambda x: x['risk_score'], reverse=True)
+        rf_predictions = rf_predictions[:10]
+
+        importances = clf.feature_importances_()
+        feature_importance_list = sorted(
+            [{'name': n, 'importance': round(float(v) * 100, 1)} for n, v in zip(feature_names, importances)],
+            key=lambda x: x['importance'], reverse=True,
+        )
+
+        top_feature = feature_importance_list[0]
+        MLInsight.objects.update_or_create(
+            name='Task Deadline Risk Classifier',
+            defaults={
+                'algorithm': 'Random Forest',
+                'target': 'Deadline Risk (Binary)',
+                'status': 'ready',
+                'score': round(rf_accuracy / 100, 3),
+                'notes': (
+                    f"Trained on {len(X_train)} labeled tasks. "
+                    f"Training accuracy: {rf_accuracy}%. "
+                    f"Top feature: {top_feature['name']} ({top_feature['importance']}%)."
+                ),
+            }
+        )
+
+        rf_data = {
+            'trained': True,
+            'accuracy': rf_accuracy,
+            'n_samples': len(X_train),
+            'n_predictions': len(rf_predictions),
+        }
+    else:
+        if len(X_train) < 5:
+            reason = 'Need at least 5 labeled tasks (completed or overdue) to train.'
+        else:
+            reason = 'Need both completed and overdue tasks for binary classification.'
+        rf_data = {'trained': False, 'reason': reason}
+        MLInsight.objects.update_or_create(
+            name='Task Deadline Risk Classifier',
+            defaults={
+                'algorithm': 'Random Forest',
+                'target': 'Deadline Risk (Binary)',
+                'status': 'draft',
+                'score': None,
+                'notes': f"Not yet trained: {reason}",
+            }
+        )
+
+    ml_models = MLInsight.objects.all()
+
+    # ---- Project analytics ----
+    total_projects = Project.objects.count()
+    active_projects = Project.objects.filter(status='active').count()
+    completed_projects = Project.objects.filter(status='completed').count()
+    completion_rate = round((completed_projects / total_projects) * 100) if total_projects else 0
+
+    total_tasks = Task.objects.count()
+    completed_tasks = Task.objects.filter(status='completed').count()
+    overdue_tasks = Task.objects.filter(
+        due_date__lt=today, status__in=['todo', 'in_progress']
+    ).count()
+    task_completion_rate = round((completed_tasks / total_tasks) * 100) if total_tasks else 0
+
+    # ---- Charts data ----
+    status_dist = Project.objects.values('status').annotate(count=Count('id')).order_by('status')
+    status_labels = [s['status'].title() for s in status_dist]
+    status_values = [s['count'] for s in status_dist]
+
+    last_30_days = timezone.now() - timedelta(days=30)
+    daily_tasks = (
+        Task.objects
+        .filter(created_at__gte=last_30_days)
+        .annotate(date=TruncDate('created_at'))
+        .values('date')
+        .annotate(count=Count('id'))
+        .order_by('date')
+    )
+    trend_labels = [t['date'].strftime('%b %d') for t in daily_tasks]
+    trend_values = [t['count'] for t in daily_tasks]
+
+    team_workload = [
+        {'name': team.name, 'projects': Project.objects.filter(team=team).count()}
+        for team in Team.objects.all()
+    ]
+    workload_labels = [t['name'] for t in team_workload]
+    workload_values = [t['projects'] for t in team_workload]
+
+    fi_labels = [fi['name'] for fi in feature_importance_list]
+    fi_values = [fi['importance'] for fi in feature_importance_list]
+
+    context = {
+        'systems': systems,
+        'current_system': current_system,
+        'ml_models': ml_models,
+        'rf_data': rf_data,
+        'rf_predictions': rf_predictions,
+        'feature_importance_list': feature_importance_list,
+        'total_projects': total_projects,
+        'active_projects': active_projects,
+        'completed_projects': completed_projects,
+        'completion_rate': completion_rate,
+        'total_tasks': total_tasks,
+        'completed_tasks': completed_tasks,
+        'overdue_tasks': overdue_tasks,
+        'task_completion_rate': task_completion_rate,
+        'status_labels': json.dumps(status_labels),
+        'status_values': json.dumps(status_values),
+        'trend_labels': json.dumps(trend_labels),
+        'trend_values': json.dumps(trend_values),
+        'workload_labels': json.dumps(workload_labels),
+        'workload_values': json.dumps(workload_values),
+        'fi_labels': json.dumps(fi_labels),
+        'fi_values': json.dumps(fi_values),
+    }
+    return render(request, 'projectmanagement/pages/admin/ml_lab.html', context)

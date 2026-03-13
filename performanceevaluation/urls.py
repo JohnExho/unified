@@ -85,4 +85,5 @@ urlpatterns = [
     path('admin/rubrics/add/', views.add_rubric, name='add_rubric'),
     path('admin/rubrics/<int:rubric_id>/', views.edit_rubric, name='edit_rubric'),
     path('admin/rubrics/<int:rubric_id>/delete/', views.delete_rubric, name='delete_rubric'),
+    path('admin/ml-lab/', views.ml_lab, name='ml_lab'),
 ]

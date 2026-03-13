@@ -15,8 +15,6 @@ class InventoryManagementSystemMiddleware:
             # Don't override session during logout to preserve origin system
             if not request.path.endswith('/logout/'):
                 request.session['current_system'] = 'inventorymanagement'
-        else:
-            request.current_system = None
 
         response = self.get_response(request)
         return response

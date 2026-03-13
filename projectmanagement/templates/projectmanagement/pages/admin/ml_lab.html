@@ -1,0 +1,331 @@
+{% extends 'projectmanagement/base.html' %}
+{% load static %}
+
+{% block title %}ML Lab - Project Management{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="{% static 'projectmanagement/css/pages/admin/ml_lab.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="top-bar">
+        <div class="page-header">
+            <div class="breadcrumb">Admin <span class="breadcrumb-sep">›</span> ML Lab</div>
+            <h1>Machine Learning Lab</h1>
+            <p>Data mining models for project and task analytics.</p>
+        </div>
+        <span class="badge badge-info">Data Mining</span>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Completion Rate</h3>
+            <div class="stat-value">{{ completion_rate }}%</div>
+            <div class="stat-meta">{{ completed_projects }} of {{ total_projects }} projects</div>
+        </div>
+        <div class="stat-card">
+            <h3>Task Completion</h3>
+            <div class="stat-value">{{ task_completion_rate }}%</div>
+            <div class="stat-meta">{{ completed_tasks }} of {{ total_tasks }} tasks</div>
+        </div>
+        <div class="stat-card">
+            <h3>Active Projects</h3>
+            <div class="stat-value">{{ active_projects }}</div>
+            <div class="stat-meta">Currently in progress</div>
+        </div>
+        <div class="stat-card">
+            <h3>Overdue Tasks</h3>
+            <div class="stat-value warning">{{ overdue_tasks }}</div>
+            <div class="stat-meta">Past deadline</div>
+        </div>
+    </div>
+
+    <!-- ML Models Section -->
+    <div class="section-card">
+        <div class="section-header">
+            <div>
+                <h2>ML Model Registry</h2>
+                <p class="section-subtitle">Predictive models for project success and task management.</p>
+            </div>
+        </div>
+
+        {% if ml_models %}
+        <div class="models-grid">
+            {% for model in ml_models %}
+            <div class="model-card">
+                <div class="model-header">
+                    <div>
+                        <h3>{{ model.name }}</h3>
+                        <p class="model-meta">{{ model.algorithm }} · {{ model.target }}</p>
+                    </div>
+                    <span class="badge {% if model.status == 'ready' %}badge-success{% elif model.status == 'training' %}badge-warning{% else %}badge-default{% endif %}">{{ model.get_status_display }}</span>
+                </div>
+                <div class="model-score">
+                    <span class="score-label">Score</span>
+                    <span class="score-value">{{ model.score|default:"—" }}</span>
+                </div>
+                <p class="model-notes">{{ model.notes|default:"No notes yet." }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h3>ML Sandbox Ready</h3>
+            <p>No models registered yet. Seed data to showcase predictive models.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Random Forest: Active Model -->
+    <div class="section-card">
+        <div class="section-header">
+            <div>
+                <h2>Random Forest — Task Deadline Risk Classifier</h2>
+                <p class="section-subtitle">Ensemble classifier trained on your task data to predict deadline risk for active tasks.</p>
+            </div>
+            {% if rf_data.trained %}
+            <span class="badge badge-success">Trained &amp; Ready</span>
+            {% else %}
+            <span class="badge badge-default">Needs Data</span>
+            {% endif %}
+        </div>
+
+        {% if rf_data.trained %}
+        <div class="rf-meta">
+            <span class="tag">Accuracy: {{ rf_data.accuracy }}%</span>
+            <span class="tag">Trained on {{ rf_data.n_samples }} samples</span>
+            <span class="tag">{{ rf_data.n_predictions }} active task predictions</span>
+            <span class="tag">100 decision trees</span>
+        </div>
+
+        {% if rf_predictions %}
+        <h3 class="subsection-title">Top At-Risk Tasks</h3>
+        <div class="rf-table-wrap">
+            <table class="rf-table">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Project</th>
+                        <th>Due Date</th>
+                        <th>Priority</th>
+                        <th>Risk Score</th>
+                        <th>Risk Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pred in rf_predictions %}
+                    <tr>
+                        <td>{{ pred.task.title }}</td>
+                        <td>{{ pred.task.project.name }}</td>
+                        <td>{{ pred.task.due_date }}</td>
+                        <td>{{ pred.task.priority }}</td>
+                        <td>{{ pred.risk_score }}%</td>
+                        <td>
+                            <span class="badge {% if pred.risk_label == 'High' %}badge-high{% elif pred.risk_label == 'Medium' %}badge-warning{% else %}badge-success{% endif %}">
+                                {{ pred.risk_label }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="rf-no-data">No active tasks available for scoring.</p>
+        {% endif %}
+
+        {% if feature_importance_list %}
+        <h3 class="subsection-title">Feature Importances</h3>
+        <div class="feature-importances">
+            {% for fi in feature_importance_list %}
+            <div class="fi-row">
+                <span class="fi-name">{{ fi.name }}</span>
+                <div class="fi-bar-wrap">
+                    <div class="fi-bar" style="width: {{ fi.importance }}%;"></div>
+                </div>
+                <span class="fi-value">{{ fi.importance }}%</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <h3>Model Not Yet Trained</h3>
+            <p>{{ rf_data.reason }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+        <div class="section-card">
+            <h2>Project Status Distribution</h2>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+        <div class="section-card">
+            <h2>Task Creation Trend (30 Days)</h2>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="section-card">
+            <h2>Team Workload Distribution</h2>
+            <div class="chart-container">
+                <canvas id="workloadChart"></canvas>
+            </div>
+        </div>
+        <div class="section-card">
+            <h2>RF Feature Importances</h2>
+            <p class="section-subtitle" style="margin-bottom:0">Relative weight of each input feature in the trained Random Forest model.</p>
+            <div class="chart-container">
+                <canvas id="featureImportanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+}
+
+// Project Status Distribution
+const statusLabels = {{ status_labels|safe }};
+const statusValues = {{ status_values|safe }};
+
+if (statusLabels.length > 0) {
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusValues,
+                backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                borderWidth: 2,
+                borderColor: '#fff',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+}
+
+// Task trend chart
+const trendLabels = {{ trend_labels|safe }};
+const trendValues = {{ trend_values|safe }};
+
+if (trendLabels.length > 0) {
+    new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+            labels: trendLabels,
+            datasets: [{
+                label: 'Tasks Created',
+                data: trendValues,
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// Team workload chart
+const workloadLabels = {{ workload_labels|safe }};
+const workloadValues = {{ workload_values|safe }};
+
+if (workloadLabels.length > 0) {
+    new Chart(document.getElementById('workloadChart'), {
+        type: 'bar',
+        data: {
+            labels: workloadLabels,
+            datasets: [{
+                label: 'Projects',
+                data: workloadValues,
+                backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                borderColor: '#6366f1',
+                borderWidth: 1,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// RF Feature Importance chart
+const fiLabels = {{ fi_labels|safe }};
+const fiValues = {{ fi_values|safe }};
+
+if (fiLabels.length > 0) {
+    new Chart(document.getElementById('featureImportanceChart'), {
+        type: 'bar',
+        data: {
+            labels: fiLabels,
+            datasets: [{
+                label: 'Importance (%)',
+                data: fiValues,
+                backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                borderColor: '#6366f1',
+                borderWidth: 1,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, max: 100, grid: { color: '#f3f4f6' }, ticks: { callback: v => v + '%' } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

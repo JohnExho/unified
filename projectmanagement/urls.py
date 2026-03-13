@@ -62,4 +62,5 @@ urlpatterns = [
     path('admin/<uuid:user_id>/manage_access/', manage_user_access, name='manage_user_access'),
     path('admin/update_tos/', update_tos, name='update_tos'),
     path('admin/system_logs/', system_logs, name='pm_system_logs'),
+    path('admin/ml-lab/', views.ml_lab, name='ml_lab'),
 ]

@@ -7,7 +7,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q, Count, Avg, F, ExpressionWrapper, DurationField
-from .models import InventoryCategory, InventoryItem, InventoryTransaction, Asset, AssetCategory, AssetAssignment, AssetMaintenance, Requisition, RequisitionItem
+from .models import InventoryCategory, InventoryItem, InventoryTransaction, Asset, AssetCategory, AssetAssignment, AssetMaintenance, Requisition, RequisitionItem, MLInsight
 from core.models import Address, Logs, SystemMembership
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
@@ -2584,4 +2584,99 @@ def delete_asset_maintenance(request, maintenance_id):
         import traceback
         traceback.print_exc()
         return JsonResponse({'error': str(e), 'success': False}, status=500)
+
+
+@login_required
+@require_system_role(['admin', 'superadmin'])
+def ml_lab(request):
+    """ML Lab for inventory management analytics and LSTM time-series forecasting."""
+    from django.db.models.functions import TruncDate
+    from .lstm_forecast import LSTMForecast
+
+    current_system = getattr(request, 'current_system', None) or 'inventorymanagement'
+    systems = request.session.get('accessible_systems', [])
+
+    ml_models = MLInsight.objects.all()
+
+    # Inventory stats
+    total_items = InventoryItem.objects.count()
+    low_stock = InventoryItem.objects.filter(quantity__lte=F('low_stock_threshold')).count()
+
+    # Asset utilization
+    total_assets = Asset.objects.count()
+    assigned_assets = Asset.objects.filter(status='assigned').count()
+    utilization_rate = round((assigned_assets / total_assets) * 100) if total_assets else 0
+
+    # Requisition approval rate
+    total_reqs = Requisition.objects.count()
+    approved_reqs = Requisition.objects.filter(status='approved').count()
+    approval_rate = round((approved_reqs / total_reqs) * 100) if total_reqs else 0
+
+    # Build a complete 60-day daily transaction series (0-filled for missing dates)
+    today = timezone.now().date()
+    start_date = today - timedelta(days=59)
+    last_60_days = timezone.now() - timedelta(days=60)
+
+    raw_txns = (
+        InventoryTransaction.objects
+        .filter(created_at__gte=last_60_days)
+        .annotate(date=TruncDate('created_at'))
+        .values('date')
+        .annotate(count=Count('id'))
+        .order_by('date')
+    )
+    date_count_map = {t['date']: t['count'] for t in raw_txns}
+    all_dates   = [start_date + timedelta(days=i) for i in range(60)]
+    full_series = [date_count_map.get(d, 0) for d in all_dates]
+
+    # LSTM Time Series Forecasting
+    lstm_trained    = False
+    forecast_labels = []
+    forecast_values = []
+    forecast_points = []
+    lstm_info       = {}
+
+    if sum(full_series) >= 10:
+        try:
+            model = LSTMForecast(hidden=8, look_back=5, forecast=7, lr=0.02, epochs=50)
+            model.fit(full_series)
+            forecast_values = model.predict(full_series)
+            forecast_labels = [
+                (today + timedelta(days=i + 1)).strftime('%b %d')
+                for i in range(7)
+            ]
+            forecast_points = list(zip(forecast_labels, forecast_values))
+            lstm_trained = True
+            lstm_info = {
+                'hidden':           8,
+                'look_back':        5,
+                'forecast_horizon': 7,
+                'n_samples':        len(full_series),
+                'epochs':           50,
+                'loss':             model._last_loss,
+            }
+        except Exception:
+            pass
+
+    # Last 30 days for the trend display
+    trend_labels = [d.strftime('%b %d') for d in all_dates[-30:]]
+    trend_values = full_series[-30:]
+
+    context = {
+        'systems':          systems,
+        'current_system':   current_system,
+        'ml_models':        ml_models,
+        'total_items':      total_items,
+        'low_stock':        low_stock,
+        'utilization_rate': utilization_rate,
+        'approval_rate':    approval_rate,
+        'trend_labels':     json.dumps(trend_labels),
+        'trend_values':     json.dumps(trend_values),
+        'lstm_trained':     lstm_trained,
+        'forecast_labels':  json.dumps(forecast_labels),
+        'forecast_values':  json.dumps(forecast_values),
+        'forecast_points':  forecast_points,
+        'lstm_info':        lstm_info,
+    }
+    return render(request, 'inventorymanagement/pages/admin/ml_lab.html', context)
 

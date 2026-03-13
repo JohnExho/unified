@@ -1,0 +1,209 @@
+{% extends 'inventorymanagement/base.html' %}
+{% load static %}
+
+{% block title %}ML Lab - Inventory Management{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/admin/ml_lab.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="top-bar">
+        <div class="page-header">
+            <div class="breadcrumb">Admin <span class="breadcrumb-sep">›</span> ML Lab</div>
+            <h1>Machine Learning Lab</h1>
+            <p>Data analytics and predictive models for inventory optimization.</p>
+        </div>
+        <span class="badge badge-info">Analytics-Ready</span>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Items</h3>
+            <div class="stat-value">{{ total_items }}</div>
+            <div class="stat-meta">Inventory items tracked</div>
+        </div>
+        <div class="stat-card">
+            <h3>Low Stock</h3>
+            <div class="stat-value warning">{{ low_stock }}</div>
+            <div class="stat-meta">Items needing restock</div>
+        </div>
+        <div class="stat-card">
+            <h3>Asset Utilization</h3>
+            <div class="stat-value">{{ utilization_rate }}%</div>
+            <div class="stat-meta">Assets currently assigned</div>
+        </div>
+        <div class="stat-card">
+            <h3>Approval Rate</h3>
+            <div class="stat-value">{{ approval_rate }}%</div>
+            <div class="stat-meta">Requisition approval rate</div>
+        </div>
+    </div>
+
+
+    <!-- LSTM Time Series Forecaster -->
+    <div class="section-card">
+        <div class="section-header">
+            <div>
+                <h2>LSTM — Transaction Demand Forecaster</h2>
+                <p class="section-subtitle">Recurrent neural network trained on 60 days of daily inventory transactions to forecast the next 7 days of demand.</p>
+            </div>
+            {% if lstm_trained %}
+            <span class="badge badge-success">Trained &amp; Ready</span>
+            {% else %}
+            <span class="badge badge-default">Needs Data</span>
+            {% endif %}
+        </div>
+
+        {% if lstm_trained %}
+        <div class="lstm-meta">
+            <span class="tag">Hidden units: {{ lstm_info.hidden }}</span>
+            <span class="tag">Look-back: {{ lstm_info.look_back }} days</span>
+            <span class="tag">Forecast: {{ lstm_info.forecast_horizon }} days ahead</span>
+            <span class="tag">Trained on {{ lstm_info.n_samples }} samples</span>
+            <span class="tag">{{ lstm_info.epochs }} epochs</span>
+        </div>
+
+        {% if forecast_points %}
+        <h3 class="subsection-title">7-Day Transaction Forecast</h3>
+        <div class="forecast-table-wrap">
+            <table class="forecast-table">
+                <thead>
+                    <tr>
+                        {% for label, val in forecast_points %}
+                        <th>{{ label }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {% for label, val in forecast_points %}
+                        <td>{{ val }}</td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <h3>Insufficient Training Data</h3>
+            <p>Requires at least 10 inventory transactions in the past 60 days to train the LSTM model.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+        <div class="section-card">
+            <h2>Transaction Trend (30 Days) &amp; LSTM Forecast</h2>
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+        <div class="section-card">
+            <h2>Planned Experiments</h2>
+            <div class="experiments-list">
+                <span class="badge badge-default">Stock Depletion Forecast</span>
+                <span class="badge badge-default">Requisition Demand Prediction</span>
+                <span class="badge badge-default">Asset Lifecycle Analysis</span>
+                <span class="badge badge-default">Low Stock Early Warning</span>
+                <span class="badge badge-default">Category Usage Patterns</span>
+                <span class="badge badge-default">Seasonal Demand Analysis</span>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+}
+
+// Transaction Trend + LSTM Forecast chart
+const trendLabels    = {{ trend_labels|safe }};
+const trendValues    = {{ trend_values|safe }};
+const forecastLabels = {{ forecast_labels|safe }};
+const forecastValues = {{ forecast_values|safe }};
+const lstmTrained    = {{ lstm_trained|lower }};
+
+const allChartLabels = [...trendLabels, ...forecastLabels];
+
+// Actual series: 30 values then null for forecast window
+const actualData = [
+    ...trendValues,
+    ...forecastLabels.map(() => null)
+];
+
+// Forecast series: nulls up to last actual (connector point), then forecast values
+const forecastData = [
+    ...trendValues.slice(0, -1).map(() => null),
+    trendValues[trendValues.length - 1],
+    ...forecastValues
+];
+
+if (allChartLabels.length > 0) {
+    const datasets = [{
+        label: 'Actual Transactions',
+        data: actualData,
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 2,
+        spanGaps: false,
+    }];
+
+    if (lstmTrained && forecastValues.length > 0) {
+        datasets.push({
+            label: 'LSTM Forecast',
+            data: forecastData,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.05)',
+            fill: false,
+            tension: 0.4,
+            pointRadius: 4,
+            borderDash: [5, 4],
+            spanGaps: false,
+        });
+    }
+
+    new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: { labels: allChartLabels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: lstmTrained, position: 'top' }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                x: {
+                    grid: { display: false },
+                    ticks: { maxTicksLimit: 12, maxRotation: 45 }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

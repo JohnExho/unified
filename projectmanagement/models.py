@@ -167,3 +167,26 @@ class Report(models.Model):
 
     def __str__(self):
         return f"Report for {self.project.name} at {self.created_at}"
+
+
+class MLInsight(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('training', 'Training'),
+        ('ready', 'Ready'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=120)
+    target = models.CharField(max_length=120)
+    algorithm = models.CharField(max_length=120)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    score = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.name
