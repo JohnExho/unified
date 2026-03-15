@@ -15,6 +15,11 @@ def root_redirect(request):
 urlpatterns = [
     path("", root_redirect, name="root-redirect"),
     path("dashboard/", views.dashboard, name="information-dashboard"),
+    path(
+        "dashboard/train-naive-bayes/",
+        views.train_naive_bayes_model,
+        name="information-train-naive-bayes",
+    ),
     path("projects/", views.projects, name="information-projects"),
     path("projects/new/", views.project_create, name="information-project-create"),
     path(

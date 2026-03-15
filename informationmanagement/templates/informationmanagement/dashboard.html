@@ -13,6 +13,14 @@
          href="{% url 'informationmanagement:information-reports' %}">View Reports</a>
       <a class="button"
          href="{% url 'informationmanagement:information-project-create' %}">Create Project</a>
+      {% if can_train_nb_model %}
+        <form method="post"
+              action="{% url 'informationmanagement:information-train-naive-bayes' %}">
+          {% csrf_token %}
+          <input type="hidden" name="days" value="3650" />
+          <button type="submit" class="button secondary">Train Naive Bayes</button>
+        </form>
+      {% endif %}
     </div>
   </div>
   <div class="grid cols-4">
@@ -127,6 +135,13 @@
           <p>Prepared datasets and pipelines.</p>
         </div>
       </div>
+      {% if not nb_model_ready %}
+        <div class="muted text-small mb-12">Naive Bayes model is not trained yet. Use the admin action to train.</div>
+      {% elif nb_uses_fallback %}
+        <div class="muted text-small mb-12">
+          Model is available. Showing fallback preview due to limited confident classifications.
+        </div>
+      {% endif %}
       <div class="list">
         <div class="list-item">
           <div>
@@ -149,6 +164,19 @@
           </div>
           <span class="badge success">{{ ml_summary.experiments }}</span>
         </div>
+        {% for row in nb_predictions %}
+          <div class="list-item">
+            <div>
+              <div class="text-strong">{{ row.project.name|truncatechars:30 }}</div>
+              <div class="muted text-small">{{ row.predicted_label }} · Reach {{ row.predicted_reach }}</div>
+            </div>
+            <span class="pill">{{ row.confidence|floatformat:2 }}</span>
+          </div>
+        {% empty %}
+          <div class="list-item">
+            <div class="muted text-small">No classification output yet.</div>
+          </div>
+        {% endfor %}
       </div>
     </div>
   </div>

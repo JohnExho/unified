@@ -8,4 +8,8 @@ django-simple-captcha==0.6.3
 pillow==12.1.0
 pycparser==2.23
 pytz==2025.2
+joblib==1.5.3
+numpy==2.4.3
+pandas==3.0.1
+scikit-learn==1.8.0
 sqlparse==0.5.5

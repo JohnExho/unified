@@ -20,6 +20,8 @@ from librarymanagement.utils import BookUtils
 from datetime import timedelta
 from decimal import Decimal
 from django.db.models import Count, Avg, F
+from django.conf import settings
+import os
 
 
 class ReportServices:
@@ -589,7 +591,6 @@ class BookServices:
 
         return book
 
-
     @staticmethod
     def update_book(book_id, data, files=None):
         """Update existing book"""
@@ -630,7 +631,9 @@ class BookServices:
 
         # Update M2M relations
         if "categories" in data:
-            category_names = BookServices.process_tagify_data(data.get("categories", ""))
+            category_names = BookServices.process_tagify_data(
+                data.get("categories", "")
+            )
             if category_names:
                 categories = CategoryServices.get_or_create_categories_from_strings(
                     category_names
@@ -640,7 +643,9 @@ class BookServices:
         if "authors" in data:
             author_names = BookServices.process_tagify_data(data.get("authors", ""))
             if author_names:
-                authors = AuthorServices.get_or_create_authors_from_strings(author_names)
+                authors = AuthorServices.get_or_create_authors_from_strings(
+                    author_names
+                )
                 book.authors.set(authors)
 
         return book
@@ -710,9 +715,7 @@ class BookServices:
                             ),
                             edition=row.get("edition", ""),
                             language=row.get("language", "English"),
-                            pages=(
-                                int(row.get("pages")) if row.get("pages") else None
-                            ),
+                            pages=(int(row.get("pages")) if row.get("pages") else None),
                             resource_type=row.get("resource_type", "physical"),
                             total_copies=(
                                 int(row.get("total_copies", 1))
@@ -736,10 +739,8 @@ class BookServices:
                             author_names = [
                                 name.strip() for name in row["authors"].split(";")
                             ]
-                            authors = (
-                                AuthorServices.get_or_create_authors_from_strings(
-                                    author_names
-                                )
+                            authors = AuthorServices.get_or_create_authors_from_strings(
+                                author_names
                             )
                             book.authors.set(authors)
 
@@ -847,7 +848,6 @@ class BookServices:
             return html_content, "text/html", "books_export.html"
 
         return html_content, "application/vnd.ms-excel", "books_export.xls"
-
 
 
 class LibraryServices:
@@ -1087,7 +1087,9 @@ class TransactionServices:
         trans = BorrowingTransaction.objects.get(id=transaction_id)
 
         # Deduct payment from fine
-        trans.fine_amount = max(Decimal("0.00"), trans.fine_amount - Decimal(str(amount_paid)))
+        trans.fine_amount = max(
+            Decimal("0.00"), trans.fine_amount - Decimal(str(amount_paid))
+        )
 
         trans.notes += f"\n[Payment] {payment_method}: ₱{amount_paid}"
         trans.save()
@@ -1851,6 +1853,294 @@ class RecommendationServices:
 class DataMiningServices:
     """Services for data mining and analytics"""
 
+    RANDOM_FOREST_DEMAND_MODEL_PATH = os.path.join(
+        settings.BASE_DIR,
+        "librarymanagement",
+        "ml_models",
+        "book_demand_random_forest.joblib",
+    )
+
+    @staticmethod
+    def _build_book_demand_features(books, period_start):
+        """Build feature vectors for book demand modeling."""
+        samples = []
+
+        for book in books:
+            borrows = BorrowingTransaction.objects.filter(
+                book=book, borrowed_date__date__gte=period_start
+            ).count()
+            reservations = Reservation.objects.filter(
+                book=book, reservation_date__date__gte=period_start
+            ).count()
+            views = UserActivity.objects.filter(
+                book=book,
+                activity_type="view",
+                timestamp__date__gte=period_start,
+            ).count()
+
+            category_count = book.categories.count()
+            pages = book.pages or 0
+            publication_year = book.publication_year or 0
+
+            # Basic supervised label for a practical MVP:
+            # high-demand if books are being borrowed/reserved frequently.
+            total_demand = borrows + reservations
+            high_demand_label = 1 if total_demand >= 3 or reservations >= 2 else 0
+
+            features = [
+                borrows,
+                reservations,
+                views,
+                int(book.total_copies or 0),
+                int(book.available_copies or 0),
+                category_count,
+                pages,
+                publication_year,
+                1 if book.resource_type == "digital" else 0,
+                1 if book.status == "available" else 0,
+            ]
+
+            samples.append(
+                {
+                    "book": book,
+                    "features": features,
+                    "borrows": borrows,
+                    "reservations": reservations,
+                    "views": views,
+                    "label": high_demand_label,
+                }
+            )
+
+        return samples
+
+    @staticmethod
+    def train_random_forest_demand_model(period_days=90):
+        """
+        Train a basic Random Forest model for high-demand book classification.
+        Stores the trained model to disk for later inference.
+        """
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.model_selection import train_test_split
+        from sklearn.metrics import accuracy_score
+        import joblib
+
+        period_start = timezone.now().date() - timedelta(days=period_days)
+        books = Book.objects.all().prefetch_related("categories")
+        samples = DataMiningServices._build_book_demand_features(books, period_start)
+
+        if len(samples) < 8:
+            return {
+                "trained": False,
+                "reason": "Not enough samples to train Random Forest",
+                "samples": len(samples),
+            }
+
+        X = [sample["features"] for sample in samples]
+        y = [sample["label"] for sample in samples]
+
+        if len(set(y)) < 2:
+            return {
+                "trained": False,
+                "reason": "Training labels have only one class",
+                "samples": len(samples),
+            }
+
+        model = RandomForestClassifier(
+            n_estimators=120,
+            max_depth=8,
+            random_state=42,
+            class_weight="balanced",
+        )
+
+        accuracy = None
+        if len(samples) >= 12:
+            X_train, X_test, y_train, y_test = train_test_split(
+                X,
+                y,
+                test_size=0.25,
+                random_state=42,
+                stratify=y,
+            )
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            accuracy = round(float(accuracy_score(y_test, y_pred)), 4)
+        else:
+            model.fit(X, y)
+
+        os.makedirs(
+            os.path.dirname(DataMiningServices.RANDOM_FOREST_DEMAND_MODEL_PATH),
+            exist_ok=True,
+        )
+        artifact = {
+            "model": model,
+            "feature_names": [
+                "recent_borrows",
+                "recent_reservations",
+                "recent_views",
+                "total_copies",
+                "available_copies",
+                "category_count",
+                "pages",
+                "publication_year",
+                "is_digital",
+                "is_available",
+            ],
+            "trained_at": timezone.now().isoformat(),
+            "period_days": period_days,
+        }
+        joblib.dump(artifact, DataMiningServices.RANDOM_FOREST_DEMAND_MODEL_PATH)
+
+        return {
+            "trained": True,
+            "samples": len(samples),
+            "accuracy": accuracy,
+            "model_path": DataMiningServices.RANDOM_FOREST_DEMAND_MODEL_PATH,
+        }
+
+    @staticmethod
+    def _load_random_forest_model():
+        """Load trained Random Forest artifact from disk, if available."""
+        import joblib
+
+        if not os.path.exists(DataMiningServices.RANDOM_FOREST_DEMAND_MODEL_PATH):
+            return None
+
+        return joblib.load(DataMiningServices.RANDOM_FOREST_DEMAND_MODEL_PATH)
+
+    @staticmethod
+    def _predict_demand_with_random_forest(book_id=None, threshold=0.55):
+        """Predict high-demand books using a trained Random Forest model."""
+        artifact = DataMiningServices._load_random_forest_model()
+        if not artifact or "model" not in artifact:
+            return []
+
+        model = artifact["model"]
+        period_days = artifact.get("period_days", 90)
+        period_start = timezone.now().date() - timedelta(days=period_days)
+
+        if book_id:
+            books = Book.objects.filter(id=book_id).prefetch_related("categories")
+        else:
+            books = Book.objects.all().prefetch_related("categories")
+
+        samples = DataMiningServices._build_book_demand_features(books, period_start)
+        if not samples:
+            return []
+
+        X = [sample["features"] for sample in samples]
+
+        probabilities = None
+        if hasattr(model, "predict_proba") and len(getattr(model, "classes_", [])) >= 2:
+            classes = list(model.classes_)
+            positive_idx = classes.index(1) if 1 in classes else 0
+            probabilities = model.predict_proba(X)[:, positive_idx]
+        else:
+            probabilities = model.predict(X)
+
+        predictions = []
+        for sample, probability in zip(samples, probabilities):
+            total_demand = sample["borrows"] + sample["reservations"]
+            total_copies = max(1, int(sample["book"].total_copies or 1))
+            demand_ratio = total_demand / total_copies
+
+            confidence = round(float(probability), 4)
+            if confidence >= threshold:
+                predictions.append(
+                    {
+                        "book": sample["book"],
+                        "confidence": confidence,
+                        "demand_ratio": round(demand_ratio, 2),
+                        "recent_borrows": sample["borrows"],
+                        "recent_reservations": sample["reservations"],
+                        "recent_views": sample["views"],
+                        "recommended_copies": max(
+                            1,
+                            (
+                                int((confidence * total_demand) / 2)
+                                if total_demand > 0
+                                else 1
+                            ),
+                        ),
+                    }
+                )
+
+        return sorted(
+            predictions,
+            key=lambda item: (item["confidence"], item["demand_ratio"]),
+            reverse=True,
+        )
+
+    @staticmethod
+    def _heuristic_demand_predictions(book_id=None, period_days=90, min_ratio=2):
+        """Fallback deterministic demand prediction when ML model is unavailable."""
+        period_start = timezone.now().date() - timedelta(days=period_days)
+
+        books = (
+            Book.objects.filter(id=book_id)
+            if book_id
+            else Book.objects.all().prefetch_related("categories")
+        )
+
+        high_demand_books = []
+        for book in books:
+            recent_borrows = BorrowingTransaction.objects.filter(
+                book=book, borrowed_date__date__gte=period_start
+            ).count()
+            recent_reservations = Reservation.objects.filter(
+                book=book, reservation_date__date__gte=period_start
+            ).count()
+            recent_views = UserActivity.objects.filter(
+                book=book,
+                activity_type="view",
+                timestamp__date__gte=period_start,
+            ).count()
+
+            total_demand = recent_borrows + recent_reservations
+            if total_demand > 0 and book.total_copies > 0:
+                demand_ratio = total_demand / book.total_copies
+                if demand_ratio >= min_ratio:
+                    high_demand_books.append(
+                        {
+                            "book": book,
+                            "confidence": 0.50,
+                            "demand_ratio": round(demand_ratio, 2),
+                            "recent_borrows": recent_borrows,
+                            "recent_reservations": recent_reservations,
+                            "recent_views": recent_views,
+                            "recommended_copies": max(1, int(max(demand_ratio, 2) / 2)),
+                        }
+                    )
+
+        return sorted(
+            high_demand_books,
+            key=lambda item: (item["demand_ratio"], item.get("recent_views", 0)),
+            reverse=True,
+        )
+
+    @staticmethod
+    def get_demand_forecast_snapshot(limit=5, threshold=0.55):
+        """
+        Get demand forecast rows for dashboard without triggering model training.
+        """
+        model_ready = DataMiningServices._load_random_forest_model() is not None
+        forecasts = []
+
+        if model_ready:
+            forecasts = DataMiningServices._predict_demand_with_random_forest(
+                threshold=threshold
+            )
+
+        uses_fallback = False
+        if not forecasts:
+            forecasts = DataMiningServices._heuristic_demand_predictions()
+            uses_fallback = True
+
+        return {
+            "model_ready": model_ready,
+            "uses_fallback": uses_fallback,
+            "forecasts": forecasts[:limit],
+        }
+
     @staticmethod
     def analyze_user_patterns():
         """
@@ -2011,46 +2301,26 @@ class DataMiningServices:
         Predict future demand for books based on historical trends
         Returns books that might need additional copies
         """
-        from datetime import timedelta
+        # Try ML prediction first. If model is missing, train once and retry.
+        ml_predictions = DataMiningServices._predict_demand_with_random_forest(
+            book_id=book_id,
+            threshold=0.55,
+        )
 
-        # Analyze past 3 months
-        period_start = timezone.now().date() - timedelta(days=90)
+        if ml_predictions:
+            return ml_predictions
 
-        if book_id:
-            books = Book.objects.filter(id=book_id)
-        else:
-            books = Book.objects.all()
+        training_result = DataMiningServices.train_random_forest_demand_model()
+        if training_result.get("trained"):
+            ml_predictions = DataMiningServices._predict_demand_with_random_forest(
+                book_id=book_id,
+                threshold=0.55,
+            )
+            if ml_predictions:
+                return ml_predictions
 
-        high_demand_books = []
-
-        for book in books:
-            # Count recent activity
-            recent_borrows = BorrowingTransaction.objects.filter(
-                book=book, borrowed_date__date__gte=period_start
-            ).count()
-
-            recent_reservations = Reservation.objects.filter(
-                book=book, reservation_date__date__gte=period_start
-            ).count()
-
-            # Calculate demand ratio
-            total_demand = recent_borrows + recent_reservations
-            if total_demand > 0 and book.total_copies > 0:
-                demand_ratio = total_demand / book.total_copies
-
-                # If demand ratio > 3, book is in high demand
-                if demand_ratio > 3:
-                    high_demand_books.append(
-                        {
-                            "book": book,
-                            "demand_ratio": round(demand_ratio, 2),
-                            "recent_borrows": recent_borrows,
-                            "recent_reservations": recent_reservations,
-                            "recommended_copies": max(1, int(demand_ratio / 2)),
-                        }
-                    )
-
-        return sorted(high_demand_books, key=lambda x: x["demand_ratio"], reverse=True)
+        # Fallback to deterministic heuristic when data is too sparse for ML.
+        return DataMiningServices._heuristic_demand_predictions(book_id=book_id)
 
     @staticmethod
     def generate_usage_insights(days=30):
@@ -2415,9 +2685,7 @@ class UserActivityServices:
         from datetime import timedelta
 
         period_start = timezone.now() - timedelta(days=days)
-        activities = UserActivity.objects.filter(
-            user=user, timestamp__gte=period_start
-        )
+        activities = UserActivity.objects.filter(user=user, timestamp__gte=period_start)
 
         if activity_type:
             activities = activities.filter(activity_type=activity_type)
@@ -2430,9 +2698,9 @@ class UserActivityServices:
         from datetime import timedelta
 
         cutoff_date = timezone.now() - timedelta(days=days)
-        deleted_count = UserActivity.objects.filter(
-            timestamp__lt=cutoff_date
-        ).delete()[0]
+        deleted_count = UserActivity.objects.filter(timestamp__lt=cutoff_date).delete()[
+            0
+        ]
         return deleted_count
 
     @staticmethod

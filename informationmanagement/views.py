@@ -4,6 +4,7 @@ from django.db.models import Count, Sum
 from django.utils import timezone
 from django.utils.text import slugify
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 from core.decorators import require_system_access, require_system_role
 from core.services import Services
 from .models import (
@@ -28,6 +29,7 @@ from .forms import (
     MLPipelineForm,
     MLExperimentForm,
 )
+from .services import InformationClassificationService
 
 
 def _has_information_access(request):
@@ -98,6 +100,21 @@ def dashboard(request):
         },
     ]
 
+    nb_snapshot = InformationClassificationService.get_dashboard_snapshot(limit=5)
+    can_train_nb_model = (
+        request.user.is_superuser
+        or Services.has_access(
+            request.user,
+            "informationmanagement",
+            role="admin",
+        )
+        or Services.has_access(
+            request.user,
+            "informationmanagement",
+            role="superadmin",
+        )
+    )
+
     context = {
         **_base_context(request),
         "stats": stats,
@@ -109,8 +126,54 @@ def dashboard(request):
             "pipelines": MLPipeline.objects.count(),
             "experiments": MLExperiment.objects.count(),
         },
+        "nb_predictions": nb_snapshot["predictions"],
+        "nb_model_ready": nb_snapshot["model_ready"],
+        "nb_uses_fallback": nb_snapshot["uses_fallback"],
+        "can_train_nb_model": can_train_nb_model,
     }
     return render(request, "informationmanagement/dashboard.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+@require_POST
+def train_naive_bayes_model(request):
+    """Train IMS Naive Bayes classifier and refresh project predictions."""
+    days_raw = request.POST.get("days", "3650")
+
+    try:
+        days = int(days_raw)
+    except (TypeError, ValueError):
+        days = 3650
+
+    if days <= 0:
+        days = 3650
+
+    result = InformationClassificationService.train_naive_bayes_classifier(
+        lookback_days=days
+    )
+
+    if result.get("trained"):
+        predictions = InformationClassificationService.predict_project_success()
+        accuracy = result.get("accuracy")
+        if accuracy is not None:
+            messages.success(
+                request,
+                f"Naive Bayes trained (accuracy: {accuracy}). Updated {len(predictions)} predictions.",
+            )
+        else:
+            messages.success(
+                request,
+                f"Naive Bayes trained. Updated {len(predictions)} predictions.",
+            )
+    else:
+        messages.warning(
+            request,
+            f"Training skipped: {result.get('reason', 'insufficient data')}",
+        )
+
+    return redirect("informationmanagement:information-dashboard")
 
 
 @login_required(login_url="/informationmanagement/login")

@@ -13,6 +13,14 @@
          href="{% url 'communityextensionservices:ces-member-create' %}">Add Member</a>
       <a class="button"
          href="{% url 'communityextensionservices:ces-dues-create' %}">Record Dues</a>
+      {% if can_train_kmeans_model %}
+        <form method="post"
+              action="{% url 'communityextensionservices:ces-train-kmeans' %}">
+          {% csrf_token %}
+          <input type="hidden" name="k" value="3" />
+          <button class="button secondary" type="submit">Train K-Means</button>
+        </form>
+      {% endif %}
     </div>
   </div>
   <div class="grid cols-4">
@@ -76,10 +84,15 @@
       <div class="split">
         <div>
           <h3>ML Readiness</h3>
-          <p class="muted text-small">Models registered for demo</p>
+          <p class="muted text-small">Models and segmentation snapshot</p>
         </div>
         <span class="chip">{{ ml_count }}</span>
       </div>
+      {% if not kmeans_model_ready %}
+        <div class="muted text-small" style="margin-top: 8px;">K-Means model not trained yet.</div>
+      {% elif kmeans_uses_fallback %}
+        <div class="muted text-small" style="margin-top: 8px;">Showing fallback segmentation preview.</div>
+      {% endif %}
       <div style="margin-top: 14px;">
         {% for model in ml_insights %}
           <div class="split" style="margin-bottom: 10px;">
@@ -91,6 +104,19 @@
           </div>
         {% empty %}
           <p class="muted">No ML models yet. Seed data to populate.</p>
+        {% endfor %}
+      </div>
+      <div style="margin-top: 14px;">
+        {% for row in cluster_snapshot %}
+          <div class="split" style="margin-bottom: 8px;">
+            <div>
+              <div class="text-strong">{{ row.member.last_name }}, {{ row.member.first_name }}</div>
+              <div class="muted text-small">{{ row.cluster_label }}</div>
+            </div>
+            <span class="chip">{{ row.engagement_score|floatformat:1 }}</span>
+          </div>
+        {% empty %}
+          <p class="muted text-small">No cluster output yet.</p>
         {% endfor %}
       </div>
     </div>

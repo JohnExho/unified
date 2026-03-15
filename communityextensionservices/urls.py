@@ -16,6 +16,11 @@ def root_redirect(request):
 urlpatterns = [
     path("", root_redirect, name="ces-root"),
     path("dashboard/", views.dashboard, name="ces-dashboard"),
+    path(
+        "dashboard/train-kmeans/",
+        views.train_member_kmeans,
+        name="ces-train-kmeans",
+    ),
     path("members/", views.members, name="ces-members"),
     path("members/new/", views.member_create, name="ces-member-create"),
     path("members/<int:pk>/edit/", views.member_edit, name="ces-member-edit"),

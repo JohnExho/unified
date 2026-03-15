@@ -15,6 +15,7 @@ from librarymanagement.services import (
     NotificationServices,
     DashboardServices,
     ReportServices,
+    DataMiningServices,
 )
 from .models import (
     Library,
@@ -81,6 +82,20 @@ def dashboard(request):
     recent_transactions = DashboardServices.get_recent_transactions(limit=4)
     popular_books = DashboardServices.get_popular_books(limit=4)
     activity_summary = DashboardServices.get_activity_summary(days=activity_days)
+    demand_forecast_snapshot = DataMiningServices.get_demand_forecast_snapshot(limit=5)
+    can_train_forecast_model = (
+        request.user.is_superuser
+        or Services.has_access(
+            request.user,
+            "librarymanagement",
+            role="admin",
+        )
+        or Services.has_access(
+            request.user,
+            "librarymanagement",
+            role="superadmin",
+        )
+    )
 
     return render(
         request,
@@ -100,8 +115,48 @@ def dashboard(request):
             "popular_books": popular_books,
             # Activity summary
             "activity_summary": activity_summary,
+            # Random Forest demand forecasting
+            "demand_forecasts": demand_forecast_snapshot["forecasts"],
+            "rf_model_ready": demand_forecast_snapshot["model_ready"],
+            "demand_uses_fallback": demand_forecast_snapshot["uses_fallback"],
+            "can_train_forecast_model": can_train_forecast_model,
         },
     )
+
+
+@login_required(login_url="/librarymanagement/login")
+@require_system_role(["admin", "superadmin"])
+@require_POST
+def train_demand_forecast_model(request):
+    """Train Random Forest demand forecasting model from dashboard action."""
+    days_raw = request.POST.get("days", "90")
+
+    try:
+        days = int(days_raw)
+    except (TypeError, ValueError):
+        days = 90
+
+    if days <= 0:
+        days = 90
+
+    result = DataMiningServices.train_random_forest_demand_model(period_days=days)
+
+    if result.get("trained"):
+        accuracy = result.get("accuracy")
+        if accuracy is not None:
+            messages.success(
+                request,
+                f"Demand model retrained successfully (accuracy: {accuracy}).",
+            )
+        else:
+            messages.success(request, "Demand model retrained successfully.")
+    else:
+        messages.warning(
+            request,
+            f"Model training skipped: {result.get('reason', 'insufficient data')}",
+        )
+
+    return redirect("librarymanagement:library_dashboard")
 
 
 # Main Modules

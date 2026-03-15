@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from core.decorators import require_system_access, require_system_role
 from core.services import Services
 from .forms import ActivityForm, DocumentRecordForm, DuesPaymentForm, MemberForm
@@ -14,7 +15,7 @@ from .models import (
     Member,
     MLInsight,
 )
-from .services import get_analytics_data, get_dashboard_data
+from .services import CESClusteringService, get_analytics_data, get_dashboard_data
 
 
 def _base_context(request):
@@ -29,11 +30,71 @@ def _base_context(request):
 def dashboard(request):
     if not Services.has_access(request.user, "communityextensionservices"):
         return render(request, "404.html", status=404)
+
+    cluster_snapshot = CESClusteringService.get_dashboard_snapshot(limit=6)
+    can_train_kmeans_model = (
+        request.user.is_superuser
+        or Services.has_access(
+            request.user,
+            "communityextensionservices",
+            role="admin",
+        )
+        or Services.has_access(
+            request.user,
+            "communityextensionservices",
+            role="superadmin",
+        )
+    )
+
     context = {
         **_base_context(request),
         **get_dashboard_data(),
+        "cluster_snapshot": cluster_snapshot["clusters"],
+        "kmeans_model_ready": cluster_snapshot["model_ready"],
+        "kmeans_uses_fallback": cluster_snapshot["uses_fallback"],
+        "can_train_kmeans_model": can_train_kmeans_model,
     }
     return render(request, "communityextensionservices/dashboard.html", context)
+
+
+@login_required(login_url="/communityextensionservices/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+@require_POST
+def train_member_kmeans(request):
+    """Train CES K-Means model and apply cluster labels to members."""
+    k_raw = request.POST.get("k", "3")
+    try:
+        k = int(k_raw)
+    except (TypeError, ValueError):
+        k = 3
+
+    if k < 2:
+        k = 2
+    if k > 8:
+        k = 8
+
+    result = CESClusteringService.train_kmeans_model(k=k)
+    if result.get("trained"):
+        assignments = CESClusteringService.run_member_clustering()
+        silhouette = result.get("silhouette")
+        if silhouette is not None:
+            messages.success(
+                request,
+                f"K-Means trained (silhouette: {silhouette}). Updated {len(assignments)} member clusters.",
+            )
+        else:
+            messages.success(
+                request,
+                f"K-Means trained. Updated {len(assignments)} member clusters.",
+            )
+    else:
+        messages.warning(
+            request,
+            f"Training skipped: {result.get('reason', 'insufficient data')}",
+        )
+
+    return redirect("communityextensionservices:ces-dashboard")
 
 
 @login_required(login_url="/communityextensionservices/login")

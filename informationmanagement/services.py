@@ -1,5 +1,253 @@
 from django.utils import timezone
+from django.conf import settings
+from datetime import timedelta
+from decimal import Decimal
+import os
 from .utils import percent_change
+from .models import Project, MLModel
+
+
+class InformationClassificationService:
+    """Naive Bayes classification services for IMS basic ML workflows."""
+
+    MODEL_PATH = os.path.join(
+        settings.BASE_DIR,
+        "informationmanagement",
+        "ml_models",
+        "project_success_naive_bayes.joblib",
+    )
+
+    @staticmethod
+    def _project_duration_days(project):
+        if not project.start_date or not project.end_date:
+            return 0
+        return max(0, (project.end_date - project.start_date).days)
+
+    @staticmethod
+    def _project_label(project):
+        """Binary label: 1=likely successful, 0=at risk/unfinished."""
+        if project.status == "Completed":
+            return 1
+        if project.status == "Ongoing" and (project.progress or 0) >= 70:
+            return 1
+        return 0
+
+    @staticmethod
+    def _build_training_rows(projects):
+        rows = []
+        for project in projects:
+            rows.append(
+                {
+                    "project": project,
+                    "category": project.category,
+                    "beneficiaries_count": int(project.beneficiaries_count or 0),
+                    "progress": int(project.progress or 0),
+                    "duration_days": InformationClassificationService._project_duration_days(
+                        project
+                    ),
+                    "label": InformationClassificationService._project_label(project),
+                }
+            )
+        return rows
+
+    @staticmethod
+    def _load_model_artifact():
+        import joblib
+
+        if not os.path.exists(InformationClassificationService.MODEL_PATH):
+            return None
+        return joblib.load(InformationClassificationService.MODEL_PATH)
+
+    @staticmethod
+    def train_naive_bayes_classifier(lookback_days=3650):
+        """Train a basic Naive Bayes classifier for project success prediction."""
+        from sklearn.compose import ColumnTransformer
+        from sklearn.naive_bayes import GaussianNB
+        from sklearn.pipeline import Pipeline
+        from sklearn.preprocessing import OneHotEncoder
+        from sklearn.model_selection import train_test_split
+        from sklearn.metrics import accuracy_score
+        import pandas as pd
+        import joblib
+
+        since = timezone.now().date() - timedelta(days=lookback_days)
+        projects = Project.objects.filter(start_date__gte=since).order_by("id")
+        rows = InformationClassificationService._build_training_rows(projects)
+
+        if len(rows) < 8:
+            return {
+                "trained": False,
+                "reason": "Not enough project samples for training",
+                "samples": len(rows),
+            }
+
+        df = pd.DataFrame(rows)
+        X = df[["category", "beneficiaries_count", "progress", "duration_days"]]
+        y = df["label"]
+
+        if y.nunique() < 2:
+            return {
+                "trained": False,
+                "reason": "Training labels have only one class",
+                "samples": len(rows),
+            }
+
+        preprocessor = ColumnTransformer(
+            transformers=[
+                (
+                    "category",
+                    OneHotEncoder(handle_unknown="ignore", sparse_output=False),
+                    ["category"],
+                )
+            ],
+            remainder="passthrough",
+        )
+
+        pipeline = Pipeline(
+            steps=[
+                ("preprocessor", preprocessor),
+                ("classifier", GaussianNB()),
+            ]
+        )
+
+        accuracy = None
+        if len(df) >= 12:
+            X_train, X_test, y_train, y_test = train_test_split(
+                X,
+                y,
+                test_size=0.25,
+                random_state=42,
+                stratify=y,
+            )
+            pipeline.fit(X_train, y_train)
+            y_pred = pipeline.predict(X_test)
+            accuracy = round(float(accuracy_score(y_test, y_pred)), 4)
+        else:
+            pipeline.fit(X, y)
+
+        os.makedirs(
+            os.path.dirname(InformationClassificationService.MODEL_PATH), exist_ok=True
+        )
+        artifact = {
+            "model": pipeline,
+            "trained_at": timezone.now().isoformat(),
+            "feature_names": [
+                "category",
+                "beneficiaries_count",
+                "progress",
+                "duration_days",
+            ],
+        }
+        joblib.dump(artifact, InformationClassificationService.MODEL_PATH)
+
+        metric_value = f"Accuracy {accuracy}" if accuracy is not None else "Trained"
+        MLModel.objects.update_or_create(
+            name="IMS Project Success Classifier",
+            defaults={
+                "model_type": "Naive Bayes / Classification",
+                "status": "Ready",
+                "metric": metric_value,
+            },
+        )
+
+        return {
+            "trained": True,
+            "samples": len(rows),
+            "accuracy": accuracy,
+            "model_path": InformationClassificationService.MODEL_PATH,
+        }
+
+    @staticmethod
+    def predict_project_success(threshold=0.55):
+        """Predict success probability and update project prediction fields."""
+        import pandas as pd
+
+        artifact = InformationClassificationService._load_model_artifact()
+        if not artifact or "model" not in artifact:
+            return []
+
+        model = artifact["model"]
+        projects = list(Project.objects.all().order_by("-start_date"))
+        if not projects:
+            return []
+
+        rows = InformationClassificationService._build_training_rows(projects)
+        df = pd.DataFrame(rows)
+        X = df[["category", "beneficiaries_count", "progress", "duration_days"]]
+
+        probabilities = model.predict_proba(X)[:, 1]
+        predictions = []
+
+        for row, probability in zip(rows, probabilities):
+            project = row["project"]
+            success_percent = round(float(probability) * 100, 2)
+
+            projected_reach = int(
+                round(
+                    (project.beneficiaries_count or 0)
+                    * (0.8 + (float(probability) * 0.4))
+                )
+            )
+
+            project.predicted_success = Decimal(str(success_percent))
+            project.predicted_reach = max(
+                projected_reach, project.beneficiaries_count or 0
+            )
+            project.save(update_fields=["predicted_success", "predicted_reach"])
+
+            if float(probability) >= threshold:
+                predictions.append(
+                    {
+                        "project": project,
+                        "confidence": round(float(probability), 4),
+                        "predicted_reach": project.predicted_reach,
+                        "predicted_label": "Likely Successful",
+                    }
+                )
+
+        return sorted(predictions, key=lambda item: item["confidence"], reverse=True)
+
+    @staticmethod
+    def _fallback_predictions(limit=5):
+        projects = Project.objects.all().order_by("-progress", "-beneficiaries_count")[
+            :limit
+        ]
+        fallback = []
+        for project in projects:
+            heuristic_confidence = min(0.95, max(0.4, (project.progress or 0) / 100))
+            fallback.append(
+                {
+                    "project": project,
+                    "confidence": round(float(heuristic_confidence), 4),
+                    "predicted_reach": project.beneficiaries_count or 0,
+                    "predicted_label": "Heuristic Estimate",
+                }
+            )
+        return fallback
+
+    @staticmethod
+    def get_dashboard_snapshot(limit=5):
+        """Get prediction rows for dashboard without forcing retrain."""
+        model_ready = (
+            InformationClassificationService._load_model_artifact() is not None
+        )
+        predictions = []
+        uses_fallback = False
+
+        if model_ready:
+            predictions = InformationClassificationService.predict_project_success()
+
+        if not predictions:
+            predictions = InformationClassificationService._fallback_predictions(
+                limit=limit
+            )
+            uses_fallback = True
+
+        return {
+            "model_ready": model_ready,
+            "uses_fallback": uses_fallback,
+            "predictions": predictions[:limit],
+        }
 
 
 def get_information_dashboard_data():

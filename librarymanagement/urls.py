@@ -21,6 +21,11 @@ urlpatterns = [
         name="library_root",
     ),
     path("dashboard/", views.dashboard, name="library_dashboard"),
+    path(
+        "dashboard/train-demand-forecast/",
+        views.train_demand_forecast_model,
+        name="train_demand_forecast_model",
+    ),
     # Libraries
     path("libraries/add/", views.add_library, name="add_library"),
     # Books
