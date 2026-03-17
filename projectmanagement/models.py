@@ -29,6 +29,27 @@ class Project(models.Model):
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
     ]
+    RESEARCH_METHOD_CHOICES = [
+        ('action_research', 'Action Research'),
+        ('text_mining', 'Text Mining'),
+        ('case_study', 'Case Study'),
+        ('experimental', 'Experimental'),
+        ('mixed_methods', 'Mixed Methods'),
+        ('other', 'Other'),
+    ]
+    PUBLICATION_SCOPE_CHOICES = [
+        ('local', 'Local'),
+        ('international', 'International'),
+    ]
+    PUBLICATION_STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('for_publication', 'For Publication'),
+        ('published', 'Published'),
+    ]
+    SOURCE_TYPE_CHOICES = [
+        ('student', 'Student'),
+        ('faculty', 'Faculty'),
+    ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200)
@@ -36,12 +57,20 @@ class Project(models.Model):
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='active')
     start_date = models.DateField()
     end_date = models.DateField()
+    research_method = models.CharField(max_length=40, choices=RESEARCH_METHOD_CHOICES, default='action_research')
+    publication_scope = models.CharField(max_length=20, choices=PUBLICATION_SCOPE_CHOICES, default='local')
+    publication_status = models.CharField(max_length=30, choices=PUBLICATION_STATUS_CHOICES, default='draft')
+    source_type = models.CharField(max_length=20, choices=SOURCE_TYPE_CHOICES, default='student')
+    repository_source = models.URLField(blank=True, null=True)
+    auto_detected_topic = models.CharField(max_length=120, blank=True)
+    text_mining_summary = models.TextField(blank=True)
+    meta_tags = models.JSONField(default=list, blank=True)
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='created_projects')
 
     class Meta:
         permissions = [
-            ("access_project_management_system", "Can access Project Management system"),
+            ("access_project_management_system", "Can access Research Management system"),
         ]
 
     def clean(self):
@@ -49,7 +78,7 @@ class Project(models.Model):
         if self.start_date and self.end_date:
             if self.start_date > self.end_date:
                 raise ValidationError({
-                    'start_date': f"Project start date ({self.start_date}) cannot be after end date ({self.end_date})."
+                    'start_date': f"Research start date ({self.start_date}) cannot be after end date ({self.end_date})."
                 })
 
     def save(self, *args, **kwargs):
@@ -110,13 +139,13 @@ class Task(models.Model):
         if self.due_date and self.project.start_date:
             if self.due_date < self.project.start_date:
                 raise ValidationError({
-                    'due_date': f"Task due date ({self.due_date}) cannot be before project start date ({self.project.start_date})."
+                    'due_date': f"Task due date ({self.due_date}) cannot be before research start date ({self.project.start_date})."
                 })
         
         if self.due_date and self.project.end_date:
             if self.due_date > self.project.end_date:
                 raise ValidationError({
-                    'due_date': f"Task due date ({self.due_date}) cannot exceed project end date ({self.project.end_date})."
+                    'due_date': f"Task due date ({self.due_date}) cannot exceed research end date ({self.project.end_date})."
                 })
 
     def save(self, *args, **kwargs):

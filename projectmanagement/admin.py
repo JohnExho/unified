@@ -19,8 +19,8 @@ class TeamAdmin(admin.ModelAdmin):
 # ----------------------
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('name', 'team', 'start_date', 'end_date', 'created_by', 'status')
-    list_filter = ('team', 'start_date', 'end_date')
+    list_display = ('name', 'research_method', 'publication_scope', 'source_type', 'team', 'start_date', 'end_date', 'created_by', 'status')
+    list_filter = ('research_method', 'publication_scope', 'source_type', 'team', 'start_date', 'end_date')
     search_fields = ('name', 'description', 'created_by__username')
 
 # ----------------------

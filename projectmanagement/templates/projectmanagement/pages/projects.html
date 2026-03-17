@@ -1,7 +1,7 @@
 {% extends 'projectmanagement/base.html' %}
 {% load static %}
 
-{% block title %}My Projects - Project Management{% endblock %}
+{% block title %}My Research - Research Management{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'projectmanagement/css/pages/projects.css' %}">
@@ -10,8 +10,8 @@
 <main class="main-content">
     <div class="projects-header">
         <div class="page-header">
-            <h1>My Projects</h1>
-            <p>Overview of your projects and tasks</p>
+            <h1>My Research</h1>
+            <p>Overview of your research records and tasks</p>
         </div>
         <div class="header-actions">
             <div class="search-box">
@@ -19,7 +19,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="M21 21l-4.35-4.35"></path>
             </svg>
-            <input type="text" placeholder="Search projects..." id="project-search" value="{{ search_query }}">
+            <input type="text" placeholder="Search research..." id="project-search" value="{{ search_query }}">
             {% if search_query %}
             <button class="clear-search-btn" id="clear-project-search" title="Clear search">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -29,13 +29,32 @@
             </button>
             {% endif %}
             </div>
-            {% if request.user.is_superuser or current_user_role == 'admin' or current_user_role == 'superadmin' %}
+            <select id="filter-method" class="filter-select" title="Filter by method">
+                <option value="">Any Methods</option>
+                <option value="action_research" {% if filter_method == 'action_research' %}selected{% endif %}>Action Research</option>
+                <option value="text_mining" {% if filter_method == 'text_mining' %}selected{% endif %}>Text Mining</option>
+                <option value="case_study" {% if filter_method == 'case_study' %}selected{% endif %}>Case Study</option>
+                <option value="experimental" {% if filter_method == 'experimental' %}selected{% endif %}>Experimental</option>
+                <option value="mixed_methods" {% if filter_method == 'mixed_methods' %}selected{% endif %}>Mixed Methods</option>
+                <option value="other" {% if filter_method == 'other' %}selected{% endif %}>Other</option>
+            </select>
+            <select id="filter-scope" class="filter-select" title="Filter by publication scope">
+                <option value="">Any Scope</option>
+                <option value="local" {% if filter_scope == 'local' %}selected{% endif %}>Local</option>
+                <option value="international" {% if filter_scope == 'international' %}selected{% endif %}>International</option>
+            </select>
+            <select id="filter-source" class="filter-select" title="Filter by source">
+                <option value="">Any Source</option>
+                <option value="student" {% if filter_source == 'student' %}selected{% endif %}>Student</option>
+                <option value="faculty" {% if filter_source == 'faculty' %}selected{% endif %}>Faculty</option>
+            </select>
+            {% if request.user.is_superuser or current_user_role == 'admin' or current_user_role == 'superadmin' or current_user_role == 'researcher' %}
             <a href="#" class="add-project-button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
-                Add Project
+                New Research
             </a>
             {% endif %}
         </div>
@@ -60,6 +79,9 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('project-search');
+    const methodFilter = document.getElementById('filter-method');
+    const scopeFilter = document.getElementById('filter-scope');
+    const sourceFilter = document.getElementById('filter-source');
     const projectsContent = document.getElementById('projects-list-content');
     let searchTimeout;
 
@@ -69,6 +91,21 @@ document.addEventListener('DOMContentLoaded', function() {
             url.searchParams.set('search', query);
         } else {
             url.searchParams.delete('search');
+        }
+        if (methodFilter && methodFilter.value) {
+            url.searchParams.set('method', methodFilter.value);
+        } else {
+            url.searchParams.delete('method');
+        }
+        if (scopeFilter && scopeFilter.value) {
+            url.searchParams.set('scope', scopeFilter.value);
+        } else {
+            url.searchParams.delete('scope');
+        }
+        if (sourceFilter && sourceFilter.value) {
+            url.searchParams.set('source', sourceFilter.value);
+        } else {
+            url.searchParams.delete('source');
         }
         window.history.pushState({}, '', url);
 
@@ -104,6 +141,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     });
 
+    [methodFilter, scopeFilter, sourceFilter].forEach(el => {
+        if (!el) return;
+        el.addEventListener('change', function() {
+            performSearch(searchInput.value || '');
+        });
+    });
+
     // Clear search button handler
     const clearProjectSearchBtn = document.getElementById('clear-project-search');
     if (clearProjectSearchBtn) {
@@ -127,6 +171,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Preserve search if not in link
                 if (!url.searchParams.get('search') && current.searchParams.get('search')) {
                     url.searchParams.set('search', current.searchParams.get('search'));
+                }
+                if (!url.searchParams.get('method') && current.searchParams.get('method')) {
+                    url.searchParams.set('method', current.searchParams.get('method'));
+                }
+                if (!url.searchParams.get('scope') && current.searchParams.get('scope')) {
+                    url.searchParams.set('scope', current.searchParams.get('scope'));
+                }
+                if (!url.searchParams.get('source') && current.searchParams.get('source')) {
+                    url.searchParams.set('source', current.searchParams.get('source'));
                 }
 
                 window.history.pushState({}, '', url);

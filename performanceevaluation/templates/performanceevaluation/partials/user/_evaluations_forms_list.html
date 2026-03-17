@@ -3,12 +3,12 @@
     <span class="helper-text">Pick an evaluatee from your department.</span>
 </div>
 
-{% if not evaluatees %}
+{% if not active_forms %}
 <div class="empty-state">
-    <h3>No evaluatees found</h3>
-    <p>You are not assigned to a department or no eligible users are available.</p>
+    <h3>No active forms</h3>
+    <p>There are no active evaluation forms available right now.</p>
 </div>
-{% elif active_forms %}
+{% else %}
 <div class="form-grid">
     {% for form in active_forms %}
     <article class="form-card">
@@ -48,10 +48,5 @@
         </form>
     </article>
     {% endfor %}
-</div>
-{% else %}
-<div class="empty-state">
-    <h3>No active forms</h3>
-    <p>There are no active evaluation forms available right now.</p>
 </div>
 {% endif %}
