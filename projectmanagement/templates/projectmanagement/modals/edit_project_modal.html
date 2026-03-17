@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(editProjectForm);
         const projectId = editProjectForm.dataset.projectId;
 
-        fetch(`/projectmanagement/projects/${projectId}/edit/`, {
+        fetch(`/researchmanagement/projects/${projectId}/edit/`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -354,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
         editProjectForm.dataset.projectId = projectId;
 
         // Fetch project data
-        fetch(`/projectmanagement/projects/${projectId}/edit/`, {
+        fetch(`/researchmanagement/projects/${projectId}/edit/`, {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',

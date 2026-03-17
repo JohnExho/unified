@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const projectId = deleteProjectForm.dataset.projectId;
 
-        fetch(`/projectmanagement/projects/${projectId}/delete/`, {
+        fetch(`/researchmanagement/projects/${projectId}/delete/`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',

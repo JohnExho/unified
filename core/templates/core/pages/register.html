@@ -5,7 +5,7 @@
 
 {% block content %}
 <!-- Dynamic CSS Loading -->
-{% if system_name == 'projectmanagement' %}
+{% if system_name == 'researchmanagement' %}
 <link rel="stylesheet" type="text/css" href="{% static 'projectmanagement/css/pages/register.css' %}" />
 {% elif system_name == 'inventorymanagement' %}
 <link rel="stylesheet" type="text/css" href="{% static 'inventorymanagement/css/pages/register.css' %}" />
@@ -25,7 +25,7 @@
     <!-- Logo Section -->
     <div class="logo-section">
       <div class="logo">
-        {% if system_name == 'projectmanagement' %}
+        {% if system_name == 'researchmanagement' %}
         P
         {% elif system_name == 'librarymanagement' %}
         L
@@ -175,7 +175,7 @@
 </div>
 
 <!-- Include Terms Modal -->
-{% if system_name == 'projectmanagement' %}
+{% if system_name == 'researchmanagement' %}
 {% include 'projectmanagement/modals/terms_modal.html' %}
 {% elif system_name == 'inventorymanagement' %}
 {% include 'inventorymanagement/modals/terms_modal.html' %}

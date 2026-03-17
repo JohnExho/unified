@@ -18,7 +18,7 @@ def root_redirect(request):
     if request.user.is_authenticated:
         return redirect('projectmanagement:pm_dashboard')
     else:
-        return redirect('/projectmanagement/login')
+        return redirect('/researchmanagement/login')
 
 urlpatterns = [
     path('',  root_redirect, name='pm_root'),

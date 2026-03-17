@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const teamNameEl = document.getElementById('delete-team-name');
       
       if (form) {
-        form.action = `/projectmanagement/teams/${teamId}/delete/`;
+        form.action = `/researchmanagement/teams/${teamId}/delete/`;
       }
       if (teamNameEl) {
         teamNameEl.textContent = teamName;
@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const teamNameEl = document.getElementById('remove-team-name');
       
       if (form) {
-        form.action = `/projectmanagement/teams/${teamId}/remove-user/${userId}/`;
+        form.action = `/researchmanagement/teams/${teamId}/remove-user/${userId}/`;
       }
       if (userNameEl) {
         userNameEl.textContent = userName;
@@ -357,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Set form action with team ID
       const form = document.getElementById('add-team-user-form');
       if (form) {
-        form.action = `/projectmanagement/teams/${teamId}/add-user/`;
+        form.action = `/researchmanagement/teams/${teamId}/add-user/`;
       }
       
       addUserModal.classList.add('show');

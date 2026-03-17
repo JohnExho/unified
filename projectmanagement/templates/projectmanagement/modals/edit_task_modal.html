@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(editTaskForm);
         const taskId = editTaskForm.dataset.taskId;
 
-        fetch(`/projectmanagement/tasks/${taskId}/edit/`, {
+        fetch(`/researchmanagement/tasks/${taskId}/edit/`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
         editTaskForm.dataset.taskId = taskId;
 
         // Fetch task data
-        fetch(`/projectmanagement/tasks/${taskId}/edit/`, {
+        fetch(`/researchmanagement/tasks/${taskId}/edit/`, {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',

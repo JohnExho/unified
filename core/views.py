@@ -259,7 +259,7 @@ def core_login(request, system_name=None):
         # Helper: determine dashboard URL
         def get_dashboard_url(system):
             systems_with_admin_dashboard = {
-                "projectmanagement",
+                "researchmanagement",
                 "inventorymanagement",
                 "performanceevaluation",
                 "communityextensionservices",
@@ -346,7 +346,7 @@ def system_selection(request):
     if request.method == "POST":
         selected_system = request.POST.get("system")
         systems_with_admin_dashboard = {
-            "projectmanagement",
+            "researchmanagement",
             "inventorymanagement",
             "performanceevaluation",
             "communityextensionservices",

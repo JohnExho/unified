@@ -43,7 +43,7 @@ function addProjectClickHandlers() {
       const projectName = this.getAttribute('title');
       if (projectName) {
         // Redirect to projects page with search query
-        window.location.href = `/projectmanagement/projects/?search=${encodeURIComponent(projectName)}`;
+        window.location.href = `/researchmanagement/projects/?search=${encodeURIComponent(projectName)}`;
       }
     });
   });

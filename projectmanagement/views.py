@@ -60,7 +60,7 @@ def _extract_research_metadata(name, description):
 @login_required
 @require_system_access
 def dashboard(request):
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     # ---- Get current user's role ----
     user_membership = SystemMembership.objects.filter(
@@ -246,7 +246,7 @@ def dashboard(request):
 @login_required
 @require_system_access
 def reports(request):
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     user_membership = SystemMembership.objects.filter(
         user=request.user,
@@ -430,7 +430,7 @@ def reports(request):
 @login_required
 @require_system_role(['admin', 'superadmin'])
 def admin_dashboard(request):
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     ROLE_LABELS = {
         'superadmin': 'Super Admin',
@@ -552,7 +552,7 @@ def admin_dashboard(request):
 @login_required
 @require_system_access
 def settings(request):
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     systems = request.session.get('accessible_systems', [])
 
@@ -598,7 +598,7 @@ def deactivate_user(request, user_id):
     
     Logs.objects.create(
         user=request.user,
-        system_name='projectmanagement',
+        system_name='researchmanagement',
         action='UPDATE',
         target_model='User',
         target_id=user.id,  # Fixed: was target_user.id
@@ -619,7 +619,7 @@ def activate_user(request, user_id):
     
     Logs.objects.create(
         user=request.user,
-        system_name='projectmanagement',
+        system_name='researchmanagement',
         action='UPDATE',
         target_model='User',
         target_id=user.id,  # Fixed: was target_user.id
@@ -636,7 +636,7 @@ def delete_user(request, user_id):
     Delete a user by their ID.
     Only accessible by system_role = superusers.
     """
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     target_user = get_object_or_404(User, id=user_id)
 
@@ -650,7 +650,7 @@ def delete_user(request, user_id):
 
         Logs.objects.create(
             user=request.user,
-            system_name='projectmanagement',
+            system_name='researchmanagement',
             action='DELETE',
             target_model='User',
             target_id=user_id,
@@ -661,7 +661,7 @@ def delete_user(request, user_id):
 
         Logs.objects.create(
             user=request.user,
-            system_name='projectmanagement',
+            system_name='researchmanagement',
             action='DELETE',
             target_model='SystemMembership',
             target_id=None,
@@ -684,7 +684,7 @@ def manage_user_access(request, user_id):
     """
     if request.method == 'POST':
         new_role = request.POST.get('access_level')
-        current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+        current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
         target_user = get_object_or_404(User, id=user_id)
 
@@ -730,7 +730,7 @@ def update_tos(request):
     """
     Update the Terms of Service for the current system.
     """
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
     tos_text = request.POST.get('tos_text', '')
 
     system, created = Systems.objects.get_or_create(
@@ -759,7 +759,7 @@ def update_tos(request):
 @login_required
 @require_system_role(['admin', 'superadmin'])
 def system_logs(request):
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     # ---- Get search query ----
     search_query = request.GET.get('search', '').strip()
@@ -1115,7 +1115,7 @@ def projects(request):
     """
     Display user's projects in a table format with search and pagination.
     """
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     # ---- Get current user's role ----
     user_membership = SystemMembership.objects.filter(
@@ -1210,7 +1210,7 @@ def projects(request):
 @require_http_methods(["GET", "POST"])
 def create_project(request):
     """Create a new project via modal"""
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
     
     if request.method == 'POST':
         try:
@@ -1263,7 +1263,7 @@ def create_project(request):
 
             Logs.objects.create(
                 user=request.user,
-                system_name='projectmanagement',
+                system_name='researchmanagement',
                 action='CREATE',
                 target_model='Research',
                 target_id=project.id,
@@ -1291,7 +1291,7 @@ def create_project(request):
 def edit_project(request, project_id):
     """Edit a project via modal or AJAX"""
     project = get_object_or_404(Project, id=project_id)
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
     
     # Check permissions
     user_membership = SystemMembership.objects.filter(
@@ -1369,7 +1369,7 @@ def edit_project(request, project_id):
         
         Logs.objects.create(
             user=request.user,
-            system_name='projectmanagement',
+            system_name='researchmanagement',
             action='UPDATE',
             target_model='Research',
             target_id=project.id,
@@ -1428,7 +1428,7 @@ def edit_project(request, project_id):
 def delete_project(request, project_id):
     """Delete a project"""
     project = get_object_or_404(Project, id=project_id)
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
     
     # Check permissions
     user_membership = SystemMembership.objects.filter(
@@ -1447,7 +1447,7 @@ def delete_project(request, project_id):
     
     Logs.objects.create(
         user=request.user,
-        system_name='projectmanagement',
+        system_name='researchmanagement',
         action='DELETE',
         target_model='Research',
         target_id=project_id,
@@ -1465,7 +1465,7 @@ def delete_project(request, project_id):
 def edit_task(request, task_id):
     """Edit a task via modal or AJAX"""
     task = get_object_or_404(Task, id=task_id)
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
     
     # Check permissions
     user_membership = SystemMembership.objects.filter(
@@ -1517,7 +1517,7 @@ def edit_task(request, task_id):
         
         Logs.objects.create(
             user=request.user,
-            system_name='projectmanagement',
+            system_name='researchmanagement',
             action='UPDATE',
             target_model='Task',
             target_id=task.id,
@@ -1575,7 +1575,7 @@ def edit_task(request, task_id):
 def delete_task(request, task_id):
     """Delete a task"""
     task = get_object_or_404(Task, id=task_id)
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
     
     # Check permissions
     user_membership = SystemMembership.objects.filter(
@@ -1595,7 +1595,7 @@ def delete_task(request, task_id):
     
     Logs.objects.create(
         user=request.user,
-        system_name='projectmanagement',
+        system_name='researchmanagement',
         action='DELETE',
         target_model='Task',
         target_id=task_id,
@@ -1612,7 +1612,7 @@ def delete_task(request, task_id):
 def complete_task(request, task_id):
     """Mark a task as completed"""
     task = get_object_or_404(Task, id=task_id)
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
     
     # Check permissions
     user_membership = SystemMembership.objects.filter(
@@ -1631,7 +1631,7 @@ def complete_task(request, task_id):
     
     Logs.objects.create(
         user=request.user,
-        system_name='projectmanagement',
+        system_name='researchmanagement',
         action='UPDATE',
         target_model='Task',
         target_id=task.id,
@@ -1649,7 +1649,7 @@ def complete_task(request, task_id):
 def create_task(request, project_id):
     """Create a new task in a project"""
     project = get_object_or_404(Project, id=project_id)
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
     
     # Check permissions - must be able to access the project
     user_membership = SystemMembership.objects.filter(
@@ -1715,7 +1715,7 @@ def create_task(request, project_id):
         # Create audit log
         Logs.objects.create(
             user=request.user,
-            system_name='projectmanagement',
+            system_name='researchmanagement',
             action='CREATE',
             target_model='Task',
             target_id=task.id,
@@ -1750,7 +1750,7 @@ def create_task(request, project_id):
 def api_users(request):
     """Get list of all active users for assignment."""
     try:
-        current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+        current_system = getattr(request, 'current_system', None) or 'researchmanagement'
         
         # Get users from current system
         system_members = SystemMembership.objects.filter(
@@ -1829,7 +1829,7 @@ def assign_task(request, task_id):
     try:
         task = get_object_or_404(Task, id=task_id)
         project = task.project
-        current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+        current_system = getattr(request, 'current_system', None) or 'researchmanagement'
         
         # Check permissions
         user_membership = SystemMembership.objects.filter(
@@ -1880,7 +1880,7 @@ def assign_task(request, task_id):
             user_names = ', '.join([u.username for u in users])
             Logs.objects.create(
                 user=request.user,
-                system_name='projectmanagement',
+                system_name='researchmanagement',
                 action='UPDATE',
                 target_model='Task',
                 target_id=task.id,
@@ -1907,7 +1907,7 @@ def assign_task(request, task_id):
 
                 Logs.objects.create(
                     user=request.user,
-                    system_name='projectmanagement',
+                    system_name='researchmanagement',
                     action='UPDATE',
                     target_model='Task',
                     target_id=task.id,
@@ -1932,7 +1932,7 @@ def assign_task(request, task_id):
             # Create audit log
             Logs.objects.create(
                 user=request.user,
-                system_name='projectmanagement',
+                system_name='researchmanagement',
                 action='UPDATE',
                 target_model='Task',
                 target_id=task.id,
@@ -1962,7 +1962,7 @@ def assign_task(request, task_id):
 @login_required
 @require_system_access
 def teams(request):
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     # Get current user's role
     user_membership = SystemMembership.objects.filter(
@@ -2081,7 +2081,7 @@ def teams(request):
 @require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def add_team(request):
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     # Only admins/superadmins or superuser
     user_membership = SystemMembership.objects.filter(
@@ -2103,7 +2103,7 @@ def add_team(request):
         
         Logs.objects.create(
             user=request.user,
-            system_name='projectmanagement',
+            system_name='researchmanagement',
             action='CREATE',
             target_model='Team',
             target_id=team.id,
@@ -2124,7 +2124,7 @@ def add_team(request):
 @require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def delete_team(request, team_id):
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     # Only admins/superadmins or superuser
     user_membership = SystemMembership.objects.filter(
@@ -2142,7 +2142,7 @@ def delete_team(request, team_id):
     
     Logs.objects.create(
         user=request.user,
-        system_name='projectmanagement',
+        system_name='researchmanagement',
         action='DELETE',
         target_model='Team',
         target_id=team_id,
@@ -2159,7 +2159,7 @@ def delete_team(request, team_id):
 @login_required
 @require_http_methods(["POST"])
 def add_team_user_placeholder(request, team_id):
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     # Only admins/superadmins or superuser
     user_membership = SystemMembership.objects.filter(
@@ -2191,7 +2191,7 @@ def add_team_user_placeholder(request, team_id):
 @require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def add_team_user(request, team_id):
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     # Only admins/superadmins or superuser
     user_membership = SystemMembership.objects.filter(
@@ -2214,7 +2214,7 @@ def add_team_user(request, team_id):
     
     Logs.objects.create(
         user=request.user,
-        system_name='projectmanagement',
+        system_name='researchmanagement',
         action='UPDATE',
         target_model='Team',
         target_id=team.id,
@@ -2232,7 +2232,7 @@ def add_team_user(request, team_id):
 @require_system_role(['admin', 'superadmin'])
 @require_http_methods(["POST"])
 def remove_team_user(request, team_id, user_id):
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
 
     # Only admins/superadmins or superuser
     user_membership = SystemMembership.objects.filter(
@@ -2251,7 +2251,7 @@ def remove_team_user(request, team_id, user_id):
     
     Logs.objects.create(
         user=request.user,
-        system_name='projectmanagement',
+        system_name='researchmanagement',
         action='UPDATE',
         target_model='Team',
         target_id=team.id,
@@ -2538,7 +2538,7 @@ def ml_lab(request):
     from .models import MLInsight
     from django.db.models.functions import TruncDate
 
-    current_system = getattr(request, 'current_system', None) or 'projectmanagement'
+    current_system = getattr(request, 'current_system', None) or 'researchmanagement'
     systems = request.session.get('accessible_systems', [])
     today = timezone.now().date()
 

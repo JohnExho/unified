@@ -24,7 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
     path('captcha/', include('captcha.urls')),
-    path('projectmanagement/', include('projectmanagement.urls')),
+    path('researchmanagement/', include('projectmanagement.urls')),
     path('librarymanagement/', include('librarymanagement.urls')),
     path('inventorymanagement/', include('inventorymanagement.urls')),
     path('communityextensionservices/', include('communityextensionservices.urls')),

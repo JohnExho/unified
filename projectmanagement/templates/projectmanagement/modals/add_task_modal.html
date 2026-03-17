@@ -331,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formData = new FormData(addTaskForm);
 
-        fetch(`/projectmanagement/projects/${projectId}/tasks/create/`, {
+        fetch(`/researchmanagement/projects/${projectId}/tasks/create/`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',

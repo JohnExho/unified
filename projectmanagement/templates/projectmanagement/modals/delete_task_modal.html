@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const taskId = deleteTaskForm.dataset.taskId;
 
-        fetch(`/projectmanagement/tasks/${taskId}/delete/`, {
+        fetch(`/researchmanagement/tasks/${taskId}/delete/`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',

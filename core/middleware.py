@@ -17,8 +17,8 @@ class SystemAwareLoginRedirectMiddleware:
             
             # Detect which system based on the 'next' URL
             if next_url:
-                if next_url.startswith('/projectmanagement/'):
-                    return redirect(f'/projectmanagement/login/?next={next_url}')
+                if next_url.startswith('/researchmanagement/'):
+                    return redirect(f'/researchmanagement/login/?next={next_url}')
                 elif next_url.startswith('/performanceevaluation/'):
                     return redirect(f'/performanceevaluation/login/?next={next_url}')
                 elif next_url.startswith('/inventorymanagement/'):
