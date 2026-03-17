@@ -17,7 +17,10 @@ class Services:
         try:
             qs = SystemMembership.objects.filter(user=user, system_name=system_name)
             if role:
-                qs = qs.filter(system_role=role)
+                if role == "admin":
+                    qs = qs.filter(system_role__in=["admin", "superadmin"])
+                else:
+                    qs = qs.filter(system_role=role)
             return qs.exists()
         except Exception:
             # If models are not available or query fails, deny access by default

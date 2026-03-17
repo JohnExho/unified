@@ -14,6 +14,7 @@ def root_redirect(request):
 
 urlpatterns = [
     path("", root_redirect, name="root-redirect"),
+    path("admin/dashboard/", views.dashboard, name="information-admin-dashboard"),
     path("dashboard/", views.dashboard, name="information-dashboard"),
     path(
         "dashboard/train-naive-bayes/",

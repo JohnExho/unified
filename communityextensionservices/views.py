@@ -24,6 +24,18 @@ def _base_context(request):
     }
 
 
+def _has_ces_admin_access(user):
+    return Services.has_access(
+        user,
+        "communityextensionservices",
+        role="admin",
+    ) or Services.has_access(
+        user,
+        "communityextensionservices",
+        role="superadmin",
+    )
+
+
 @login_required(login_url="/communityextensionservices/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
@@ -32,18 +44,8 @@ def dashboard(request):
         return render(request, "404.html", status=404)
 
     cluster_snapshot = CESClusteringService.get_dashboard_snapshot(limit=6)
-    can_train_kmeans_model = (
-        request.user.is_superuser
-        or Services.has_access(
-            request.user,
-            "communityextensionservices",
-            role="admin",
-        )
-        or Services.has_access(
-            request.user,
-            "communityextensionservices",
-            role="superadmin",
-        )
+    can_train_kmeans_model = request.user.is_superuser or _has_ces_admin_access(
+        request.user
     )
 
     context = {
@@ -251,9 +253,7 @@ def activity_create(request):
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activity_edit(request, pk):
-    if not Services.has_access(
-        request.user, "communityextensionservices", role="admin"
-    ):
+    if not _has_ces_admin_access(request.user):
         return render(request, "404.html", status=404)
     activity = get_object_or_404(Activity, pk=pk)
     form = ActivityForm(request.POST or None, instance=activity)
@@ -274,9 +274,7 @@ def activity_edit(request, pk):
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activity_delete(request, pk):
-    if not Services.has_access(
-        request.user, "communityextensionservices", role="admin"
-    ):
+    if not _has_ces_admin_access(request.user):
         return render(request, "404.html", status=404)
     activity = get_object_or_404(Activity, pk=pk)
     if request.method == "POST":
@@ -309,9 +307,7 @@ def documents(request):
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def document_create(request):
-    if not Services.has_access(
-        request.user, "communityextensionservices", role="admin"
-    ):
+    if not _has_ces_admin_access(request.user):
         return render(request, "404.html", status=404)
     form = DocumentRecordForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -333,9 +329,7 @@ def document_create(request):
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def analytics(request):
-    if not Services.has_access(
-        request.user, "communityextensionservices", role="admin"
-    ):
+    if not _has_ces_admin_access(request.user):
         return render(request, "404.html", status=404)
     context = {
         **_base_context(request),
@@ -348,9 +342,7 @@ def analytics(request):
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def reports(request):
-    if not Services.has_access(
-        request.user, "communityextensionservices", role="admin"
-    ):
+    if not _has_ces_admin_access(request.user):
         return render(request, "404.html", status=404)
     context = {
         **_base_context(request),
@@ -363,9 +355,7 @@ def reports(request):
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_lab(request):
-    if not Services.has_access(
-        request.user, "communityextensionservices", role="admin"
-    ):
+    if not _has_ces_admin_access(request.user):
         return render(request, "404.html", status=404)
     context = {
         **_base_context(request),
@@ -378,9 +368,7 @@ def ml_lab(request):
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def settings(request):
-    if not Services.has_access(
-        request.user, "communityextensionservices", role="admin"
-    ):
+    if not _has_ces_admin_access(request.user):
         return render(request, "404.html", status=404)
     context = {
         **_base_context(request),

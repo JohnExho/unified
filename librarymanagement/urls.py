@@ -20,6 +20,7 @@ urlpatterns = [
         lambda request: redirect("librarymanagement:library_dashboard"),
         name="library_root",
     ),
+    path("admin/dashboard/", views.dashboard, name="library_admin_dashboard"),
     path("dashboard/", views.dashboard, name="library_dashboard"),
     path(
         "dashboard/train-demand-forecast/",

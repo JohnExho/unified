@@ -15,6 +15,7 @@ def root_redirect(request):
 
 urlpatterns = [
     path("", root_redirect, name="ces-root"),
+    path("admin/dashboard/", views.dashboard, name="ces-admin-dashboard"),
     path("dashboard/", views.dashboard, name="ces-dashboard"),
     path(
         "dashboard/train-kmeans/",

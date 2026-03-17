@@ -223,16 +223,19 @@ def core_login(request, system_name=None):
         # Check if user has access to the specific system
         if system_name:
             has_access = SystemMembership.objects.filter(
-                user=user, 
-                system_name=system_name
+                user=user, system_name=system_name
             ).exists()
-            
+
             if not has_access:
                 form.add_error(None, "No account found with this username.")
                 return render(
                     request,
                     "core/pages/login.html",
-                    {"form": form, "system_name": system_name, "system_info": system_info},
+                    {
+                        "form": form,
+                        "system_name": system_name,
+                        "system_info": system_info,
+                    },
                 )
 
         # Superuser-only check for /login
@@ -255,7 +258,19 @@ def core_login(request, system_name=None):
 
         # Helper: determine dashboard URL
         def get_dashboard_url(system):
-            if system.get("role") == "admin":
+            systems_with_admin_dashboard = {
+                "projectmanagement",
+                "inventorymanagement",
+                "performanceevaluation",
+                "communityextensionservices",
+                "librarymanagement",
+                "informationmanagement",
+            }
+
+            if (
+                system.get("role") == "admin"
+                and system.get("url") in systems_with_admin_dashboard
+            ):
                 return f"/{system['url']}/admin/dashboard/"
             if system["url"] == "core":
                 return "/dashboard/"
@@ -330,9 +345,20 @@ def system_selection(request):
 
     if request.method == "POST":
         selected_system = request.POST.get("system")
+        systems_with_admin_dashboard = {
+            "projectmanagement",
+            "inventorymanagement",
+            "performanceevaluation",
+            "communityextensionservices",
+            "librarymanagement",
+            "informationmanagement",
+        }
 
         # Verify the user has access to this system
         if any(s["url"] == selected_system for s in systems):
+            selected_system_data = next(
+                s for s in systems if s["url"] == selected_system
+            )
             Logs.objects.create(
                 user=request.user,
                 target_model="User",
@@ -351,6 +377,11 @@ def system_selection(request):
 
             if selected_system == "core":
                 return redirect("core:core_dashboard")
+            if (
+                selected_system_data.get("role") == "admin"
+                and selected_system in systems_with_admin_dashboard
+            ):
+                return redirect(f"/{selected_system}/admin/dashboard/")
             return redirect(f"/{selected_system}")
 
         messages.error(request, "Invalid system selection.")
@@ -363,11 +394,11 @@ def core_logout(request, system_name=None):
     # Capture current system BEFORE any session changes
     # Priority: URL parameter > request attribute > session
     current_system = (
-        system_name or 
-        getattr(request, 'current_system', None) or 
-        request.session.get('current_system', 'core')
+        system_name
+        or getattr(request, "current_system", None)
+        or request.session.get("current_system", "core")
     )
-    
+
     # Capture user state BEFORE logout
     is_admin = request.user.is_authenticated and request.user.is_superuser
 
