@@ -14,7 +14,7 @@ from informationmanagement.models import (
 
 
 class Command(BaseCommand):
-    help = "Seed Information Management with sample data (20 items total)."
+    help = "Seed Information Management with sample data (23 items total)."
 
     def handle(self, *args, **options):
         Project.objects.all().delete()
@@ -87,6 +87,42 @@ class Command(BaseCommand):
                 progress=55,
                 predicted_success=70.8,
                 predicted_reach=120,
+            ),
+            Project(
+                name="Barangay Health Navigator",
+                category="Health",
+                lead="Nurse J. Ramos",
+                status="Ongoing",
+                start_date=timezone.now().date(),
+                end_date=timezone.now().date(),
+                beneficiaries_count=165,
+                progress=74,
+                predicted_success=79.4,
+                predicted_reach=190,
+            ),
+            Project(
+                name="Community Composting Network",
+                category="Environment",
+                lead="Engr. T. Navarro",
+                status="Completed",
+                start_date=timezone.now().date(),
+                end_date=timezone.now().date(),
+                beneficiaries_count=140,
+                progress=100,
+                predicted_success=88.1,
+                predicted_reach=158,
+            ),
+            Project(
+                name="Microenterprise Mentoring",
+                category="Livelihood",
+                lead="Ms. D. Flores",
+                status="Proposed",
+                start_date=timezone.now().date(),
+                end_date=timezone.now().date(),
+                beneficiaries_count=120,
+                progress=22,
+                predicted_success=61.9,
+                predicted_reach=145,
             ),
         ]
         Project.objects.bulk_create(projects)
@@ -211,5 +247,5 @@ class Command(BaseCommand):
         MLExperiment.objects.bulk_create(experiments)
 
         self.stdout.write(
-            self.style.SUCCESS("Seeded Information Management with 20 items.")
+            self.style.SUCCESS("Seeded Information Management with 23 items.")
         )
