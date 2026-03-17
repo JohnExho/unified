@@ -1,7 +1,7 @@
 {% extends 'projectmanagement/base.html' %}
 {% load static %}
 {% block title %}
-  Reports - Project Management
+	Reports - Research Management
 {% endblock title %}
 {% block extra_head %}
   <link rel="stylesheet"
@@ -12,7 +12,7 @@
     <div class="top-bar">
       <div class="page-header">
         <h1>Reports</h1>
-        <p>Snapshots for progress, completion, workload, overdue items, and exports</p>
+		<p>Snapshots for research progress, completion, workload, overdue items, and exports</p>
       </div>
       <div class="top-actions">
         <div class="search-box">
@@ -27,7 +27,7 @@
           </svg>
           <input type="text"
                  id="report-search"
-                 placeholder="Search projects or tasks"
+				 placeholder="Search research or tasks"
                  value="{{ search_query }}" />
           {% if search_query %}
             <button class="clear-search-btn" id="clear-search" title="Clear search">
@@ -44,7 +44,7 @@
           {% endif %}
         </div>
         <a href="?{% if search_query %}search={{ search_query|urlencode }}&{% endif %}export=projects"
-           class="btn btn-secondary">Export projects</a>
+		   class="btn btn-secondary">Export research</a>
         <a href="?{% if search_query %}search={{ search_query|urlencode }}&{% endif %}export=tasks"
            class="btn btn-secondary">Export tasks</a>
         <a href="?{% if search_query %}search={{ search_query|urlencode }}&{% endif %}export=overdue"

@@ -2,7 +2,7 @@
 {% load static %}
 {% load calendar_extras %}
 
-{% block title %}Calendar - Project Management{% endblock %}
+{% block title %}Calendar - Research Management{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'projectmanagement/css/pages/calendar.css' %}">
@@ -14,7 +14,7 @@
     <div class="top-bar">
         <div class="page-header">
             <h1>Calendar</h1>
-            <p>View active and overdue projects and tasks</p>
+            <p>View active and overdue research and tasks</p>
         </div>
         <div class="top-actions">
             <a href="{% url 'projectmanagement:pm_calendar' %}" class="filter-btn">
@@ -85,11 +85,11 @@
         <!-- Stats Row -->
         <div class="calendar-stats">
             <div class="stat-item">
-                <div class="stat-label">Projects</div>
+                <div class="stat-label">Research</div>
                 <div class="stat-number">{{ total_projects }}</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label">Late Projects</div>
+                <div class="stat-label">Late Research</div>
                 <div class="stat-number">{{ total_late_projects }}</div>
             </div>
             <div class="stat-item">

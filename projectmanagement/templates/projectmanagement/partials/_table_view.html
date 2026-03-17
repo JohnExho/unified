@@ -1,10 +1,10 @@
 {% load assignee_utils %}
-<h2>Projects</h2>
+<h2>Research</h2>
 <table class="projects-table">
   <thead>
     <tr>
       <th></th>
-      <th>Name</th>
+      <th>Research Title</th>
       <th>Status</th>
       <th>Start</th>
       <th>End</th>
@@ -60,7 +60,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="4" class="empty-state">No tasks for this project.</td>
+                <td colspan="4" class="empty-state">No tasks for this research record.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -70,7 +70,7 @@
     </tr>
     {% empty %}
     <tr>
-      <td colspan="6" class="empty-state">No projects found.</td>
+      <td colspan="6" class="empty-state">No research records found.</td>
     </tr>
     {% endfor %}
   </tbody>

@@ -2,7 +2,7 @@
 <div id="edit-project-modal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>Edit Project</h2>
+            <h2>Edit Research</h2>
             <button type="button" class="modal-close" aria-label="Close">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -14,13 +14,13 @@
             {% csrf_token %}
             
             <div class="form-group">
-                <label for="project-name">Project Name</label>
+                <label for="project-name">Research Title</label>
                 <input 
                     type="text" 
                     id="project-name" 
                     name="name" 
                     required
-                    placeholder="Enter project name"
+                    placeholder="Enter research title"
                 >
             </div>
 
@@ -30,7 +30,7 @@
                     id="project-description" 
                     name="description" 
                     rows="4"
-                    placeholder="Enter project description"
+                    placeholder="Enter research abstract or description"
                 ></textarea>
             </div>
 
@@ -45,6 +45,54 @@
                         <option value="cancelled">Cancelled</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="project-research-method">Research Method</label>
+                    <select id="project-research-method" name="research_method" disabled>
+                        <option value="action_research">Action Research</option>
+                        <option value="text_mining">Text Mining</option>
+                        <option value="case_study">Case Study</option>
+                        <option value="experimental">Experimental</option>
+                        <option value="mixed_methods">Mixed Methods</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="project-publication-status">Publication Status</label>
+                    <select id="project-publication-status" name="publication_status" disabled>
+                        <option value="draft">Draft</option>
+                        <option value="for_publication">For Publication</option>
+                        <option value="published">Published</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="project-publication-scope">Publication Scope</label>
+                    <select id="project-publication-scope" name="publication_scope" disabled>
+                        <option value="local">Local</option>
+                        <option value="international">International</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="project-source-type">Source</label>
+                    <select id="project-source-type" name="source_type" required>
+                        <option value="student">Student</option>
+                        <option value="faculty">Faculty</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="project-meta-tags">Meta Tags</label>
+                    <input type="text" id="project-meta-tags" name="meta_tags" placeholder="ai, publication, education">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="project-repository-source">Repository Source URL</label>
+                <input type="url" id="project-repository-source" name="repository_source" placeholder="https://repository.example.edu/research/...">
             </div>
 
             <div class="form-row">
@@ -334,6 +382,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('project-name').value = project.name;
                 document.getElementById('project-description').value = project.description || '';
                 document.getElementById('project-status').value = project.status;
+                document.getElementById('project-research-method').value = project.research_method || 'action_research';
+                document.getElementById('project-publication-status').value = project.publication_status || 'draft';
+                document.getElementById('project-publication-scope').value = project.publication_scope || 'local';
+                document.getElementById('project-source-type').value = project.source_type || 'student';
+                document.getElementById('project-meta-tags').value = project.meta_tags || '';
+                document.getElementById('project-repository-source').value = project.repository_source || '';
                 document.getElementById('project-start-date').value = project.start_date;
                 document.getElementById('project-end-date').value = project.end_date;
 

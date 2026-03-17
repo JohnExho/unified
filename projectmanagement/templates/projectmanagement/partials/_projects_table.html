@@ -7,7 +7,7 @@
         <thead>
             <tr>
                 <th style="width: 40px;"></th>
-                <th>Project Name</th>
+                <th>Research Title</th>
                 <th>Status</th>
                 <th>Start Date</th>
                 <th>End Date</th>
@@ -35,6 +35,15 @@
                         <strong>{{ project.name }}</strong>
                         {% if project.description %}
                         <p class="project-description">{{ project.description|truncatewords:15 }}</p>
+                        {% endif %}
+                        <p class="project-description">
+                            Method: {{ project.get_research_method_display }} | Scope: {{ project.get_publication_scope_display }} | Source: {{ project.get_source_type_display }}
+                        </p>
+                        {% if project.auto_detected_topic %}
+                        <p class="project-description">Detected Topic: {{ project.auto_detected_topic|title }}</p>
+                        {% endif %}
+                        {% if project.meta_tags %}
+                        <p class="project-description">Tags: {{ project.meta_tags|join:", " }}</p>
                         {% endif %}
                     </div>
                 </td>
@@ -175,7 +184,7 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="6" class="empty-state">No tasks for this project.</td>
+                                    <td colspan="6" class="empty-state">No tasks for this research record.</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -197,11 +206,11 @@
   <div class="pagination-buttons">
     {% if projects.has_previous %}
       {% if search_query %}
-        <a href="?search={{ search_query|urlencode }}&page=1" class="pagination-btn">First</a>
-        <a href="?search={{ search_query|urlencode }}&page={{ projects.previous_page_number }}" class="pagination-btn">Previous</a>
+                <a href="?search={{ search_query|urlencode }}{% if filter_method %}&method={{ filter_method }}{% endif %}{% if filter_scope %}&scope={{ filter_scope }}{% endif %}{% if filter_source %}&source={{ filter_source }}{% endif %}&page=1" class="pagination-btn">First</a>
+                <a href="?search={{ search_query|urlencode }}{% if filter_method %}&method={{ filter_method }}{% endif %}{% if filter_scope %}&scope={{ filter_scope }}{% endif %}{% if filter_source %}&source={{ filter_source }}{% endif %}&page={{ projects.previous_page_number }}" class="pagination-btn">Previous</a>
       {% else %}
-        <a href="?page=1" class="pagination-btn">First</a>
-        <a href="?page={{ projects.previous_page_number }}" class="pagination-btn">Previous</a>
+                <a href="?{% if filter_method %}method={{ filter_method }}&{% endif %}{% if filter_scope %}scope={{ filter_scope }}&{% endif %}{% if filter_source %}source={{ filter_source }}&{% endif %}page=1" class="pagination-btn">First</a>
+                <a href="?{% if filter_method %}method={{ filter_method }}&{% endif %}{% if filter_scope %}scope={{ filter_scope }}&{% endif %}{% if filter_source %}source={{ filter_source }}&{% endif %}page={{ projects.previous_page_number }}" class="pagination-btn">Previous</a>
       {% endif %}
     {% else %}
       <button class="pagination-btn" disabled>First</button>
@@ -213,20 +222,20 @@
         <button class="pagination-btn active">{{ page_num }}</button>
       {% elif page_num >= projects.number|add:'-2' and page_num <= projects.number|add:'2' %}
         {% if search_query %}
-          <a href="?search={{ search_query|urlencode }}&page={{ page_num }}" class="pagination-btn">{{ page_num }}</a>
+                    <a href="?search={{ search_query|urlencode }}{% if filter_method %}&method={{ filter_method }}{% endif %}{% if filter_scope %}&scope={{ filter_scope }}{% endif %}{% if filter_source %}&source={{ filter_source }}{% endif %}&page={{ page_num }}" class="pagination-btn">{{ page_num }}</a>
         {% else %}
-          <a href="?page={{ page_num }}" class="pagination-btn">{{ page_num }}</a>
+                    <a href="?{% if filter_method %}method={{ filter_method }}&{% endif %}{% if filter_scope %}scope={{ filter_scope }}&{% endif %}{% if filter_source %}source={{ filter_source }}&{% endif %}page={{ page_num }}" class="pagination-btn">{{ page_num }}</a>
         {% endif %}
       {% endif %}
     {% endfor %}
     
     {% if projects.has_next %}
       {% if search_query %}
-        <a href="?search={{ search_query|urlencode }}&page={{ projects.next_page_number }}" class="pagination-btn">Next</a>
-        <a href="?search={{ search_query|urlencode }}&page={{ projects_paginator.num_pages }}" class="pagination-btn">Last</a>
+                <a href="?search={{ search_query|urlencode }}{% if filter_method %}&method={{ filter_method }}{% endif %}{% if filter_scope %}&scope={{ filter_scope }}{% endif %}{% if filter_source %}&source={{ filter_source }}{% endif %}&page={{ projects.next_page_number }}" class="pagination-btn">Next</a>
+                <a href="?search={{ search_query|urlencode }}{% if filter_method %}&method={{ filter_method }}{% endif %}{% if filter_scope %}&scope={{ filter_scope }}{% endif %}{% if filter_source %}&source={{ filter_source }}{% endif %}&page={{ projects_paginator.num_pages }}" class="pagination-btn">Last</a>
       {% else %}
-        <a href="?page={{ projects.next_page_number }}" class="pagination-btn">Next</a>
-        <a href="?page={{ projects_paginator.num_pages }}" class="pagination-btn">Last</a>
+                <a href="?{% if filter_method %}method={{ filter_method }}&{% endif %}{% if filter_scope %}scope={{ filter_scope }}&{% endif %}{% if filter_source %}source={{ filter_source }}&{% endif %}page={{ projects.next_page_number }}" class="pagination-btn">Next</a>
+                <a href="?{% if filter_method %}method={{ filter_method }}&{% endif %}{% if filter_scope %}scope={{ filter_scope }}&{% endif %}{% if filter_source %}source={{ filter_source }}&{% endif %}page={{ projects_paginator.num_pages }}" class="pagination-btn">Last</a>
       {% endif %}
     {% else %}
       <button class="pagination-btn" disabled>Next</button>

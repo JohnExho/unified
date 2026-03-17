@@ -354,14 +354,18 @@ def user_evaluation_form(request, form_id):
     ).exclude(id=user.id).exclude(is_superuser=True).distinct()
 
     evaluatee_id = request.POST.get('evaluatee') or request.GET.get('evaluatee')
-    if evaluation_form.evaluator_type == 'self':
+    is_self_form = evaluation_form.evaluator_type == 'self'
+    if is_self_form:
         evaluatee_id = str(user.id)
 
     if not evaluatee_id:
         messages.error(request, 'Please select an evaluatee before opening the form.')
         return redirect('performanceevaluation:user_evaluations')
 
-    evaluatee = get_object_or_404(allowed_evaluatees, id=evaluatee_id)
+    if is_self_form:
+        evaluatee = user
+    else:
+        evaluatee = get_object_or_404(allowed_evaluatees, id=evaluatee_id)
 
     rubric_prefetch = Prefetch('rubric_set', queryset=Rubric.objects.order_by('level'))
     criteria_prefetch = Prefetch(

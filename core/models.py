@@ -69,7 +69,7 @@ class CustomUser(AbstractUser):
 class Systems(models.Model):
     DefaultSystems = [
         ('core', 'Core'),
-        ('projectmanagement', 'Project Management'),
+        ('projectmanagement', 'Research Management'),
         ('librarymanagement', 'Library Management'),
         ('inventorymanagement', 'Inventory Management'),
         ('communityextensionservices', 'Community Extension Services'),
@@ -88,7 +88,7 @@ class Systems(models.Model):
 class SystemMembership(models.Model):
     SYSTEM_CHOICES = [
         ('core', 'Core'),
-        ('projectmanagement', 'Project Management'),
+        ('projectmanagement', 'Research Management'),
         ('librarymanagement', 'Library Management'),
         ('inventorymanagement', 'Inventory Management'),
         ('communityextensionservices', 'Community Extension Services'),
@@ -108,6 +108,7 @@ class SystemMembership(models.Model):
         null=True,
         choices=[
             ('admin', 'Admin'),
+            ('researcher', 'Researcher'),
             ('user', 'User'),
             ('instructor', 'Instructor'),
             ('superadmin', 'Super Admin'),
@@ -126,7 +127,7 @@ class Logs(models.Model):
 
     SYSTEM_CHOICES = [
         ('core', 'Core'),
-        ('projectmanagement', 'Project Management'),
+        ('projectmanagement', 'Research Management'),
         ('librarymanagement', 'Library Management'),
         ('inventorymanagement', 'Inventory Management'),
         ('communityextensionservices', 'Community Extension Services'),

@@ -16,12 +16,45 @@ from django.db import IntegrityError
 from django.template.loader import render_to_string
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
+from django.core.exceptions import ValidationError
+from .ml_classification import predict_research_fields
 import json
 import csv
+import re
 from datetime import timedelta
 
 now = timezone.now()
 User = get_user_model()
+
+
+def _extract_research_metadata(name, description):
+    """Infer simple topic/tags from title+description for auto-tagging and filtering."""
+    text = f"{name or ''} {description or ''}".lower()
+    topic_keywords = {
+        'text mining': ['text mining', 'nlp', 'keyword extraction', 'topic modeling'],
+        'action research': ['action research', 'iterative intervention', 'cycle'],
+        'publication': ['publication', 'journal', 'conference', 'paper'],
+        'repository': ['repository', 'archive', 'indexing', 'catalog'],
+    }
+
+    detected_topic = 'general research'
+    for topic, keywords in topic_keywords.items():
+        if any(keyword in text for keyword in keywords):
+            detected_topic = topic
+            break
+
+    tokens = set(re.findall(r"[a-zA-Z]{4,}", text))
+    stop_words = {
+        'this', 'that', 'with', 'from', 'your', 'have', 'will', 'research', 'project',
+        'into', 'using', 'management', 'system', 'for', 'and', 'the', 'are', 'auto',
+    }
+    keywords = sorted([token for token in tokens if token not in stop_words])[:8]
+    summary = f"Auto-detected topic: {detected_topic}. Keyword sample: {', '.join(keywords) if keywords else 'none'}."
+    return {
+        'auto_detected_topic': detected_topic,
+        'meta_tags': keywords,
+        'text_mining_summary': summary,
+    }
 
 
 @login_required
@@ -39,6 +72,9 @@ def dashboard(request):
 
     # ---- Get search query ----
     search_query = request.GET.get('search', '').strip()
+    filter_scope = request.GET.get('scope', '').strip()
+    filter_source = request.GET.get('source', '').strip()
+    filter_method = request.GET.get('method', '').strip()
 
     # ---- Base querysets ----
     projects = Project.objects.prefetch_related("tasks")
@@ -78,8 +114,19 @@ def dashboard(request):
         
         projects = projects.filter(
             Q(name__icontains=search_query) |
-            Q(tasks__title__icontains=search_query)
+            Q(tasks__title__icontains=search_query) |
+            Q(auto_detected_topic__icontains=search_query)
         ).distinct()
+
+    if filter_scope:
+        projects = projects.filter(publication_scope=filter_scope)
+        stats_projects = stats_projects.filter(publication_scope=filter_scope)
+    if filter_source:
+        projects = projects.filter(source_type=filter_source)
+        stats_projects = stats_projects.filter(source_type=filter_source)
+    if filter_method:
+        projects = projects.filter(research_method=filter_method)
+        stats_projects = stats_projects.filter(research_method=filter_method)
 
     # ---- Time-aware project states (using stats querysets for admin/superuser) ----
     active_projects = stats_projects.filter(
@@ -136,6 +183,7 @@ def dashboard(request):
         'projects_paginator': paginator_projects,
         'projects_page_number': page_number,
         'current_system': current_system,
+        'current_user_role': user_role,
         'now': now,
         'is_admin_or_superadmin': is_admin_or_superadmin,
         # Stats - Total counts
@@ -157,6 +205,9 @@ def dashboard(request):
         'overdue_task_ids': set(overdue_tasks.values_list('id', flat=True)),
         'past_projects': past_projects,
         'search_query': search_query,
+        'filter_scope': filter_scope,
+        'filter_source': filter_source,
+        'filter_method': filter_method,
     }
 
     # ---- Handle AJAX requests ----
@@ -384,6 +435,7 @@ def admin_dashboard(request):
     ROLE_LABELS = {
         'superadmin': 'Super Admin',
         'admin': 'Admin',
+        'researcher': 'Researcher',
         'user': 'User',
         # add other roles as needed
     }
@@ -395,8 +447,8 @@ def admin_dashboard(request):
             system_record, created = Systems.objects.get_or_create(
                 name=current_system,
                 defaults={
-                    'description': 'Project Management System',
-                    'terms_of_service': 'Default Terms of Service for Project Management System. Please update this content.'
+                    'description': 'Research Management System',
+                    'terms_of_service': 'Default Terms of Service for Research Management System. Please update this content.'
                 }
             )
             tos_text = system_record.terms_of_service if system_record.terms_of_service else ''
@@ -1075,6 +1127,9 @@ def projects(request):
 
     # ---- Get search query ----
     search_query = request.GET.get('search', '').strip()
+    filter_scope = request.GET.get('scope', '').strip()
+    filter_source = request.GET.get('source', '').strip()
+    filter_method = request.GET.get('method', '').strip()
 
     # ---- Base queryset ----
     projects_qs = Project.objects.prefetch_related("tasks").all()
@@ -1090,8 +1145,16 @@ def projects(request):
         projects_qs = projects_qs.filter(
             Q(name__icontains=search_query) |
             Q(description__icontains=search_query) |
-            Q(tasks__title__icontains=search_query)
+            Q(tasks__title__icontains=search_query) |
+            Q(auto_detected_topic__icontains=search_query)
         ).distinct()
+
+    if filter_scope:
+        projects_qs = projects_qs.filter(publication_scope=filter_scope)
+    if filter_source:
+        projects_qs = projects_qs.filter(source_type=filter_source)
+    if filter_method:
+        projects_qs = projects_qs.filter(research_method=filter_method)
 
     # Order by start date
     projects_qs = projects_qs.order_by('-start_date')
@@ -1119,6 +1182,9 @@ def projects(request):
         'current_system': current_system,
         'current_user_role': current_user_role,
         'search_query': search_query,
+        'filter_scope': filter_scope,
+        'filter_source': filter_source,
+        'filter_method': filter_method,
         'now': now,
     }
 
@@ -1153,10 +1219,25 @@ def create_project(request):
             status = request.POST.get('status', 'planning')
             start_date = request.POST.get('start_date')
             end_date = request.POST.get('end_date')
+            predicted_fields = predict_research_fields(name, description)
+            research_method = predicted_fields['research_method']
+            publication_scope = predicted_fields['publication_scope']
+            publication_status = predicted_fields['publication_status']
+            source_type = request.POST.get('source_type', 'student')
+            repository_source = request.POST.get('repository_source', '').strip() or None
+
+            metadata = _extract_research_metadata(name, description)
+            posted_tags = request.POST.get('meta_tags', '').strip()
+            if posted_tags:
+                metadata['meta_tags'] = [
+                    tag.strip().lower()
+                    for tag in posted_tags.split(',')
+                    if tag.strip()
+                ][:12]
 
             # Validate required fields
             if not name:
-                messages.error(request, "Project name is required.")
+                messages.error(request, "Research title is required.")
                 return render(request, 'projectmanagement/modals/add_project_modal.html', {})
             
             if not start_date or not end_date:
@@ -1169,6 +1250,14 @@ def create_project(request):
                 status=status,
                 start_date=start_date,
                 end_date=end_date,
+                research_method=research_method,
+                publication_scope=publication_scope,
+                publication_status=publication_status,
+                source_type=source_type,
+                repository_source=repository_source,
+                auto_detected_topic=metadata['auto_detected_topic'],
+                text_mining_summary=metadata['text_mining_summary'],
+                meta_tags=metadata['meta_tags'],
                 created_by=request.user
             )
 
@@ -1176,22 +1265,22 @@ def create_project(request):
                 user=request.user,
                 system_name='projectmanagement',
                 action='CREATE',
-                target_model='Project',
+                target_model='Research',
                 target_id=project.id,
-                description=f"Created project '{project.name}'",
-                hidden_description=f"User '{request.user.username}' created project '{project.name}'",
+                description=f"Created research '{project.name}'",
+                hidden_description=f"User '{request.user.username}' created research '{project.name}'",
                 ip_address=get_client_ip(request),
                 user_agent=get_user_agent(request),
             )
 
-            messages.success(request, f"Project '{project.name}' created successfully.")
+            messages.success(request, f"Research '{project.name}' created successfully.")
             return redirect('projectmanagement:pm_projects')
         
         except ValidationError as e:
-            messages.error(request, f"Invalid project data: {str(e)}")
+            messages.error(request, f"Invalid research data: {str(e)}")
             return render(request, 'projectmanagement/modals/add_project_modal.html', {})
         except Exception as e:
-            messages.error(request, f"Error creating project: {str(e)}")
+            messages.error(request, f"Error creating research: {str(e)}")
             return render(request, 'projectmanagement/modals/add_project_modal.html', {})
     
     if request.method == 'GET':
@@ -1220,6 +1309,8 @@ def edit_project(request, project_id):
         project.name = request.POST.get('name', project.name)
         project.description = request.POST.get('description', project.description)
         project.status = request.POST.get('status', project.status)
+        project.source_type = request.POST.get('source_type', project.source_type)
+        project.repository_source = request.POST.get('repository_source', project.repository_source)
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
         
@@ -1227,6 +1318,25 @@ def edit_project(request, project_id):
             project.start_date = start_date
         if end_date:
             project.end_date = end_date
+
+        predicted_fields = predict_research_fields(project.name, project.description)
+        project.research_method = predicted_fields['research_method']
+        project.publication_scope = predicted_fields['publication_scope']
+        project.publication_status = predicted_fields['publication_status']
+
+        metadata = _extract_research_metadata(project.name, project.description)
+        project.auto_detected_topic = metadata['auto_detected_topic']
+        project.text_mining_summary = metadata['text_mining_summary']
+
+        posted_tags = request.POST.get('meta_tags', '').strip()
+        if posted_tags:
+            project.meta_tags = [
+                tag.strip().lower()
+                for tag in posted_tags.split(',')
+                if tag.strip()
+            ][:12]
+        elif not project.meta_tags:
+            project.meta_tags = metadata['meta_tags']
         
         # Validate start date is before end date
         if project.start_date and project.end_date:
@@ -1261,10 +1371,10 @@ def edit_project(request, project_id):
             user=request.user,
             system_name='projectmanagement',
             action='UPDATE',
-            target_model='Project',
+            target_model='Research',
             target_id=project.id,
-            description=f"Updated project '{project.name}'",
-            hidden_description=f"User '{request.user.username}' updated project '{project.name}'",
+            description=f"Updated research '{project.name}'",
+            hidden_description=f"User '{request.user.username}' updated research '{project.name}'",
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
         )
@@ -1273,18 +1383,24 @@ def edit_project(request, project_id):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
                 'success': True,
-                'message': f"Project '{project.name}' updated successfully.",
+                'message': f"Research '{project.name}' updated successfully.",
                 'project': {
                     'id': str(project.id),
                     'name': project.name,
                     'description': project.description,
                     'status': project.status,
+                    'research_method': project.research_method,
+                    'publication_scope': project.publication_scope,
+                    'publication_status': project.publication_status,
+                    'source_type': project.source_type,
+                    'repository_source': project.repository_source,
+                    'meta_tags': ', '.join(project.meta_tags or []),
                     'start_date': project.start_date.isoformat() if hasattr(project.start_date, 'isoformat') else str(project.start_date),
                     'end_date': project.end_date.isoformat() if hasattr(project.end_date, 'isoformat') else str(project.end_date),
                 }
             })
         
-        messages.success(request, f"Project '{project.name}' updated successfully.")
+        messages.success(request, f"Research '{project.name}' updated successfully.")
         return redirect('projectmanagement:pm_projects')
     
     # GET request - return form data as JSON for modal
@@ -1296,6 +1412,12 @@ def edit_project(request, project_id):
                 'name': project.name,
                 'description': project.description,
                 'status': project.status,
+                'research_method': project.research_method,
+                'publication_scope': project.publication_scope,
+                'publication_status': project.publication_status,
+                'source_type': project.source_type,
+                'repository_source': project.repository_source,
+                'meta_tags': ', '.join(project.meta_tags or []),
                 'start_date': project.start_date.isoformat(),
                 'end_date': project.end_date.isoformat(),
             }
@@ -1317,7 +1439,7 @@ def delete_project(request, project_id):
     is_admin = request.user.is_superuser or user_role in ['admin', 'superadmin']
     
     if not is_admin and project.created_by != request.user:
-        messages.error(request, "You don't have permission to delete this project.")
+        messages.error(request, "You don't have permission to delete this research record.")
         return redirect('projectmanagement:pm_projects')
     
     project_name = project.name
@@ -1327,15 +1449,15 @@ def delete_project(request, project_id):
         user=request.user,
         system_name='projectmanagement',
         action='DELETE',
-        target_model='Project',
+        target_model='Research',
         target_id=project_id,
-        description=f"Deleted project '{project_name}'",
-        hidden_description=f"User '{request.user.username}' deleted project '{project_name}'",
+        description=f"Deleted research '{project_name}'",
+        hidden_description=f"User '{request.user.username}' deleted research '{project_name}'",
         ip_address=get_client_ip(request),
         user_agent=get_user_agent(request),
     )
     
-    messages.success(request, f"Project '{project_name}' deleted successfully.")
+    messages.success(request, f"Research '{project_name}' deleted successfully.")
     return redirect('projectmanagement:pm_projects')
 
 @login_required
@@ -1399,8 +1521,8 @@ def edit_task(request, task_id):
             action='UPDATE',
             target_model='Task',
             target_id=task.id,
-            description=f"Updated task '{task.title}' in project '{task.project.name}'",
-            hidden_description=f"User '{request.user.username}' updated task '{task.title}' in project '{task.project.name}'",
+            description=f"Updated task '{task.title}' in research '{task.project.name}'",
+            hidden_description=f"User '{request.user.username}' updated task '{task.title}' in research '{task.project.name}'",
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
         )
@@ -1477,8 +1599,8 @@ def delete_task(request, task_id):
         action='DELETE',
         target_model='Task',
         target_id=task_id,
-        description=f"Deleted task '{task_title}' from project '{project_name}'",
-        hidden_description=f"User '{request.user.username}' deleted task '{task_title}' from project '{project_name}'",
+        description=f"Deleted task '{task_title}' from research '{project_name}'",
+        hidden_description=f"User '{request.user.username}' deleted task '{task_title}' from research '{project_name}'",
         user_agent=get_user_agent(request),
     )
     
@@ -1513,8 +1635,8 @@ def complete_task(request, task_id):
         action='UPDATE',
         target_model='Task',
         target_id=task.id,
-        description=f"Marked task '{task.title}' as completed in project '{task.project.name}'",
-        hidden_description=f"User '{request.user.username}' marked task '{task.title}' as completed in project '{task.project.name}'",
+        description=f"Marked task '{task.title}' as completed in research '{task.project.name}'",
+        hidden_description=f"User '{request.user.username}' marked task '{task.title}' as completed in research '{task.project.name}'",
         ip_address=get_client_ip(request),
         user_agent=get_user_agent(request),
     )
@@ -1597,8 +1719,8 @@ def create_task(request, project_id):
             action='CREATE',
             target_model='Task',
             target_id=task.id,
-            description=f"Created task '{task.title}' in project '{project.name}'",
-            hidden_description=f"User '{request.user.username}' created task '{task.title}' in project '{project.name}'",
+            description=f"Created task '{task.title}' in research '{project.name}'",
+            hidden_description=f"User '{request.user.username}' created task '{task.title}' in research '{project.name}'",
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
         )

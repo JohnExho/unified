@@ -1,8 +1,8 @@
 	<section class="summary-grid">
 		<div class="summary-card">
-			<p>Projects</p>
+			<p>Research</p>
 			<h2>{{ total_projects }}</h2>
-			<p class="muted">Total visible projects</p>
+			<p class="muted">Total visible research records</p>
 		</div>
 		<div class="summary-card">
 			<p>Tasks</p>
@@ -24,7 +24,7 @@
 	<section class="section">
 		<div class="section-header">
 			<h3>Progress trend</h3>
-			<span class="muted">Progress percentage by project</span>
+			<span class="muted">Progress percentage by research record</span>
 		</div>
 		<div class="chart-wrap">
 			<canvas id="progressChart" height="160"></canvas>
@@ -33,14 +33,14 @@
 
 	<section class="section">
 		<div class="section-header">
-			<h3>Project progress</h3>
+			<h3>Research progress</h3>
 			<span class="muted">Completed vs total tasks</span>
 		</div>
 		<div class="table-wrap">
 			<table>
 				<thead>
 					<tr>
-						<th>Project</th>
+						<th>Research</th>
 						<th>Status</th>
 						<th>Progress</th>
 						<th>Tasks</th>
@@ -66,7 +66,7 @@
 							</tr>
 						{% endfor %}
 					{% else %}
-						<tr><td colspan="5">No projects match the current filters.</td></tr>
+						<tr><td colspan="5">No research records match the current filters.</td></tr>
 					{% endif %}
 				</tbody>
 			</table>
@@ -132,7 +132,7 @@
 		<div class="table-wrap">
 			<table>
 				<thead>
-					<tr><th>Task</th><th>Project</th><th>Due</th><th>Status</th></tr>
+					<tr><th>Task</th><th>Research</th><th>Due</th><th>Status</th></tr>
 				</thead>
 				<tbody>
 					{% if overdue_tasks_list %}

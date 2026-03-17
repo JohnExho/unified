@@ -20,11 +20,11 @@
                         {% with events=calendar_events|get_item:day_date %}
                             {% if events %}
                                 <div class="week-cell-content">
-                                    <!-- Projects -->
+                                    <!-- Research -->
                                     {% for project in events.projects %}
                                         <div class="event-item project-event {% if project.status == 'late' %}late{% else %}active{% endif %}" title="{{ project.name }}">
                                             <span class="event-badge">📁</span>
-                                            <span class="event-type">PRJ</span>
+                                            <span class="event-type">RSH</span>
                                             <span class="event-text">{{ project.name|truncatewords:2 }}</span>
                                         </div>
                                     {% endfor %}

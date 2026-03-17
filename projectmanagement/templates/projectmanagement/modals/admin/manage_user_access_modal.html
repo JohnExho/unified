@@ -9,6 +9,7 @@
                 <label for="accessLevel">Access Level:</label>
                 <select name="access_level" id="accessLevel" required>
                     <option value="user">User</option>
+                    <option value="researcher">Researcher</option>
                     <option value="admin">Admin</option>
                     {% if user.is_superuser %}
                         <option value="superadmin">Super Admin</option>
@@ -37,7 +38,7 @@
         if (modalUsername) modalUsername.textContent = username;
 
         const modalRole = modal.querySelector('.modal-current-role');
-        if (modalRole) modalRole.textContent = (role || 'user').charAt(0).toUpperCase() + (role || 'user.bio').slice(1);
+        if (modalRole) modalRole.textContent = (role || 'user').charAt(0).toUpperCase() + (role || 'user').slice(1);
 
         // Set the select value to current role
         const accessLevelSelect = modal.querySelector('#accessLevel');
