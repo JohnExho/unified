@@ -1,0 +1,148 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Financial Dashboard · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Financial Dashboard</div>
+      <div class="page-subtitle">Real-time financial metrics and fund allocation overview.</div>
+    </div>
+  </div>
+  
+  <div class="grid cols-4 mb-24">
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Total Allocations</span>
+        <span class="stat-value">${{ summary.total_allocations|floatformat:2 }}</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Total Expenses</span>
+        <span class="stat-value" style="color: var(--warning);">${{ summary.total_expenses|floatformat:2 }}</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Available Funds</span>
+        <span class="stat-value" style="color: var(--success);">${{ summary.available_funds|floatformat:2 }}</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Active Funds</span>
+        <span class="stat-value">{{ summary.num_active_funds }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="grid cols-2 mb-24">
+    <div class="card">
+      <div class="section-title">
+        <h3>Financial Summary</h3>
+        <p>Overall financial status</p>
+      </div>
+      
+      <div class="list">
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Total Allocations</div>
+            <div class="muted text-small">Funds allocated to projects</div>
+          </div>
+          <span class="pill">${{ summary.total_allocations|floatformat:2 }}</span>
+        </div>
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Total Expenses</div>
+            <div class="muted text-small">Funds expended from allocations</div>
+          </div>
+          <span class="pill" style="background: var(--warning); opacity: 0.2;">${{ summary.total_expenses|floatformat:2 }}</span>
+        </div>
+        <div class="list-item">
+          <div>
+            <div class="text-strong">Available Funds</div>
+            <div class="muted text-small">Remaining for allocation</div>
+          </div>
+          <span class="pill" style="background: var(--success); opacity: 0.2;">${{ summary.available_funds|floatformat:2 }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="section-title">
+        <h3>Quick Reports</h3>
+        <p>Generate financial reports</p>
+      </div>
+      
+      <div class="list">
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:financial-summary-report' %}">
+            <div class="text-strong">Financial Summary</div>
+            <div class="muted text-small">Association-wide overview</div>
+          </a>
+        </div>
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:fund-utilization-report' %}">
+            <div class="text-strong">Fund Utilization</div>
+            <div class="muted text-small">Per-fund breakdown</div>
+          </a>
+        </div>
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:monthly-contribution-report' %}">
+            <div class="text-strong">Monthly Report</div>
+            <div class="muted text-small">Month-by-month analysis</div>
+          </a>
+        </div>
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:annual-financial-report' %}">
+            <div class="text-strong">Annual Report</div>
+            <div class="muted text-small">Yearly financial summary</div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="section-title">
+      <div>
+        <h3>Fund Utilization Overview</h3>
+        <p>Allocation and expense status by fund</p>
+      </div>
+    </div>
+    
+    {% if fund_report %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Fund Name</th>
+            <th>Allocated</th>
+            <th>Used</th>
+            <th>Remaining</th>
+            <th>Utilization %</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fund in fund_report %}
+            <tr>
+              <td>{{ fund.fund_name }}</td>
+              <td>${{ fund.total_allocated|floatformat:2 }}</td>
+              <td>${{ fund.total_used|floatformat:2 }}</td>
+              <td>${{ fund.remaining_balance|floatformat:2 }}</td>
+              <td>{{ fund.utilization_rate }}%</td>
+              <td>
+                <span class="badge {% if fund.status == 'active' %}success{% elif fund.status == 'completed' %}default{% else %}warning{% endif %}">
+                  {{ fund.status }}
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">No fund data available.</div>
+    {% endif %}
+  </div>
+{% endblock content %}

@@ -1,0 +1,98 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Master Data: Departments · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Master Data: Departments</div>
+      <div class="page-subtitle">Configure and manage organizational departments.</div>
+    </div>
+    <div class="action-group">
+      <a class="button" href="{% url 'informationmanagement:master-data-department-create' %}">New Department</a>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="section-title">
+      <div>
+        <h3>Department List</h3>
+        <p>All configured departments in the system</p>
+      </div>
+    </div>
+    
+    {% if departments %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Department Name</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dept in departments %}
+            <tr>
+              <td><strong>{{ dept.name }}</strong></td>
+              <td>{{ dept.description|truncatewords:15 }}</td>
+              <td>
+                <span class="badge {% if dept.is_active %}success{% else %}secondary{% endif %}">
+                  {% if dept.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+              </td>
+              <td>{{ dept.created_at|date:"M d, Y" }}</td>
+              <td>
+                <div class="table-actions">
+                  <a class="link-btn" href="{% url 'informationmanagement:master-data-department-edit' dept.id %}">Edit</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">No departments configured. Create the first department to begin.</div>
+    {% endif %}
+  </div>
+  
+  <div class="grid cols-2 mt-24">
+    <div class="card">
+      <h3>Department Statistics</h3>
+      <p>Overview of configured departments</p>
+      <div class="stat-item">
+        <span class="stat-label">Total Departments</span>
+        <span class="stat-value">{{ departments|length }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Active Departments</span>
+        <span class="stat-value" style="color: var(--success);">
+          {% regroup departments by is_active as active_groups %}
+          {% for active in active_groups %}
+            {% if active.grouper %}{{ active.list|length }}{% endif %}
+          {% endfor %}
+        </span>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3>Quick Actions</h3>
+      <p>Department management</p>
+      <div class="list">
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:master-data-department-create' %}">
+            <div class="text-strong">Add Department</div>
+            <div class="muted text-small">Create new department</div>
+          </a>
+        </div>
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:member-contributions-list' %}">
+            <div class="text-strong">View Members by Department</div>
+            <div class="muted text-small">Filter contributions by department</div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

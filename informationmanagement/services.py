@@ -571,3 +571,313 @@ def get_ml_lab_data():
             },
         ],
     }
+
+
+# ============================================================================
+# Feature 2: Financial Reporting and Export Services
+# ============================================================================
+
+
+class FinancialReportingService:
+    """Service for generating comprehensive financial reports and analytics"""
+
+    @staticmethod
+    def get_association_financial_summary(date_from=None, date_to=None):
+        """Generate association-wide financial summary"""
+        from .models import FundAllocation, FundExpense, ContributionFund
+        from django.db.models import Sum
+        
+        query_allocations = FundAllocation.objects.all()
+        query_expenses = FundExpense.objects.all()
+        
+        if date_from:
+            query_allocations = query_allocations.filter(allocated_date__gte=date_from)
+            query_expenses = query_expenses.filter(expense_date__gte=date_from)
+        
+        if date_to:
+            query_allocations = query_allocations.filter(allocated_date__lte=date_to)
+            query_expenses = query_expenses.filter(expense_date__lte=date_to)
+        
+        total_allocated = query_allocations.aggregate(
+            total=Sum("amount")
+        )["total"] or Decimal("0.00")
+        
+        total_expenses = query_expenses.aggregate(
+            total=Sum("amount")
+        )["total"] or Decimal("0.00")
+        
+        available_funds = total_allocated - total_expenses
+        
+        return {
+            "total_allocations": total_allocated,
+            "total_expenses": total_expenses,
+            "available_funds": available_funds,
+            "num_active_funds": ContributionFund.objects.filter(status="active").count(),
+            "date_from": date_from,
+            "date_to": date_to,
+        }
+
+    @staticmethod
+    def get_fund_utilization_report(date_from=None, date_to=None):
+        """Generate detailed fund utilization report per project"""
+        from .models import ContributionFund
+        
+        funds = ContributionFund.objects.all()
+        
+        report_data = []
+        for fund in funds:
+            allocated = fund.get_total_allocated()
+            used = fund.get_total_used()
+            remaining = fund.get_remaining_balance()
+            utilization_rate = (used / allocated * 100) if allocated > 0 else 0
+            
+            report_data.append({
+                "fund_name": fund.name,
+                "fund_id": fund.id,
+                "budget_required": fund.budget_required,
+                "total_allocated": allocated,
+                "total_used": used,
+                "remaining_balance": remaining,
+                "utilization_rate": round(utilization_rate, 2),
+                "status": fund.status,
+            })
+        
+        return report_data
+
+    @staticmethod
+    def get_monthly_contribution_report(year, month):
+        """Generate monthly contribution report"""
+        from .models import FundAllocation
+        from dateutil import relativedelta
+        from datetime import date
+        
+        start_date = date(year, month, 1)
+        if month == 12:
+            end_date = date(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_date = date(year, month + 1, 1) - timedelta(days=1)
+        
+        allocations = FundAllocation.objects.filter(
+            allocated_date__range=[start_date, end_date]
+        )
+        
+        total = allocations.aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+        count = allocations.count()
+        
+        return {
+            "year": year,
+            "month": month,
+            "start_date": start_date,
+            "end_date": end_date,
+            "total_contributions": total,
+            "number_of_allocations": count,
+            "allocations": allocations,
+        }
+
+    @staticmethod
+    def get_annual_financial_report(year):
+        """Generate annual financial report"""
+        from .models import FundAllocation, FundExpense
+        from datetime import date
+        
+        start_date = date(year, 1, 1)
+        end_date = date(year, 12, 31)
+        
+        total_allocated = FundAllocation.objects.filter(
+            allocated_date__range=[start_date, end_date]
+        ).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+        
+        total_expenses = FundExpense.objects.filter(
+            expense_date__range=[start_date, end_date]
+        ).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+        
+        monthly_data = []
+        for month in range(1, 13):
+            month_allocations = FundAllocation.objects.filter(
+                allocated_date__year=year,
+                allocated_date__month=month
+            ).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+            
+            month_expenses = FundExpense.objects.filter(
+                expense_date__year=year,
+                expense_date__month=month
+            ).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+            
+            monthly_data.append({
+                "month": month,
+                "allocations": month_allocations,
+                "expenses": month_expenses,
+            })
+        
+        return {
+            "year": year,
+            "total_allocated": total_allocated,
+            "total_expenses": total_expenses,
+            "available_funds": total_allocated - total_expenses,
+            "monthly_breakdown": monthly_data,
+        }
+
+
+class ExportService:
+    """Service for exporting reports to various formats"""
+
+    @staticmethod
+    def export_to_excel(report_data, report_type, filename):
+        """Export report data to Excel"""
+        try:
+            import openpyxl
+            from openpyxl.styles import Font, PatternFill, Alignment
+        except ImportError:
+            return None
+        
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = report_type
+        
+        # Add header
+        ws['A1'] = f"{report_type} Report"
+        ws['A1'].font = Font(bold=True, size=14)
+        ws.merge_cells('A1:E1')
+        
+        # Add data
+        if isinstance(report_data, list):
+            headers = list(report_data[0].keys()) if report_data else []
+            for col_idx, header in enumerate(headers, 1):
+                ws.cell(row=3, column=col_idx, value=header).font = Font(bold=True)
+            
+            for row_idx, row_data in enumerate(report_data, 4):
+                for col_idx, value in enumerate(row_data.values(), 1):
+                    ws.cell(row=row_idx, column=col_idx, value=value)
+        
+        wb.save(filename)
+        return filename
+
+    @staticmethod
+    def export_to_pdf(report_data, report_type, filename):
+        """Export report data to PDF"""
+        try:
+            from reportlab.lib.pagesizes import letter
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import inch
+            from reportlab.lib import colors
+        except ImportError:
+            return None
+        
+        doc = SimpleDocTemplate(filename, pagesize=letter)
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Title
+        title = Paragraph(f"<b>{report_type} Report</b>", styles['Heading1'])
+        story.append(title)
+        story.append(Spacer(1, 0.3 * inch))
+        
+        # Create table data
+        if isinstance(report_data, list) and report_data:
+            headers = [[str(h) for h in report_data[0].keys()]]
+            data = headers + [[str(v) for v in row.values()] for row in report_data]
+            
+            table = Table(data)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ]))
+            story.append(table)
+        
+        doc.build(story)
+        return filename
+
+
+class MemberContributionService:
+    """Service for member contribution tracking and monitoring"""
+
+    @staticmethod
+    def calculate_payment_status(member_record):
+        """Calculate and update payment status based on due amount"""
+        from datetime import date, timedelta
+        
+        today = date.today()
+        
+        if member_record.due_amount == 0:
+            return "on_time"
+        
+        if member_record.last_payment_date:
+            days_overdue = (today - member_record.last_payment_date).days
+            if days_overdue > 90:
+                return "delinquent"
+            elif days_overdue > 30:
+                return "overdue"
+        
+        return "on_time"
+
+    @staticmethod
+    def generate_member_statement(member_record):
+        """Generate individual member contribution statement"""
+        from .models import MemberContributionRecord
+        
+        payment_status = MemberContributionService.calculate_payment_status(member_record)
+        member_record.payment_status = payment_status
+        member_record.save()
+        
+        return {
+            "member_name": member_record.member_name,
+            "employee_id": member_record.employee_id,
+            "department": member_record.department,
+            "total_contributions": member_record.total_contributions,
+            "current_balance": member_record.current_balance,
+            "due_amount": member_record.due_amount,
+            "late_payment_penalties": member_record.late_payment_penalties,
+            "payment_status": payment_status,
+            "last_payment_date": member_record.last_payment_date,
+            "generated_at": timezone.now(),
+        }
+
+    @staticmethod
+    def get_filtered_members(filters):
+        """Get members filtered by specified criteria"""
+        from .models import MemberContributionRecord
+        
+        query = MemberContributionRecord.objects.all()
+        
+        if filters.get('status_filter') and filters['status_filter'] != 'all':
+            query = query.filter(payment_status=filters['status_filter'])
+        
+        if filters.get('member_name'):
+            query = query.filter(member_name__icontains=filters['member_name'])
+        
+        if filters.get('employee_id'):
+            query = query.filter(employee_id__icontains=filters['employee_id'])
+        
+        if filters.get('department'):
+            query = query.filter(department=filters['department'])
+        
+        if filters.get('date_from'):
+            query = query.filter(created_at__gte=filters['date_from'])
+        
+        if filters.get('date_to'):
+            query = query.filter(created_at__lte=filters['date_to'])
+        
+        return query.order_by('-updated_at')
+
+    @staticmethod
+    def export_member_statement(member_record, format='pdf'):
+        """Export individual member statement"""
+        statement = MemberContributionService.generate_member_statement(member_record)
+        
+        filename = f"member_statement_{member_record.employee_id}_{timezone.now().strftime('%Y%m%d')}"
+        
+        if format == 'excel':
+            filename += '.xlsx'
+            ExportService.export_to_excel([statement], 'Member Statement', filename)
+        elif format == 'pdf':
+            filename += '.pdf'
+            ExportService.export_to_pdf([statement], 'Member Statement', filename)
+        
+        return filename

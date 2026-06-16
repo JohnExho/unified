@@ -1,0 +1,182 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Member Contributions · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Member Contributions</div>
+      <div class="page-subtitle">Track and monitor individual member contribution records.</div>
+    </div>
+    <div class="action-group">
+      <a class="button" href="{% url 'informationmanagement:member-contribution-create' %}">New Record</a>
+    </div>
+  </div>
+  
+  <div class="card mb-24">
+    <div class="section-title">
+      <h3>Filter Members</h3>
+      <p>Search and filter member contribution records</p>
+    </div>
+    
+    <form method="get" class="filter-form">
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="status_filter">Status</label>
+          {{ filter_form.status_filter }}
+        </div>
+        <div class="form-field">
+          <label for="member_name">Member Name</label>
+          {{ filter_form.member_name }}
+        </div>
+        <div class="form-field">
+          <label for="employee_id">Employee ID</label>
+          {{ filter_form.employee_id }}
+        </div>
+        <div class="form-field">
+          <label for="department">Department</label>
+          {{ filter_form.department }}
+        </div>
+        <div class="form-field">
+          <label for="date_from">From Date</label>
+          {{ filter_form.date_from }}
+        </div>
+        <div class="form-field">
+          <label for="date_to">To Date</label>
+          {{ filter_form.date_to }}
+        </div>
+      </div>
+      <button type="submit" class="button">Apply Filters</button>
+    </form>
+  </div>
+  
+  <div class="card">
+    <div class="section-title">
+      <h3>Member Contribution Records</h3>
+      <p>Complete list of member contributions and payment status</p>
+    </div>
+    
+    {% if members %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Member Name</th>
+            <th>Employee ID</th>
+            <th>Department</th>
+            <th>Total Contributions</th>
+            <th>Current Balance</th>
+            <th>Due Amount</th>
+            <th>Payment Status</th>
+            <th>Last Payment</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for member in members %}
+            <tr>
+              <td><strong>{{ member.member_name }}</strong></td>
+              <td>{{ member.employee_id }}</td>
+              <td>{{ member.department }}</td>
+              <td>${{ member.total_contributions|floatformat:2 }}</td>
+              <td>${{ member.current_balance|floatformat:2 }}</td>
+              <td>
+                <span style="color: {% if member.due_amount > 0 %}var(--warning){% else %}var(--success){% endif %};">
+                  ${{ member.due_amount|floatformat:2 }}
+                </span>
+              </td>
+              <td>
+                <span class="badge {% if member.payment_status == 'on_time' %}success{% elif member.payment_status == 'overdue' %}warning{% else %}danger{% endif %}">
+                  {{ member.get_payment_status_display }}
+                </span>
+              </td>
+              <td>
+                {% if member.last_payment_date %}
+                  {{ member.last_payment_date|date:"M d, Y" }}
+                {% else %}
+                  N/A
+                {% endif %}
+              </td>
+              <td>
+                <div class="table-actions">
+                  <a class="link-btn" href="{% url 'informationmanagement:member-contribution-detail' member.id %}">View</a>
+                  <a class="link-btn" href="{% url 'informationmanagement:member-contribution-edit' member.id %}">Edit</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">No member records found. Create the first record to begin.</div>
+    {% endif %}
+  </div>
+  
+  <div class="grid cols-2 mt-24">
+    <div class="card">
+      <h3>Contribution Statistics</h3>
+      <p>Overview of member contributions</p>
+      <div class="stat-item">
+        <span class="stat-label">Total Members</span>
+        <span class="stat-value">{{ members|length }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">On Time</span>
+        <span class="stat-value" style="color: var(--success);">
+          {% regroup members by payment_status as status_groups %}
+          {% for status in status_groups %}
+            {% if status.grouper == 'on_time' %}{{ status.list|length }}{% endif %}
+          {% endfor %}
+        </span>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3>Quick Actions</h3>
+      <p>Manage member records</p>
+      <div class="list">
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:member-contribution-create' %}">
+            <div class="text-strong">Add Member</div>
+            <div class="muted text-small">Create new contribution record</div>
+          </a>
+        </div>
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:master-data-departments-list' %}">
+            <div class="text-strong">Manage Departments</div>
+            <div class="muted text-small">Configure department master data</div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+<style>
+  .filter-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .form-field {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-field label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  
+  .form-field input,
+  .form-field select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 14px;
+  }
+</style>

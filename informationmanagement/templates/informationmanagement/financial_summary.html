@@ -1,0 +1,84 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Financial Summary Report · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Association Financial Summary</div>
+      <div class="page-subtitle">Comprehensive overview of association finances.</div>
+    </div>
+    <div class="action-group">
+      <a class="button secondary" href="{% url 'informationmanagement:financial-dashboard' %}">Back to Dashboard</a>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="section-title">
+      <h3>Financial Summary Report</h3>
+      <p>
+        {% if summary.date_from %}From {{ summary.date_from|date:"M d, Y" }}{% endif %}
+        {% if summary.date_to %}to {{ summary.date_to|date:"M d, Y" }}{% endif %}
+      </p>
+    </div>
+    
+    <div class="grid cols-3 mb-24">
+      <div class="card">
+        <div class="stat-box">
+          <span class="stat-label">Total Allocations</span>
+          <span class="stat-value">${{ summary.total_allocations|floatformat:2 }}</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="stat-box">
+          <span class="stat-label">Total Expenses</span>
+          <span class="stat-value" style="color: var(--warning);">${{ summary.total_expenses|floatformat:2 }}</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="stat-box">
+          <span class="stat-label">Available Funds</span>
+          <span class="stat-value" style="color: var(--success);">${{ summary.available_funds|floatformat:2 }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="details-grid">
+      <div class="detail-row">
+        <span class="detail-label">Total Contributions Collected</span>
+        <span class="detail-value" style="color: var(--success); font-weight: 600;">${{ summary.total_allocations|floatformat:2 }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Total Allocated to Projects</span>
+        <span class="detail-value">${{ summary.total_allocations|floatformat:2 }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Total Expenses Incurred</span>
+        <span class="detail-value" style="color: var(--warning);">${{ summary.total_expenses|floatformat:2 }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Remaining Balance</span>
+        <span class="detail-value" style="color: var(--success);">${{ summary.available_funds|floatformat:2 }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Active Funds</span>
+        <span class="detail-value">{{ summary.num_active_funds }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Expense Rate</span>
+        <span class="detail-value">
+          {% if summary.total_allocations > 0 %}
+            {% widthratio summary.total_expenses summary.total_allocations 100 %}%
+          {% else %}
+            N/A
+          {% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="action-group mt-24">
+    <a class="button secondary" href="{% url 'informationmanagement:export-financial-report' 'association_summary' %}?format=pdf">Export as PDF</a>
+    <a class="button secondary" href="{% url 'informationmanagement:export-financial-report' 'association_summary' %}?format=xlsx">Export as Excel</a>
+  </div>
+{% endblock content %}

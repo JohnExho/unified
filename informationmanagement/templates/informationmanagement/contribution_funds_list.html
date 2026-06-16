@@ -1,0 +1,116 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Contribution Funds · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Contribution Funds</div>
+      <div class="page-subtitle">Manage funds and allocate collected contributions to projects.</div>
+    </div>
+    <div class="action-group">
+      <a class="button" href="{% url 'informationmanagement:contribution-fund-create' %}">New Fund</a>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="section-title">
+      <div>
+        <h3>Active Contribution Funds</h3>
+        <p>Overview of all contribution funds with allocation status.</p>
+      </div>
+    </div>
+    
+    {% if funds %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Fund Name</th>
+            <th>Status</th>
+            <th>Budget Required</th>
+            <th>Total Allocated</th>
+            <th>Total Used</th>
+            <th>Remaining</th>
+            <th>Utilization %</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fund in funds %}
+            <tr>
+              <td><strong>{{ fund.name }}</strong></td>
+              <td>
+                <span class="badge {% if fund.status == 'active' %}success{% elif fund.status == 'completed' %}default{% else %}warning{% endif %}">
+                  {{ fund.get_status_display }}
+                </span>
+              </td>
+              <td>${{ fund.budget_required|floatformat:2 }}</td>
+              <td>${{ fund.get_total_allocated|floatformat:2 }}</td>
+              <td>${{ fund.get_total_used|floatformat:2 }}</td>
+              <td>${{ fund.get_remaining_balance|floatformat:2 }}</td>
+              <td>
+                {% widthratio fund.get_total_used fund.get_total_allocated 100 as utilization %}
+                {{ utilization }}%
+              </td>
+              <td>{{ fund.created_at|date:"M d, Y" }}</td>
+              <td>
+                <div class="table-actions">
+                  <a class="link-btn" href="{% url 'informationmanagement:contribution-fund-detail' fund.id %}">View</a>
+                  <a class="link-btn" href="{% url 'informationmanagement:contribution-fund-create' %}">Edit</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">No contribution funds available. Create your first fund to begin.</div>
+    {% endif %}
+  </div>
+  
+  <div class="grid cols-2 mt-24">
+    <div class="card">
+      <h3>Fund Statistics</h3>
+      <p>Overview of all active funds.</p>
+      <div class="stat-item">
+        <span class="stat-label">Total Funds</span>
+        <span class="stat-value">{{ funds|length }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Active Funds</span>
+        <span class="stat-value" style="color: var(--success);">
+          {% regroup funds by status as status_groups %}
+          {% for status in status_groups %}
+            {% if status.grouper == 'active' %}{{ status.list|length }}{% endif %}
+          {% endfor %}
+        </span>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3>Quick Actions</h3>
+      <p>Manage contributions and allocations.</p>
+      <div class="list">
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:fund-allocation-create' %}">
+            <div class="text-strong">Add Fund Allocation</div>
+            <div class="muted text-small">Allocate contributions to funds</div>
+          </a>
+        </div>
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:fund-expense-create' %}">
+            <div class="text-strong">Record Expense</div>
+            <div class="muted text-small">Track fund utilization</div>
+          </a>
+        </div>
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:financial-dashboard' %}">
+            <div class="text-strong">Financial Dashboard</div>
+            <div class="muted text-small">View financial metrics</div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

@@ -1,0 +1,140 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  {{ fund.name }} · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ fund.name }}</div>
+      <div class="page-subtitle">Track allocations and expenses for this fund.</div>
+    </div>
+    <div class="action-group">
+      <a class="button secondary" href="{% url 'informationmanagement:contribution-funds-list' %}">Back to Funds</a>
+    </div>
+  </div>
+  
+  <div class="grid cols-3 mb-24">
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Total Allocated</span>
+        <span class="stat-value">${{ fund.get_total_allocated|floatformat:2 }}</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Total Used</span>
+        <span class="stat-value" style="color: var(--warning);">${{ fund.get_total_used|floatformat:2 }}</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Remaining Balance</span>
+        <span class="stat-value" style="color: var(--success);">${{ fund.get_remaining_balance|floatformat:2 }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="section-title">
+      <div>
+        <h3>Fund Details</h3>
+        <p>Overview of {{ fund.name }}</p>
+      </div>
+    </div>
+    
+    <div class="details-grid">
+      <div class="detail-row">
+        <span class="detail-label">Fund Name</span>
+        <span class="detail-value">{{ fund.name }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Status</span>
+        <span class="detail-value">
+          <span class="badge {% if fund.status == 'active' %}success{% elif fund.status == 'completed' %}default{% else %}warning{% endif %}">
+            {{ fund.get_status_display }}
+          </span>
+        </span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Budget Required</span>
+        <span class="detail-value">${{ fund.budget_required|floatformat:2 }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Start Date</span>
+        <span class="detail-value">{{ fund.start_date|date:"M d, Y" }}</span>
+      </div>
+      <div class="detail-row grid-span-2">
+        <span class="detail-label">Description</span>
+        <span class="detail-value">{{ fund.description }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="grid cols-2 mt-24">
+    <div class="card">
+      <div class="section-title">
+        <div>
+          <h3>Allocations</h3>
+          <p>List of all contributions allocated to this fund.</p>
+        </div>
+        <a class="button secondary" href="{% url 'informationmanagement:fund-allocation-create' %}?fund={{ fund.id }}">New Allocation</a>
+      </div>
+      
+      {% if allocations %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Allocated By</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for allocation in allocations %}
+              <tr>
+                <td>${{ allocation.amount|floatformat:2 }}</td>
+                <td>{{ allocation.allocated_date|date:"M d, Y" }}</td>
+                <td>{{ allocation.allocated_by.username }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">No allocations yet. Add the first allocation.</div>
+      {% endif %}
+    </div>
+    
+    <div class="card">
+      <div class="section-title">
+        <div>
+          <h3>Expenses</h3>
+          <p>List of all expenses from this fund.</p>
+        </div>
+        <a class="button secondary" href="{% url 'informationmanagement:fund-expense-create' %}?fund={{ fund.id }}">Record Expense</a>
+      </div>
+      
+      {% if expenses %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for expense in expenses %}
+              <tr>
+                <td>{{ expense.get_category_display }}</td>
+                <td>${{ expense.amount|floatformat:2 }}</td>
+                <td>{{ expense.expense_date|date:"M d, Y" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">No expenses recorded yet.</div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock content %}

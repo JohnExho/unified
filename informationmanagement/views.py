@@ -17,6 +17,28 @@ from .models import (
     MLModel,
     MLPipeline,
     MLExperiment,
+    ContributionFund,
+    FundAllocation,
+    FundExpense,
+    MemberContributionRecord,
+    MasterDataDepartment,
+)
+from .forms import (
+    ProjectForm,
+    BeneficiaryGroupForm,
+    PartnerForm,
+    ActivityForm,
+    ReportForm,
+    ReportTemplateForm,
+    MLModelForm,
+    MLPipelineForm,
+    MLExperimentForm,
+    ContributionFundForm,
+    FundAllocationForm,
+    FundExpenseForm,
+    MemberContributionRecordForm,
+    MemberContributionFilterForm,
+    MasterDataDepartmentForm,
 )
 from .forms import (
     ProjectForm,
@@ -831,3 +853,481 @@ def ml_experiment_delete(request, pk):
         "cancel_url": "informationmanagement:information-ml-lab",
     }
     return render(request, "informationmanagement/confirm_delete.html", context)
+
+
+# ============================================================================
+# Feature 1: Contribution Allocation Management Views
+# ============================================================================
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def contribution_funds_list(request):
+    """List all contribution funds"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    funds = ContributionFund.objects.all()
+    context = {
+        **_base_context(request),
+        "funds": funds,
+        "title": "Contribution Funds",
+    }
+    return render(request, "informationmanagement/contribution_funds_list.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def contribution_fund_create(request):
+    """Create new contribution fund"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    project_id = request.GET.get('project')
+    initial_data = {}
+    if project_id:
+        try:
+            project = Project.objects.get(pk=project_id)
+            initial_data['project'] = project
+        except Project.DoesNotExist:
+            pass
+    
+    form = ContributionFundForm(request.POST or None, initial=initial_data)
+    if request.method == "POST" and form.is_valid():
+        fund = form.save(commit=False)
+        fund.created_by = request.user
+        fund.save()
+        messages.success(request, "Contribution fund created successfully.")
+        if fund.project:
+            return redirect("informationmanagement:information-projects")
+        return redirect("informationmanagement:contribution-funds-list")
+    
+    context = {
+        **_base_context(request),
+        "form": form,
+        "title": "Create Contribution Fund",
+        "cancel_url": "informationmanagement:contribution-funds-list",
+    }
+    return render(request, "informationmanagement/form.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def contribution_fund_detail(request, pk):
+    """View fund details with allocations and expenses"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    fund = get_object_or_404(ContributionFund, pk=pk)
+    allocations = fund.allocations.all()
+    expenses = fund.expenses.all()
+    
+    context = {
+        **_base_context(request),
+        "fund": fund,
+        "allocations": allocations,
+        "expenses": expenses,
+        "title": f"Fund: {fund.name}",
+    }
+    return render(request, "informationmanagement/contribution_fund_detail.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def fund_allocation_create(request):
+    """Create new fund allocation"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    form = FundAllocationForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        allocation = form.save(commit=False)
+        allocation.allocated_by = request.user
+        allocation.save()
+        messages.success(request, "Fund allocation created successfully.")
+        return redirect("informationmanagement:contribution-fund-detail", pk=allocation.fund.pk)
+    
+    context = {
+        **_base_context(request),
+        "form": form,
+        "title": "Create Fund Allocation",
+        "cancel_url": "informationmanagement:contribution-funds-list",
+    }
+    return render(request, "informationmanagement/form.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def fund_expense_create(request):
+    """Record fund expense"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    form = FundExpenseForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        expense = form.save(commit=False)
+        expense.recorded_by = request.user
+        expense.save()
+        messages.success(request, "Fund expense recorded successfully.")
+        return redirect("informationmanagement:contribution-fund-detail", pk=expense.fund.pk)
+    
+    context = {
+        **_base_context(request),
+        "form": form,
+        "title": "Record Fund Expense",
+        "cancel_url": "informationmanagement:contribution-funds-list",
+    }
+    return render(request, "informationmanagement/form.html", context)
+
+
+# ============================================================================
+# Feature 2: Financial Reporting Views
+# ============================================================================
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def financial_dashboard(request):
+    """Financial dashboard with key metrics"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    from .services import FinancialReportingService
+    summary = FinancialReportingService.get_association_financial_summary()
+    fund_report = FinancialReportingService.get_fund_utilization_report()
+    
+    context = {
+        **_base_context(request),
+        "summary": summary,
+        "fund_report": fund_report,
+        "title": "Financial Dashboard",
+    }
+    return render(request, "informationmanagement/financial_dashboard.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def financial_summary_report(request):
+    """Association financial summary report"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    from .services import FinancialReportingService
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    
+    summary = FinancialReportingService.get_association_financial_summary(date_from, date_to)
+    
+    context = {
+        **_base_context(request),
+        "summary": summary,
+        "title": "Association Financial Summary",
+    }
+    return render(request, "informationmanagement/financial_summary.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def fund_utilization_report(request):
+    """Fund utilization report"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    from .services import FinancialReportingService
+    report_data = FinancialReportingService.get_fund_utilization_report()
+    
+    context = {
+        **_base_context(request),
+        "report_data": report_data,
+        "title": "Fund Utilization Report",
+    }
+    return render(request, "informationmanagement/fund_utilization_report.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def monthly_contribution_report(request):
+    """Monthly contribution report"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    from .services import FinancialReportingService
+    from datetime import date
+    
+    year = request.GET.get('year', date.today().year)
+    month = request.GET.get('month', date.today().month)
+    
+    report_data = FinancialReportingService.get_monthly_contribution_report(int(year), int(month))
+    
+    context = {
+        **_base_context(request),
+        "report_data": report_data,
+        "title": "Monthly Contribution Report",
+    }
+    return render(request, "informationmanagement/monthly_report.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def annual_financial_report(request):
+    """Annual financial report"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    from .services import FinancialReportingService
+    from datetime import date
+    
+    year = request.GET.get('year', date.today().year)
+    report_data = FinancialReportingService.get_annual_financial_report(int(year))
+    
+    context = {
+        **_base_context(request),
+        "report_data": report_data,
+        "title": "Annual Financial Report",
+    }
+    return render(request, "informationmanagement/annual_report.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def export_financial_report(request, report_type):
+    """Export financial report to PDF or Excel"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    from .services import FinancialReportingService, ExportService
+    from django.http import FileResponse
+    import os
+    
+    format_type = request.GET.get('format', 'pdf')
+    
+    if report_type == 'association_summary':
+        data = [FinancialReportingService.get_association_financial_summary()]
+        filename = f"association_summary.{format_type}"
+    elif report_type == 'fund_utilization':
+        data = FinancialReportingService.get_fund_utilization_report()
+        filename = f"fund_utilization.{format_type}"
+    else:
+        return render(request, "404.html", status=404)
+    
+    export_path = ExportService.export_to_excel(data, report_type, filename) if format_type == 'xlsx' else ExportService.export_to_pdf(data, report_type, filename)
+    
+    if export_path and os.path.exists(export_path):
+        return FileResponse(open(export_path, 'rb'), as_attachment=True, filename=filename)
+    
+    messages.error(request, "Failed to export report.")
+    return redirect("informationmanagement:financial-dashboard")
+
+
+# ============================================================================
+# Feature 3: Member Contribution Monitoring Views
+# ============================================================================
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def member_contributions_list(request):
+    """List member contribution records"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    from .services import MemberContributionService
+    
+    filters = {
+        'status_filter': request.GET.get('status_filter', 'all'),
+        'member_name': request.GET.get('member_name', ''),
+        'employee_id': request.GET.get('employee_id', ''),
+        'department': request.GET.get('department', ''),
+        'date_from': request.GET.get('date_from'),
+        'date_to': request.GET.get('date_to'),
+    }
+    
+    members = MemberContributionService.get_filtered_members(filters)
+    filter_form = MemberContributionFilterForm(initial=filters)
+    
+    context = {
+        **_base_context(request),
+        "members": members,
+        "filter_form": filter_form,
+        "title": "Member Contributions",
+    }
+    return render(request, "informationmanagement/member_contributions_list.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def member_contribution_detail(request, pk):
+    """View member contribution detail and statement"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    from .services import MemberContributionService
+    
+    member = get_object_or_404(MemberContributionRecord, pk=pk)
+    statement = MemberContributionService.generate_member_statement(member)
+    
+    context = {
+        **_base_context(request),
+        "member": member,
+        "statement": statement,
+        "title": f"Member Statement: {member.member_name}",
+    }
+    return render(request, "informationmanagement/member_contribution_detail.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def member_contribution_create(request):
+    """Create member contribution record"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    project_id = request.GET.get('project')
+    initial_data = {}
+    if project_id:
+        try:
+            project = Project.objects.get(pk=project_id)
+            initial_data['project'] = project
+        except Project.DoesNotExist:
+            pass
+    
+    form = MemberContributionRecordForm(request.POST or None, initial=initial_data)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Member contribution record created successfully.")
+        return redirect("informationmanagement:member-contributions-list")
+    
+    context = {
+        **_base_context(request),
+        "form": form,
+        "title": "Create Member Contribution Record",
+        "cancel_url": "informationmanagement:member-contributions-list",
+    }
+    return render(request, "informationmanagement/form.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def member_contribution_edit(request, pk):
+    """Edit member contribution record"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    member = get_object_or_404(MemberContributionRecord, pk=pk)
+    form = MemberContributionRecordForm(request.POST or None, instance=member)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Member contribution record updated successfully.")
+        return redirect("informationmanagement:member-contribution-detail", pk=member.pk)
+    
+    context = {
+        **_base_context(request),
+        "form": form,
+        "title": f"Edit: {member.member_name}",
+        "cancel_url": "informationmanagement:member-contribution-detail",
+        "cancel_url_kwargs": {"pk": member.pk},
+    }
+    return render(request, "informationmanagement/form.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def export_member_statement(request, pk):
+    """Export individual member statement"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    from .services import MemberContributionService
+    from django.http import FileResponse
+    import os
+    
+    member = get_object_or_404(MemberContributionRecord, pk=pk)
+    format_type = request.GET.get('format', 'pdf')
+    
+    filename = MemberContributionService.export_member_statement(member, format_type)
+    
+    if filename and os.path.exists(filename):
+        return FileResponse(open(filename, 'rb'), as_attachment=True, filename=os.path.basename(filename))
+    
+    messages.error(request, "Failed to export statement.")
+    return redirect("informationmanagement:member-contribution-detail", pk=pk)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def master_data_departments_list(request):
+    """List master data departments"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    departments = MasterDataDepartment.objects.all()
+    context = {
+        **_base_context(request),
+        "departments": departments,
+        "title": "Master Data: Departments",
+    }
+    return render(request, "informationmanagement/master_data_departments_list.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def master_data_department_create(request):
+    """Create new department in master data"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    form = MasterDataDepartmentForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Department created successfully.")
+        return redirect("informationmanagement:master-data-departments-list")
+    
+    context = {
+        **_base_context(request),
+        "form": form,
+        "title": "Create Department",
+        "cancel_url": "informationmanagement:master-data-departments-list",
+    }
+    return render(request, "informationmanagement/form.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def master_data_department_edit(request, pk):
+    """Edit department in master data"""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    
+    department = get_object_or_404(MasterDataDepartment, pk=pk)
+    form = MasterDataDepartmentForm(request.POST or None, instance=department)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Department updated successfully.")
+        return redirect("informationmanagement:master-data-departments-list")
+    
+    context = {
+        **_base_context(request),
+        "form": form,
+        "title": f"Edit: {department.name}",
+        "cancel_url": "informationmanagement:master-data-departments-list",
+    }
+    return render(request, "informationmanagement/form.html", context)

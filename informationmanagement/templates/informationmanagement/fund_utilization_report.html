@@ -1,0 +1,135 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Fund Utilization Report · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Fund Utilization Report</div>
+      <div class="page-subtitle">Detailed breakdown of allocation and expenses by fund.</div>
+    </div>
+    <div class="action-group">
+      <a class="button secondary" href="{% url 'informationmanagement:financial-dashboard' %}">Back to Dashboard</a>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="section-title">
+      <h3>Fund Utilization Summary</h3>
+      <p>Allocation and expense status for all funds</p>
+    </div>
+    
+    {% if report_data %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Fund Name</th>
+            <th>Budget Required</th>
+            <th>Total Allocated</th>
+            <th>Total Used</th>
+            <th>Remaining Balance</th>
+            <th>Utilization %</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fund in report_data %}
+            <tr>
+              <td>
+                <a class="link-btn" href="{% url 'informationmanagement:contribution-fund-detail' fund.fund_id %}">
+                  {{ fund.fund_name }}
+                </a>
+              </td>
+              <td>${{ fund.budget_required|floatformat:2 }}</td>
+              <td>${{ fund.total_allocated|floatformat:2 }}</td>
+              <td>${{ fund.total_used|floatformat:2 }}</td>
+              <td>${{ fund.remaining_balance|floatformat:2 }}</td>
+              <td>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: {{ fund.utilization_rate }}%"></div>
+                  <span class="progress-label">{{ fund.utilization_rate }}%</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge {% if fund.status == 'active' %}success{% elif fund.status == 'completed' %}default{% else %}warning{% endif %}">
+                  {{ fund.status }}
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">No fund data available.</div>
+    {% endif %}
+  </div>
+  
+  <div class="grid cols-2 mt-24">
+    <div class="card">
+      <h3>Overall Statistics</h3>
+      <p>Aggregated fund metrics</p>
+      
+      <div class="stat-item">
+        <span class="stat-label">Total Funds</span>
+        <span class="stat-value">{{ report_data|length }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Total Budget</span>
+        <span class="stat-value">
+          {% widthratio report_data|length 1 1 %}
+          ${% for fund in report_data %}{{ fund.budget_required|floatformat:0|add:0 }}{% if not forloop.last %}+{% endif %}{% endfor %}
+        </span>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3>Export Options</h3>
+      <p>Download this report</p>
+      
+      <div class="list">
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:export-financial-report' 'fund_utilization' %}?format=pdf">
+            <div class="text-strong">PDF Report</div>
+            <div class="muted text-small">Portable document format</div>
+          </a>
+        </div>
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:export-financial-report' 'fund_utilization' %}?format=xlsx">
+            <div class="text-strong">Excel Spreadsheet</div>
+            <div class="muted text-small">Microsoft Excel format</div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
+
+<style>
+  .progress-bar {
+    position: relative;
+    width: 100%;
+    height: 24px;
+    background: var(--card-border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.3s ease;
+  }
+  
+  .progress-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+</style>

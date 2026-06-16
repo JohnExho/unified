@@ -127,4 +127,37 @@ urlpatterns = [
         views.ml_experiment_delete,
         name="information-ml-experiment-delete",
     ),
+    
+    # ========================================================================
+    # Feature 1: Contribution Allocation Management URLs
+    # ========================================================================
+    path("funds/", views.contribution_funds_list, name="contribution-funds-list"),
+    path("funds/new/", views.contribution_fund_create, name="contribution-fund-create"),
+    path("funds/<int:pk>/", views.contribution_fund_detail, name="contribution-fund-detail"),
+    path("allocations/new/", views.fund_allocation_create, name="fund-allocation-create"),
+    path("expenses/new/", views.fund_expense_create, name="fund-expense-create"),
+    
+    # ========================================================================
+    # Feature 2: Financial Reporting URLs
+    # ========================================================================
+    path("financial/dashboard/", views.financial_dashboard, name="financial-dashboard"),
+    path("reports/financial-summary/", views.financial_summary_report, name="financial-summary-report"),
+    path("reports/fund-utilization/", views.fund_utilization_report, name="fund-utilization-report"),
+    path("reports/monthly-contribution/", views.monthly_contribution_report, name="monthly-contribution-report"),
+    path("reports/annual-financial/", views.annual_financial_report, name="annual-financial-report"),
+    path("reports/export/<str:report_type>/", views.export_financial_report, name="export-financial-report"),
+    
+    # ========================================================================
+    # Feature 3: Member Contribution Monitoring URLs
+    # ========================================================================
+    path("members/contributions/", views.member_contributions_list, name="member-contributions-list"),
+    path("members/contributions/<int:pk>/", views.member_contribution_detail, name="member-contribution-detail"),
+    path("members/contributions/new/", views.member_contribution_create, name="member-contribution-create"),
+    path("members/contributions/<int:pk>/edit/", views.member_contribution_edit, name="member-contribution-edit"),
+    path("members/contributions/<int:pk>/export/", views.export_member_statement, name="export-member-statement"),
+    
+    # Master Data - Departments
+    path("master-data/departments/", views.master_data_departments_list, name="master-data-departments-list"),
+    path("master-data/departments/new/", views.master_data_department_create, name="master-data-department-create"),
+    path("master-data/departments/<int:pk>/edit/", views.master_data_department_edit, name="master-data-department-edit"),
 ]

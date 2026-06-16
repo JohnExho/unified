@@ -1,0 +1,167 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  Annual Financial Report · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">Annual Financial Report</div>
+      <div class="page-subtitle">Comprehensive financial overview for {{ report_data.year }}</div>
+    </div>
+    <div class="action-group">
+      <a class="button secondary" href="{% url 'informationmanagement:financial-dashboard' %}">Back to Dashboard</a>
+    </div>
+  </div>
+  
+  <div class="grid cols-3 mb-24">
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Total Allocations</span>
+        <span class="stat-value">${{ report_data.total_allocated|floatformat:2 }}</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Total Expenses</span>
+        <span class="stat-value" style="color: var(--warning);">${{ report_data.total_expenses|floatformat:2 }}</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Available Funds</span>
+        <span class="stat-value" style="color: var(--success);">${{ report_data.available_funds|floatformat:2 }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="section-title">
+      <h3>Annual Summary - {{ report_data.year }}</h3>
+      <p>Financial overview for the entire year</p>
+    </div>
+    
+    <div class="details-grid">
+      <div class="detail-row">
+        <span class="detail-label">Fiscal Year</span>
+        <span class="detail-value">{{ report_data.year }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Total Allocations</span>
+        <span class="detail-value" style="color: var(--accent);">${{ report_data.total_allocated|floatformat:2 }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Total Expenses</span>
+        <span class="detail-value" style="color: var(--warning);">${{ report_data.total_expenses|floatformat:2 }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Remaining Balance</span>
+        <span class="detail-value" style="color: var(--success);">${{ report_data.available_funds|floatformat:2 }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Expense Rate</span>
+        <span class="detail-value">
+          {% if report_data.total_allocated > 0 %}
+            {% widthratio report_data.total_expenses report_data.total_allocated 100 %}%
+          {% else %}
+            0%
+          {% endif %}
+        </span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Average Monthly Allocation</span>
+        <span class="detail-value">
+          {% widthratio report_data.total_allocated 12 1 %}
+        </span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card mt-24">
+    <div class="section-title">
+      <h3>Monthly Breakdown</h3>
+      <p>Allocations and expenses by month</p>
+    </div>
+    
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Allocations</th>
+          <th>Expenses</th>
+          <th>Net</th>
+          <th>Variance %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for month in report_data.monthly_breakdown %}
+          <tr>
+            <td>
+              {% comment %} Convert month number to month name {% endcomment %}
+              {% if month.month == 1 %}January
+              {% elif month.month == 2 %}February
+              {% elif month.month == 3 %}March
+              {% elif month.month == 4 %}April
+              {% elif month.month == 5 %}May
+              {% elif month.month == 6 %}June
+              {% elif month.month == 7 %}July
+              {% elif month.month == 8 %}August
+              {% elif month.month == 9 %}September
+              {% elif month.month == 10 %}October
+              {% elif month.month == 11 %}November
+              {% elif month.month == 12 %}December
+              {% endif %}
+            </td>
+            <td>${{ month.allocations|floatformat:2 }}</td>
+            <td>${{ month.expenses|floatformat:2 }}</td>
+            <td>${{ month.allocations|add:month.expenses|floatformat:2 }}</td>
+            <td>
+              {% if month.allocations > 0 %}
+                {% widthratio month.expenses month.allocations 100 %}%
+              {% else %}
+                0%
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="grid cols-2 mt-24">
+    <div class="card">
+      <h3>Year-over-Year Comparison</h3>
+      <p>Financial trends</p>
+      
+      <div class="stat-item">
+        <span class="stat-label">Average Monthly Allocation</span>
+        <span class="stat-value">
+          ${% widthratio report_data.total_allocated 12 1 %}
+        </span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Peak Month Allocation</span>
+        <span class="stat-value">
+          ${% for month in report_data.monthly_breakdown %}
+            {% if forloop.first %}
+              {{ month.allocations|floatformat:0 }}
+            {% endif %}
+          {% endfor %}
+        </span>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3>Export Options</h3>
+      <p>Download this report</p>
+      
+      <div class="list">
+        <div class="list-item">
+          <a class="link-btn" href="{% url 'informationmanagement:financial-dashboard' %}">
+            <div class="text-strong">Back to Dashboard</div>
+            <div class="muted text-small">View real-time metrics</div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

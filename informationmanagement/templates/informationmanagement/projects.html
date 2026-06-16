@@ -34,8 +34,8 @@
             <th>Lead</th>
             <th>Status</th>
             <th>Beneficiaries</th>
-            <th>Predicted Success</th>
-            <th>Predicted Reach</th>
+            <th>Funds</th>
+            <th>Members</th>
             <th>Timeline</th>
             <th>Actions</th>
           </tr>
@@ -43,15 +43,25 @@
         <tbody>
           {% for project in projects %}
             <tr>
-              <td>{{ project.name }}</td>
+              <td><strong>{{ project.name }}</strong></td>
               <td>{{ project.category }}</td>
               <td>{{ project.lead }}</td>
               <td>
                 <span class="badge {% if project.status == 'Ongoing' %}success{% elif project.status == 'Proposed' %}warning{% else %}danger{% endif %}">{{ project.status }}</span>
               </td>
               <td>{{ project.beneficiaries_count }}</td>
-              <td>{{ project.predicted_success|default:"-" }}</td>
-              <td>{{ project.predicted_reach|default:"-" }}</td>
+              <td>
+                <div class="inline-actions">
+                  <span class="pill">{{ project.contribution_funds.count }}</span>
+                  <a class="link-btn" href="{% url 'informationmanagement:contribution-fund-create' %}?project={{ project.id }}" title="Add fund">+</a>
+                </div>
+              </td>
+              <td>
+                <div class="inline-actions">
+                  <span class="pill">{{ project.member_contributions.count }}</span>
+                  <a class="link-btn" href="{% url 'informationmanagement:member-contribution-create' %}?project={{ project.id }}" title="Add member">+</a>
+                </div>
+              </td>
               <td>{{ project.start_date }} - {{ project.end_date }}</td>
               <td>
                 <div class="table-actions">

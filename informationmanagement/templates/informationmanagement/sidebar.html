@@ -65,6 +65,43 @@
       </div>
     </div>
     <div>
+      <div class="muted sidebar-section-label">Financial Management</div>
+      <div class="list">
+        <a class="list-item"
+           href="{% url 'informationmanagement:contribution-funds-list' %}">
+          <div>
+            <div class="text-strong">Contribution Funds</div>
+            <div class="muted text-small">Fund allocation & tracking</div>
+          </div>
+          <span class="pill">Allocate</span>
+        </a>
+        <a class="list-item"
+           href="{% url 'informationmanagement:financial-dashboard' %}">
+          <div>
+            <div class="text-strong">Financial Dashboard</div>
+            <div class="muted text-small">Real-time metrics</div>
+          </div>
+          <span class="pill">Reports</span>
+        </a>
+        <a class="list-item"
+           href="{% url 'informationmanagement:member-contributions-list' %}">
+          <div>
+            <div class="text-strong">Member Contributions</div>
+            <div class="muted text-small">Payment status & records</div>
+          </div>
+          <span class="pill">Monitor</span>
+        </a>
+        <a class="list-item"
+           href="{% url 'informationmanagement:master-data-departments-list' %}">
+          <div>
+            <div class="text-strong">Master Data</div>
+            <div class="muted text-small">Departments & config</div>
+          </div>
+          <span class="pill">Config</span>
+        </a>
+      </div>
+    </div>
+    <div>
       <div class="muted sidebar-section-label">Analytics & ML</div>
       <div class="list">
         <a class="list-item"

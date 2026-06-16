@@ -1,0 +1,239 @@
+{% extends "informationmanagement/base.html" %}
+{% block title %}
+  {{ member.member_name }} · Information Management
+{% endblock title %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ member.member_name }}</div>
+      <div class="page-subtitle">Contribution record and payment history for {{ member.employee_id }}</div>
+    </div>
+    <div class="action-group">
+      <a class="button secondary" href="{% url 'informationmanagement:member-contribution-edit' member.id %}">Edit</a>
+      <a class="button secondary" href="{% url 'informationmanagement:export-member-statement' member.id %}?format=pdf">PDF</a>
+      <a class="button secondary" href="{% url 'informationmanagement:export-member-statement' member.id %}?format=excel">Excel</a>
+      <a class="button secondary" href="{% url 'informationmanagement:member-contributions-list' %}">Back</a>
+    </div>
+  </div>
+  
+  <div class="grid cols-4 mb-24">
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Total Contributions</span>
+        <span class="stat-value">${{ statement.total_contributions|floatformat:2 }}</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Current Balance</span>
+        <span class="stat-value" style="color: {% if statement.current_balance > 0 %}var(--success){% else %}var(--warning){% endif %};">
+          ${{ statement.current_balance|floatformat:2 }}
+        </span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Due Amount</span>
+        <span class="stat-value" style="color: {% if statement.due_amount > 0 %}var(--danger){% else %}var(--success){% endif %};">
+          ${{ statement.due_amount|floatformat:2 }}
+        </span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stat-box">
+        <span class="stat-label">Late Payment Penalties</span>
+        <span class="stat-value">${{ statement.late_payment_penalties|floatformat:2 }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="grid cols-2 mb-24">
+    <div class="card">
+      <div class="section-title">
+        <h3>Member Information</h3>
+        <p>Personal and organizational details</p>
+      </div>
+      
+      <div class="details-grid">
+        <div class="detail-row">
+          <span class="detail-label">Member Name</span>
+          <span class="detail-value">{{ member.member_name }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Employee ID</span>
+          <span class="detail-value">{{ member.employee_id }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Department</span>
+          <span class="detail-value">{{ member.department }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Payment Status</span>
+          <span class="detail-value">
+            <span class="badge {% if member.payment_status == 'on_time' %}success{% elif member.payment_status == 'overdue' %}warning{% else %}danger{% endif %}">
+              {{ member.get_payment_status_display }}
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="section-title">
+        <h3>Financial Summary</h3>
+        <p>Contribution and payment overview</p>
+      </div>
+      
+      <div class="details-grid">
+        <div class="detail-row">
+          <span class="detail-label">Total Contributions</span>
+          <span class="detail-value" style="color: var(--accent);">${{ statement.total_contributions|floatformat:2 }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Current Balance</span>
+          <span class="detail-value">${{ statement.current_balance|floatformat:2 }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Due Amount</span>
+          <span class="detail-value" style="color: var(--warning);">${{ statement.due_amount|floatformat:2 }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Last Payment</span>
+          <span class="detail-value">
+            {% if member.last_payment_date %}
+              {{ member.last_payment_date|date:"M d, Y" }}
+            {% else %}
+              No payment recorded
+            {% endif %}
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Penalties</span>
+          <span class="detail-value">${{ statement.late_payment_penalties|floatformat:2 }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Statement Generated</span>
+          <span class="detail-value">{{ statement.generated_at|date:"M d, Y H:i" }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="section-title">
+      <h3>Member Statement</h3>
+      <p>Summary of contributions and payments</p>
+    </div>
+    
+    <div class="statement-container">
+      <div class="statement-header">
+        <h4>Member Contribution Statement</h4>
+        <p>Generated on {{ statement.generated_at|date:"F d, Y" }}</p>
+      </div>
+      
+      <div class="statement-content">
+        <div class="statement-row">
+          <span>Member Name:</span>
+          <strong>{{ member.member_name }}</strong>
+        </div>
+        <div class="statement-row">
+          <span>Employee ID:</span>
+          <strong>{{ member.employee_id }}</strong>
+        </div>
+        <div class="statement-row">
+          <span>Department:</span>
+          <strong>{{ member.department }}</strong>
+        </div>
+        <hr>
+        <div class="statement-row">
+          <span>Total Contributions:</span>
+          <strong>${{ statement.total_contributions|floatformat:2 }}</strong>
+        </div>
+        <div class="statement-row">
+          <span>Current Balance:</span>
+          <strong>${{ statement.current_balance|floatformat:2 }}</strong>
+        </div>
+        <div class="statement-row">
+          <span>Due Amount:</span>
+          <strong style="color: var(--warning);">${{ statement.due_amount|floatformat:2 }}</strong>
+        </div>
+        <div class="statement-row">
+          <span>Late Payment Penalties:</span>
+          <strong>${{ statement.late_payment_penalties|floatformat:2 }}</strong>
+        </div>
+        <hr>
+        <div class="statement-row">
+          <span>Payment Status:</span>
+          <strong>
+            <span class="badge {% if member.payment_status == 'on_time' %}success{% elif member.payment_status == 'overdue' %}warning{% else %}danger{% endif %}">
+              {{ member.get_payment_status_display }}
+            </span>
+          </strong>
+        </div>
+        <div class="statement-row">
+          <span>Last Payment Date:</span>
+          <strong>
+            {% if member.last_payment_date %}
+              {{ member.last_payment_date|date:"M d, Y" }}
+            {% else %}
+              No payment recorded
+            {% endif %}
+          </strong>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="action-group mt-24">
+    <a class="button secondary" href="{% url 'informationmanagement:member-contributions-list' %}">Back to List</a>
+    <a class="button" href="{% url 'informationmanagement:member-contribution-edit' member.id %}">Edit Record</a>
+  </div>
+{% endblock content %}
+
+<style>
+  .statement-container {
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 24px;
+    background: var(--card);
+  }
+  
+  .statement-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--card-border);
+  }
+  
+  .statement-header h4 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .statement-header p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  
+  .statement-content {
+    line-height: 1.8;
+  }
+  
+  .statement-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+  }
+  
+  .statement-row strong {
+    font-weight: 600;
+  }
+  
+  .statement-row hr {
+    border: none;
+    border-top: 1px solid var(--card-border);
+    margin: 12px 0;
+  }
+</style>

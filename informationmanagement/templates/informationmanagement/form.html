@@ -23,7 +23,11 @@
         {% endfor %}
       </div>
       <div class="form-actions">
-        <a class="button secondary" href="{% url cancel_url %}">Cancel</a>
+        {% if cancel_url_kwargs %}
+          <a class="button secondary" href="{% url cancel_url cancel_url_kwargs.pk %}">Cancel</a>
+        {% else %}
+          <a class="button secondary" href="{% url cancel_url %}">Cancel</a>
+        {% endif %}
         <button class="button" type="submit">Save</button>
       </div>
     </form>
