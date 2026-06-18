@@ -1,0 +1,180 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}Dashboard - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/dashboard.css' %}">
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <h1>Scholarship Dashboard</h1>
+      <p>Track your scholarship journey and opportunities</p>
+    </div>
+  </div>
+
+  <!-- Stage 1 Progress -->
+  {% if not profile.is_stage_1_complete %}
+  <div class="stage-alert">
+    <div class="stage-alert-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    </div>
+    <div class="stage-alert-body">
+      <h3>Complete Stage 1 to unlock scholarships</h3>
+      <p>Your profile is {{ checklist.percent }}% complete. Fill all required fields and upload documents to unlock scholarship applications.</p>
+      <div class="stage-progress-bar"><div class="stage-progress-fill" style="width: {{ checklist.percent }}%"></div></div>
+    </div>
+    <a href="{% url 'scholarshipmanagement:profile_setup' %}" class="btn btn-primary btn-sm">Complete Profile</a>
+  </div>
+  {% endif %}
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        </svg>
+      </div>
+      <div class="stat-body">
+        <div class="stat-value">{{ total_applications }}</div>
+        <div class="stat-label">Total Applications</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--green">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <div class="stat-body">
+        <div class="stat-value">{{ accepted_count }}</div>
+        <div class="stat-label">Accepted</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--gold">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="8" r="6"></circle>
+          <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
+        </svg>
+      </div>
+      <div class="stat-body">
+        <div class="stat-value">{{ recommendations|length }}</div>
+        <div class="stat-label">Recommendations</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--purple">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+        </svg>
+      </div>
+      <div class="stat-body">
+        <div class="stat-value">{{ notifications|length }}</div>
+        <div class="stat-label">Unread Notifications</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations -->
+  {% if profile.is_stage_1_complete and recommendations %}
+  <section class="content-section">
+    <div class="section-header">
+      <h2>Recommended for You</h2>
+      <a href="{% url 'scholarshipmanagement:sm_scholarships' %}" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    <div class="recommendations-grid">
+      {% for rec in recommendations %}
+      <div class="rec-card">
+        <div class="rec-header">
+          <span class="badge badge--{{ rec.scholarship.category }}">{{ rec.scholarship.get_category_display }}</span>
+          <span class="match-score">{{ rec.match_score|floatformat:0 }}% match</span>
+        </div>
+        <h3 class="rec-title">{{ rec.scholarship.name }}</h3>
+        <p class="rec-desc">{{ rec.scholarship.description|truncatechars:90 }}</p>
+        <div class="rec-meta">
+          <span>₱{{ rec.scholarship.award_amount|floatformat:0 }}</span>
+          <span>{{ rec.scholarship.slots_remaining }} slots left</span>
+        </div>
+        <div class="rec-tags">
+          {% for tag in rec.reason_tags|slice:":3" %}
+          <span class="tag">{{ tag|cut:"_" }}</span>
+          {% endfor %}
+        </div>
+        <a href="{% url 'scholarshipmanagement:scholarship_detail' rec.scholarship.id %}" class="btn btn-primary btn-sm btn-full">View & Apply</a>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- My Applications -->
+  {% if my_applications %}
+  <section class="content-section">
+    <div class="section-header">
+      <h2>My Applications</h2>
+      <a href="{% url 'scholarshipmanagement:my_applications' %}" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    <div class="applications-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Scholarship</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in my_applications|slice:":5" %}
+          <tr>
+            <td>{{ app.scholarship.name }}</td>
+            <td><span class="status-badge status--{{ app.status }}">{{ app.get_status_display }}</span></td>
+            <td>{{ app.submitted_at|date:"M d, Y"|default:"Draft" }}</td>
+            <td><a href="{% url 'scholarshipmanagement:application_detail' app.id %}" class="btn btn-ghost btn-xs">View</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Notifications -->
+  {% if notifications %}
+  <section class="content-section">
+    <div class="section-header">
+      <h2>Recent Notifications</h2>
+      <a href="{% url 'scholarshipmanagement:notifications' %}" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    <ul class="notif-list">
+      {% for notif in notifications %}
+      <li class="notif-item">
+        <div class="notif-icon notif-icon--{{ notif.notification_type }}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          </svg>
+        </div>
+        <div class="notif-body">
+          <strong>{{ notif.title }}</strong>
+          <p>{{ notif.message }}</p>
+          <time>{{ notif.created_at|timesince }} ago</time>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+</main>
+{% endblock %}

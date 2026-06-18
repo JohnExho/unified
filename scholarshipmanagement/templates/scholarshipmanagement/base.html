@@ -1,0 +1,31 @@
+{% comment %} base for Scholarship Management app {% endcomment %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Scholarship Management{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'scholarshipmanagement/css/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/global.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% include 'scholarshipmanagement/components/sidebar.html' with current_system=current_system %}
+    {% block content %}{% endblock %}
+    <script>
+        window.DJANGO_MESSAGES = [
+        {% for message in messages %}
+            {
+                level: "{{ message.tags }}",
+                text: "{{ message|escapejs }}"
+            }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+        ];
+    </script>
+    <script src="{% static 'core/js/sidebar.js' %}"></script>
+    <script src="{% static 'core/js/global-toast.js' %}" defer></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

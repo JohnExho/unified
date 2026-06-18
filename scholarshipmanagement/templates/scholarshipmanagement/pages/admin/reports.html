@@ -1,0 +1,64 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}Reports - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/reports.css' %}">
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <h1>Reports & Analytics</h1>
+      <p>Scholarship system statistics and data exports.</p>
+    </div>
+    <div class="top-actions">
+      <a href="?export=applications" class="btn btn-secondary btn-sm">Export Applications CSV</a>
+    </div>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="stats-grid stats-grid--wide">
+    <div class="stat-card"><div class="stat-body"><div class="stat-value">{{ total_scholarships }}</div><div class="stat-label">Total Scholarships</div></div></div>
+    <div class="stat-card"><div class="stat-body"><div class="stat-value">{{ published_scholarships }}</div><div class="stat-label">Published</div></div></div>
+    <div class="stat-card"><div class="stat-body"><div class="stat-value">{{ total_applications }}</div><div class="stat-label">Total Applications</div></div></div>
+    <div class="stat-card"><div class="stat-body"><div class="stat-value">{{ submitted }}</div><div class="stat-label">Submitted</div></div></div>
+    <div class="stat-card"><div class="stat-body"><div class="stat-value">{{ under_review }}</div><div class="stat-label">Under Review</div></div></div>
+    <div class="stat-card"><div class="stat-body"><div class="stat-value">{{ accepted }}</div><div class="stat-label">Accepted</div></div></div>
+    <div class="stat-card"><div class="stat-body"><div class="stat-value">{{ rejected }}</div><div class="stat-label">Rejected</div></div></div>
+    <div class="stat-card"><div class="stat-body"><div class="stat-value">{{ waitlisted }}</div><div class="stat-label">Waitlisted</div></div></div>
+    {% if avg_eval_score %}
+    <div class="stat-card"><div class="stat-body"><div class="stat-value">{{ avg_eval_score|floatformat:1 }}</div><div class="stat-label">Avg Evaluation Score</div></div></div>
+    {% endif %}
+  </div>
+
+  <!-- Recent Audit Logs -->
+  <section class="content-section">
+    <div class="section-header">
+      <h2>Recent Audit Log</h2>
+      <a href="{% url 'scholarshipmanagement:system_logs' %}" class="btn btn-ghost btn-sm">Full Log</a>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>User</th><th>Action</th><th>Target</th><th>Description</th><th>Time</th></tr></thead>
+      <tbody>
+        {% for log in recent_audit_logs %}
+        <tr>
+          <td>{{ log.user.username|default:"System" }}</td>
+          <td><span class="badge">{{ log.action }}</span></td>
+          <td>{{ log.target_model }}</td>
+          <td>{{ log.description|truncatechars:60 }}</td>
+          <td>{{ log.created_at|timesince }} ago</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="empty-cell">No audit logs yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}{{ scholarship.name }} - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/scholarship_detail.css' %}">
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <a href="{% url 'scholarshipmanagement:sm_scholarships' %}" class="back-link">← Back to Scholarships</a>
+      <h1>{{ scholarship.name }}</h1>
+    </div>
+    {% if is_admin %}
+    <div class="top-actions">
+      <a href="{% url 'scholarshipmanagement:edit_scholarship' scholarship.id %}" class="btn btn-secondary btn-sm">Edit</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="detail-layout">
+    <div class="detail-main">
+      <div class="detail-card">
+        <div class="detail-badges">
+          <span class="badge badge--{{ scholarship.category }}">{{ scholarship.get_category_display }}</span>
+          <span class="badge badge--type">{{ scholarship.get_scholarship_type_display }}</span>
+          <span class="badge badge--status-{{ scholarship.status }}">{{ scholarship.get_status_display }}</span>
+          {% if scholarship.renewable %}<span class="badge badge--renewable">Renewable</span>{% endif %}
+        </div>
+
+        <h2>About this Scholarship</h2>
+        <p>{{ scholarship.description }}</p>
+
+        <div class="detail-meta-grid">
+          <div class="detail-meta-item">
+            <span class="meta-label">Award Amount</span>
+            <span class="meta-value">₱{{ scholarship.award_amount }}</span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="meta-label">Available Slots</span>
+            <span class="meta-value">{{ scholarship.slots_remaining }} / {{ scholarship.number_of_slots }}</span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="meta-label">Application Opens</span>
+            <span class="meta-value">{{ scholarship.application_start_date|date:"M d, Y" }}</span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="meta-label">Deadline</span>
+            <span class="meta-value">{{ scholarship.application_end_date|date:"M d, Y" }}</span>
+          </div>
+          {% if scholarship.decision_announcement_date %}
+          <div class="detail-meta-item">
+            <span class="meta-label">Results Announcement</span>
+            <span class="meta-value">{{ scholarship.decision_announcement_date|date:"M d, Y" }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Eligibility Rules -->
+      {% if scholarship.eligibility_rules %}
+      <div class="detail-card">
+        <h2>Eligibility Requirements</h2>
+        <ul class="eligibility-list">
+          {% if scholarship.eligibility_rules.min_gpa %}
+          <li>Minimum GPA: <strong>{{ scholarship.eligibility_rules.min_gpa }}</strong></li>
+          {% endif %}
+          {% if scholarship.eligibility_rules.max_annual_income %}
+          <li>Maximum Annual Family Income: <strong>₱{{ scholarship.eligibility_rules.max_annual_income }}</strong></li>
+          {% endif %}
+          {% if scholarship.eligibility_rules.required_course %}
+          <li>Eligible Courses: <strong>{{ scholarship.eligibility_rules.required_course|join:", " }}</strong></li>
+          {% endif %}
+          {% if scholarship.eligibility_rules.required_province %}
+          <li>Province Requirement: <strong>{{ scholarship.eligibility_rules.required_province|join:", " }}</strong></li>
+          {% endif %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Required Documents -->
+      {% if scholarship.required_documents %}
+      <div class="detail-card">
+        <h2>Required Documents</h2>
+        <ul class="doc-list">
+          {% for doc in scholarship.required_documents %}
+          <li>{{ doc|title|cut:"_" }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar: Eligibility Check & Apply -->
+    <aside class="detail-sidebar">
+      {% if not is_admin %}
+      <div class="apply-card">
+        {% if existing_application %}
+          <div class="apply-status">
+            <p>You have already applied for this scholarship.</p>
+            <span class="status-badge status--{{ existing_application.status }}">{{ existing_application.get_status_display }}</span>
+            <a href="{% url 'scholarshipmanagement:application_detail' existing_application.id %}" class="btn btn-ghost btn-sm btn-full">View Application</a>
+          </div>
+        {% elif not scholarship.is_accepting_applications %}
+          <div class="apply-status apply-status--closed">
+            <p>This scholarship is currently not accepting applications.</p>
+          </div>
+        {% elif eligibility_result %}
+          {% if eligibility_result.eligible %}
+          <div class="eligibility-result eligibility-result--pass">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <p>You meet the eligibility requirements!</p>
+          </div>
+          <a href="{% url 'scholarshipmanagement:apply_scholarship' scholarship.id %}" class="btn btn-primary btn-full">Apply Now</a>
+          {% else %}
+          <div class="eligibility-result eligibility-result--fail">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            <p>You do not meet some requirements:</p>
+            <ul>
+              {% for reason in eligibility_result.failed_rules %}
+              <li>{{ reason }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          {% if eligibility_result.passed_rules %}
+          <div class="eligibility-passed">
+            <p class="passed-title">Criteria you meet:</p>
+            <ul>
+              {% for p in eligibility_result.passed_rules %}
+              <li>✓ {{ p }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        {% else %}
+          <p>Complete your profile (Stage 1) to check eligibility.</p>
+          <a href="{% url 'scholarshipmanagement:profile_setup' %}" class="btn btn-secondary btn-full">Complete Profile</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </aside>
+  </div>
+</main>
+{% endblock %}

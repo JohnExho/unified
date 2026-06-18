@@ -1,0 +1,166 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}My Profile - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/profile.css' %}">
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <h1>Profile Setup — Stage 1</h1>
+      <p>Complete all required fields and upload documents to unlock scholarship applications.</p>
+    </div>
+    <div class="top-actions">
+      {% if profile.is_stage_1_complete %}
+      <span class="badge badge--success">Stage 1 Complete ✓</span>
+      {% else %}
+      <span class="badge badge--warning">{{ checklist.percent }}% Complete</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="profile-layout">
+    <!-- Checklist Sidebar -->
+    <aside class="checklist-card">
+      <h3>Completion Checklist</h3>
+      <div class="checklist-progress">
+        <div class="checklist-bar"><div class="checklist-fill" style="width: {{ checklist.percent }}%"></div></div>
+        <span>{{ checklist.completed }}/{{ checklist.total }}</span>
+      </div>
+      <ul class="checklist-items">
+        {% for field, done in checklist.items.items %}
+        <li class="checklist-item {% if done %}done{% endif %}">
+          {% if done %}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          {% else %}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>
+          {% endif %}
+          {{ field|title|cut:"_" }}
+        </li>
+        {% endfor %}
+      </ul>
+    </aside>
+
+    <!-- Profile Form -->
+    <div class="profile-form-area">
+      <form method="post" class="card-form">
+        {% csrf_token %}
+        <div class="form-section">
+          <h3>Biodata</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Full Name <span class="required">*</span></label>
+              {{ form.full_name }}
+            </div>
+            <div class="form-group">
+              <label>Contact Number <span class="required">*</span></label>
+              {{ form.contact_number }}
+            </div>
+            <div class="form-group form-group--full">
+              <label>Address <span class="required">*</span></label>
+              {{ form.address }}
+            </div>
+            <div class="form-group form-group--full">
+              <label>Family Background</label>
+              {{ form.family_background }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Academic Information</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>School / University <span class="required">*</span></label>
+              {{ form.school_university }}
+            </div>
+            <div class="form-group">
+              <label>Course / Strand <span class="required">*</span></label>
+              {{ form.course_strand }}
+            </div>
+            <div class="form-group">
+              <label>GPA (0.00 – 4.00) <span class="required">*</span></label>
+              {{ form.gpa }}
+            </div>
+            <div class="form-group">
+              <label>Province <span class="required">*</span></label>
+              {{ form.province }}
+            </div>
+            <div class="form-group form-group--full">
+              <label>Academic Awards (optional)</label>
+              {{ form.academic_awards }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Financial Information</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Annual Family Income (PHP) <span class="required">*</span></label>
+              {{ form.annual_family_income }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save Profile</button>
+        </div>
+      </form>
+
+      <!-- Documents -->
+      <div class="card-form documents-section">
+        <h3>Required Documents</h3>
+        <p class="section-desc">Upload your Government ID and Transcript/Report Card to complete Stage 1.</p>
+
+        <form method="post" action="{% url 'scholarshipmanagement:upload_document' %}" enctype="multipart/form-data" class="upload-form">
+          {% csrf_token %}
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Document Type</label>
+              {{ upload_form.document_type }}
+            </div>
+            <div class="form-group">
+              <label>File</label>
+              {{ upload_form.file }}
+            </div>
+          </div>
+          <button type="submit" class="btn btn-secondary btn-sm">Upload Document</button>
+        </form>
+
+        {% if documents %}
+        <div class="documents-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Type</th><th>Status</th><th>Uploaded</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% for doc in documents %}
+              <tr>
+                <td>{{ doc.get_document_type_display }}</td>
+                <td><span class="status-badge status--{{ doc.verification_status }}">{{ doc.get_verification_status_display }}</span></td>
+                <td>{{ doc.uploaded_at|date:"M d, Y" }}</td>
+                <td>
+                  <form method="post" action="{% url 'scholarshipmanagement:delete_document' doc.id %}" onsubmit="return confirm('Remove this document?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-xs">Remove</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

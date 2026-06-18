@@ -1,0 +1,96 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}{% if action == 'Edit' %}Edit{% else %}Create{% endif %} Scholarship{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <a href="{% url 'scholarshipmanagement:sm_scholarships' %}" class="back-link">← Back</a>
+      <h1>{{ action }} Scholarship</h1>
+    </div>
+  </div>
+
+  <form method="post" class="card-form card-form--wide">
+    {% csrf_token %}
+
+    <div class="form-section">
+      <h3>Basic Information</h3>
+      <div class="form-grid">
+        <div class="form-group form-group--full">
+          <label>Scholarship Name <span class="required">*</span></label>
+          {{ form.name }}
+          {% if form.name.errors %}<ul class="form-errors">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="form-group form-group--full">
+          <label>Description <span class="required">*</span></label>
+          {{ form.description }}
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          {{ form.category }}
+        </div>
+        <div class="form-group">
+          <label>Scholarship Type</label>
+          {{ form.scholarship_type }}
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          {{ form.status }}
+        </div>
+        <div class="form-group">
+          <label>Award Amount (PHP)</label>
+          {{ form.award_amount }}
+        </div>
+        <div class="form-group">
+          <label>Number of Slots</label>
+          {{ form.number_of_slots }}
+        </div>
+        <div class="form-group form-group--checkbox">
+          <label>{{ form.renewable }} Renewable Scholarship</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>Schedule</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Application Start Date</label>
+          {{ form.application_start_date }}
+        </div>
+        <div class="form-group">
+          <label>Application End Date (Deadline)</label>
+          {{ form.application_end_date }}
+        </div>
+        <div class="form-group">
+          <label>Decision Announcement Date</label>
+          {{ form.decision_announcement_date }}
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>Eligibility Rules (JSON)</h3>
+      <p class="field-hint">Example: <code>{"min_gpa": 3.0, "max_annual_income": 250000, "required_course": ["BSCS"]}</code></p>
+      {{ form.eligibility_rules }}
+    </div>
+
+    <div class="form-section">
+      <h3>Required Documents (JSON Array)</h3>
+      <p class="field-hint">Example: <code>["government_id", "transcript", "income_proof"]</code></p>
+      {{ form.required_documents }}
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">{{ action }} Scholarship</button>
+      <a href="{% url 'scholarshipmanagement:sm_scholarships' %}" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

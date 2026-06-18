@@ -13,6 +13,8 @@
 <link rel="stylesheet" type="text/css" href="{% static 'performanceevaluation/css/pages/register.css' %}" />
 {% elif system_name == 'librarymanagement' %}
 <link rel="stylesheet" type="text/css" href="{% static 'core/css/library_register_styles.css' %}" />
+{% elif system_name == 'scholarshipmanagement' %}
+<link rel="stylesheet" type="text/css" href="{% static 'scholarshipmanagement/css/pages/login.css' %}" />
 {% else %}
 <link rel="stylesheet" type="text/css" href="{% static 'core/css/default_register_styles.css' %}" />
 {% endif %}
@@ -31,11 +33,18 @@
         L
         {% elif system_name == 'inventorymanagement' %}
         I
+        {% elif system_name == 'scholarshipmanagement' %}
+        S
         {% else %}
         {{ system_name|slice:":1"|upper }}
         {% endif %}
       </div>
-      <div class="logo-text">{{system_info.description}}</div>
+      <div class="logo-text">
+        {% if system_name == 'scholarshipmanagement' %}Scholarship Management{% else %}{{system_info.description}}{% endif %}
+      </div>
+      {% if system_name == 'scholarshipmanagement' %}
+      <div class="logo-tagline">Gated scholarship application platform</div>
+      {% endif %}
     </div>
 
     <!-- Form Section -->

@@ -1,0 +1,117 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}Evaluate Application - Staff{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/evaluation.css' %}">
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <a href="{% url 'scholarshipmanagement:staff_applications' %}" class="back-link">← Back</a>
+      <h1>Evaluate Application</h1>
+      <p>{{ application.student.username }} — {{ application.scholarship.name }}</p>
+    </div>
+  </div>
+
+  <div class="evaluation-layout">
+    <!-- Student Info -->
+    {% if profile %}
+    <div class="detail-card">
+      <h2>Student Profile</h2>
+      <div class="detail-meta-grid">
+        <div class="detail-meta-item"><span class="meta-label">Full Name</span><span class="meta-value">{{ profile.full_name }}</span></div>
+        <div class="detail-meta-item"><span class="meta-label">GPA</span><span class="meta-value">{{ profile.gpa }}</span></div>
+        <div class="detail-meta-item"><span class="meta-label">School</span><span class="meta-value">{{ profile.school_university }}</span></div>
+        <div class="detail-meta-item"><span class="meta-label">Course</span><span class="meta-value">{{ profile.course_strand }}</span></div>
+        <div class="detail-meta-item"><span class="meta-label">Annual Income</span><span class="meta-value">₱{{ profile.annual_family_income }}</span></div>
+        <div class="detail-meta-item"><span class="meta-label">Province</span><span class="meta-value">{{ profile.province }}</span></div>
+      </div>
+      {% if application.motivation_essay %}
+      <div class="detail-section">
+        <h3>Motivation Essay</h3>
+        <p>{{ application.motivation_essay }}</p>
+      </div>
+      {% endif %}
+      {% if application.achievements %}
+      <div class="detail-section">
+        <h3>Achievements</h3>
+        <p>{{ application.achievements }}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Evaluation Form -->
+    <form method="post" class="card-form">
+      {% csrf_token %}
+      <h2>Scoring Rubric</h2>
+      <p class="rubric-info">Each score is 0–100. Weighted total: Academic 40%, Financial 30%, Interview 20%, Extracurricular 10%.</p>
+
+      <div class="score-form-grid">
+        <div class="score-form-item">
+          <label>Academic Score (40%) <span class="required">*</span></label>
+          {{ form.academic_score }}
+        </div>
+        <div class="score-form-item">
+          <label>Financial Need Score (30%) <span class="required">*</span></label>
+          {{ form.financial_need_score }}
+        </div>
+        <div class="score-form-item">
+          <label>Interview Score (20%)</label>
+          {{ form.interview_score }}
+        </div>
+        <div class="score-form-item">
+          <label>Extracurricular Score (10%)</label>
+          {{ form.extracurricular_score }}
+        </div>
+      </div>
+
+      <!-- Live total preview -->
+      <div class="total-preview">
+        Estimated Total Score: <strong id="total-preview">—</strong> / 100
+      </div>
+
+      <div class="form-group">
+        <label>Recommendation</label>
+        {{ form.recommendation }}
+      </div>
+      <div class="form-group">
+        <label>Comments</label>
+        {{ form.reviewer_comments }}
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Evaluation</button>
+        <a href="{% url 'scholarshipmanagement:staff_applications' %}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</main>
+{% block extra_scripts %}
+<script>
+const weights = {academic: 0.40, financial: 0.30, interview: 0.20, extra: 0.10};
+const fields = {
+  academic: document.querySelector('[name="academic_score"]'),
+  financial: document.querySelector('[name="financial_need_score"]'),
+  interview: document.querySelector('[name="interview_score"]'),
+  extra: document.querySelector('[name="extracurricular_score"]'),
+};
+function updateTotal() {
+  let total = 0, wsum = 0;
+  for (const [key, w] of Object.entries(weights)) {
+    const val = parseFloat(fields[key]?.value);
+    if (!isNaN(val)) { total += val * w; wsum += w; }
+  }
+  document.getElementById('total-preview').textContent = wsum > 0 ? (total / wsum).toFixed(1) : '—';
+}
+Object.values(fields).forEach(f => f?.addEventListener('input', updateTotal));
+</script>
+{% endblock %}
+{% endblock %}

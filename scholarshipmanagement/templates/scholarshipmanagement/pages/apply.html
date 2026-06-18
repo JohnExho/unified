@@ -1,0 +1,70 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}Apply - {{ scholarship.name }}{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/apply.css' %}">
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <a href="{% url 'scholarshipmanagement:scholarship_detail' scholarship.id %}" class="back-link">← Back</a>
+      <h1>Apply for {{ scholarship.name }}</h1>
+      <p>Fill in your application details below.</p>
+    </div>
+  </div>
+
+  <div class="apply-layout">
+    <div class="apply-form-wrap">
+      <form method="post" class="card-form">
+        {% csrf_token %}
+
+        <div class="form-section">
+          <h3>Scholarship Details</h3>
+          <div class="info-grid">
+            <div class="info-item"><span>Award</span><strong>₱{{ scholarship.award_amount }}</strong></div>
+            <div class="info-item"><span>Slots</span><strong>{{ scholarship.slots_remaining }} remaining</strong></div>
+            <div class="info-item"><span>Deadline</span><strong>{{ scholarship.application_end_date|date:"M d, Y" }}</strong></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Motivation Essay <span class="required">*</span></h3>
+          <p class="field-hint">Tell us why you deserve this scholarship and how it will help you achieve your goals.</p>
+          {{ form.motivation_essay }}
+          {% if form.motivation_essay.errors %}
+          <ul class="form-errors">{% for error in form.motivation_essay.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+          {% endif %}
+        </div>
+
+        <div class="form-section">
+          <h3>Achievements</h3>
+          <p class="field-hint">List your academic, extracurricular, and community achievements.</p>
+          {{ form.achievements }}
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Submit Application</button>
+          <a href="{% url 'scholarshipmanagement:scholarship_detail' scholarship.id %}" class="btn btn-ghost">Cancel</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Eligibility Summary -->
+    <aside class="apply-sidebar">
+      <div class="eligibility-summary-card">
+        <h3>Your Eligibility</h3>
+        {% for rule in eligibility.passed_rules %}
+        <p class="eligibility-pass">✓ {{ rule }}</p>
+        {% endfor %}
+      </div>
+    </aside>
+  </div>
+</main>
+{% endblock %}

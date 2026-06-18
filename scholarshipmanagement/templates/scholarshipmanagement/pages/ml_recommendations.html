@@ -1,0 +1,160 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}ML Recommendations - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/dashboard.css' %}">
+<style>
+.rec-detail-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 20px; display: flex; flex-direction: column; gap: 10px;
+}
+.rec-score-bars { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.score-bar-row { display: flex; align-items: center; gap: 10px; font-size: 0.78rem; color: #64748b; }
+.score-bar-label { width: 130px; flex-shrink: 0; }
+.score-bar-track { flex: 1; height: 7px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+.score-bar-fill--match { background: #2563eb; }
+.score-bar-fill--eligibility { background: #22c55e; }
+.score-bar-fill--success { background: #f59e0b; }
+.score-bar-value { width: 36px; text-align: right; font-weight: 600; color: #334155; }
+.rec-explanation { font-size: 0.8rem; color: #64748b; font-style: italic; padding: 8px 10px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #2563eb; }
+.rec-rank-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #2563eb; color: #fff; border-radius: 50%; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+.rec-header-row { display: flex; align-items: flex-start; gap: 10px; }
+.rec-header-info { flex: 1; }
+.ml-header-info { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 16px 20px; margin: 0 28px 20px; font-size: 0.84rem; color: #1d4ed8; display: flex; gap: 12px; align-items: flex-start; }
+.ml-header-info svg { flex-shrink: 0; margin-top: 2px; }
+.grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 28px 28px; }
+@media (max-width: 900px) { .grid-2col { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <h1>ML Scholarship Recommendations</h1>
+      <p>Scholarships ranked by match score, eligibility probability, and predicted success — powered by your profile data.</p>
+    </div>
+    <div class="top-actions">
+      {% if stage_1_complete %}
+      <span class="badge badge--success">Profile Complete ✓</span>
+      {% else %}
+      <a href="{% url 'scholarshipmanagement:profile_setup' %}" class="btn btn-secondary btn-sm">Complete Profile First</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not stage_1_complete %}
+  <div class="stage-alert">
+    <div class="stage-alert-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    </div>
+    <div class="stage-alert-body">
+      <h3>Complete Stage 1 to unlock recommendations</h3>
+      <p>The ML engine needs your academic data, financial information, province, and course to compute match scores.</p>
+    </div>
+    <a href="{% url 'scholarshipmanagement:profile_setup' %}" class="btn btn-primary btn-sm">Complete Profile</a>
+  </div>
+
+  {% else %}
+
+  <div class="ml-header-info">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path>
+    </svg>
+    <div>
+      <strong>How scoring works:</strong> Each scholarship is scored using your GPA, annual income, course, and province against the scholarship's eligibility rules.
+      The <strong>match score</strong> (0–100%) is a weighted composite. <strong>Eligibility probability</strong> reflects how many hard rules you pass (0–100%).
+      <strong>Success probability</strong> estimates your chance of being awarded based on match quality (0–100%).
+    </div>
+  </div>
+
+  {% if recommendations %}
+  <div class="grid-2col">
+    {% for rec in recommendations %}
+    <div class="rec-detail-card">
+      <div class="rec-header-row">
+        <span class="rec-rank-badge">#{{ rec.rank }}</span>
+        <div class="rec-header-info">
+          <div class="detail-badges">
+            <span class="badge badge--{{ rec.scholarship.category }}">{{ rec.scholarship.get_category_display }}</span>
+            <span class="badge badge--type">{{ rec.scholarship.get_scholarship_type_display }}</span>
+          </div>
+          <h3 class="rec-title">{{ rec.scholarship.name }}</h3>
+        </div>
+      </div>
+
+      <p class="rec-desc">{{ rec.scholarship.description|truncatechars:100 }}</p>
+
+      <div class="rec-score-bars">
+        <div class="score-bar-row">
+          <span class="score-bar-label">Match Score</span>
+          <div class="score-bar-track"><div class="score-bar-fill score-bar-fill--match" style="width: {{ rec.match_score }}%"></div></div>
+          <span class="score-bar-value">{{ rec.match_score|floatformat:0 }}%</span>
+        </div>
+        <div class="score-bar-row">
+          <span class="score-bar-label">Eligibility</span>
+          <div class="score-bar-track"><div class="score-bar-fill score-bar-fill--eligibility" style="width: {% widthratio rec.eligibility_probability 1 100 %}%"></div></div>
+          <span class="score-bar-value">{% widthratio rec.eligibility_probability 1 100 %}%</span>
+        </div>
+        <div class="score-bar-row">
+          <span class="score-bar-label">Success Chance</span>
+          <div class="score-bar-track"><div class="score-bar-fill score-bar-fill--success" style="width: {% widthratio rec.success_probability 1 100 %}%"></div></div>
+          <span class="score-bar-value">{% widthratio rec.success_probability 1 100 %}%</span>
+        </div>
+      </div>
+
+      <div class="rec-tags">
+        {% for tag in rec.reason_tags %}
+        <span class="tag">{{ tag|cut:"_" }}</span>
+        {% endfor %}
+      </div>
+
+      {% if rec.explanation %}
+      <div class="rec-explanation">{{ rec.explanation }}</div>
+      {% endif %}
+
+      <div class="sc-meta">
+        <div class="sc-meta-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          ₱{{ rec.scholarship.award_amount|floatformat:0 }}
+        </div>
+        <div class="sc-meta-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+          {{ rec.scholarship.slots_remaining }} slots left
+        </div>
+        <div class="sc-meta-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Deadline: {{ rec.scholarship.application_end_date|date:"M d, Y" }}
+        </div>
+      </div>
+
+      <a href="{% url 'scholarshipmanagement:scholarship_detail' rec.scholarship.id %}" class="btn btn-primary btn-sm">View & Apply</a>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="8" r="6"></circle>
+      <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
+    </svg>
+    <h3>No recommendations available</h3>
+    <p>There are currently no published scholarships matching your profile criteria.</p>
+    <a href="{% url 'scholarshipmanagement:sm_scholarships' %}" class="btn btn-primary">Browse All Scholarships</a>
+  </div>
+  {% endif %}
+
+  {% endif %}
+</main>
+{% endblock %}

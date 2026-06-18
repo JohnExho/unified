@@ -29,6 +29,8 @@ class SystemAwareLoginRedirectMiddleware:
                     return redirect(f'/communityextensionservices/login/?next={next_url}')
                 elif next_url.startswith('/informationmanagement/'):
                     return redirect(f'/informationmanagement/login/?next={next_url}')
+                elif next_url.startswith('/scholarshipmanagement/'):
+                    return redirect(f'/scholarshipmanagement/login/?next={next_url}')
             
             # Default to core login for /accounts/login/ without a system-specific next URL
             return redirect('/login/')

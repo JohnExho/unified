@@ -1,0 +1,142 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}Scholarships - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/scholarships.css' %}">
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <h1>Scholarships</h1>
+      <p>{% if is_admin %}Manage all scholarships{% else %}Browse available scholarship opportunities{% endif %}</p>
+    </div>
+    <div class="top-actions">
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path>
+        </svg>
+        <input type="text" id="scholarship-search" placeholder="Search scholarships..." value="{{ search_query }}">
+      </div>
+      {% if is_admin %}
+      <a href="{% url 'scholarshipmanagement:create_scholarship' %}" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Add Scholarship
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <form method="get" class="filter-bar">
+    <select name="category" class="form-select filter-select" onchange="this.form.submit()">
+      <option value="">All Categories</option>
+      <option value="merit_based" {% if filter_category == 'merit_based' %}selected{% endif %}>Merit-Based</option>
+      <option value="need_based" {% if filter_category == 'need_based' %}selected{% endif %}>Need-Based</option>
+      <option value="talent_based" {% if filter_category == 'talent_based' %}selected{% endif %}>Talent-Based</option>
+    </select>
+    <select name="type" class="form-select filter-select" onchange="this.form.submit()">
+      <option value="">All Types</option>
+      <option value="government" {% if filter_type == 'government' %}selected{% endif %}>Government</option>
+      <option value="private" {% if filter_type == 'private' %}selected{% endif %}>Private</option>
+      <option value="corporate" {% if filter_type == 'corporate' %}selected{% endif %}>Corporate</option>
+      <option value="organization" {% if filter_type == 'organization' %}selected{% endif %}>Organization</option>
+    </select>
+    {% if is_admin %}
+    <select name="status" class="form-select filter-select" onchange="this.form.submit()">
+      <option value="">All Statuses</option>
+      <option value="draft" {% if filter_status == 'draft' %}selected{% endif %}>Draft</option>
+      <option value="published" {% if filter_status == 'published' %}selected{% endif %}>Published</option>
+      <option value="closed" {% if filter_status == 'closed' %}selected{% endif %}>Closed</option>
+    </select>
+    {% endif %}
+    {% if search_query %}<input type="hidden" name="search" value="{{ search_query }}">{% endif %}
+  </form>
+
+  <!-- Scholarship Grid -->
+  <div class="scholarship-grid">
+    {% for scholarship in scholarships %}
+    <div class="scholarship-card">
+      <div class="sc-header">
+        <div class="sc-badges">
+          <span class="badge badge--{{ scholarship.category }}">{{ scholarship.get_category_display }}</span>
+          <span class="badge badge--type">{{ scholarship.get_scholarship_type_display }}</span>
+          {% if is_admin %}<span class="badge badge--status-{{ scholarship.status }}">{{ scholarship.get_status_display }}</span>{% endif %}
+        </div>
+        {% if scholarship.renewable %}<span class="badge badge--renewable">Renewable</span>{% endif %}
+      </div>
+
+      <h3 class="sc-title">{{ scholarship.name }}</h3>
+      <p class="sc-desc">{{ scholarship.description|truncatechars:110 }}</p>
+
+      <div class="sc-meta">
+        <div class="sc-meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          <span>₱{{ scholarship.award_amount|floatformat:0 }}</span>
+        </div>
+        <div class="sc-meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+          <span>{{ scholarship.slots_remaining }} / {{ scholarship.number_of_slots }} slots</span>
+        </div>
+        <div class="sc-meta-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span>Deadline: {{ scholarship.application_end_date|date:"M d, Y" }}</span>
+        </div>
+      </div>
+
+      <div class="sc-actions">
+        <a href="{% url 'scholarshipmanagement:scholarship_detail' scholarship.id %}" class="btn btn-primary btn-sm">View Details</a>
+        {% if is_admin %}
+        <a href="{% url 'scholarshipmanagement:edit_scholarship' scholarship.id %}" class="btn btn-ghost btn-sm">Edit</a>
+        <form method="post" action="{% url 'scholarshipmanagement:delete_scholarship' scholarship.id %}" onsubmit="return confirm('Delete this scholarship?')" style="display:inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <p>No scholarships found matching your criteria.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if scholarships.has_other_pages %}
+  <div class="pagination">
+    {% if scholarships.has_previous %}
+    <a href="?page={{ scholarships.previous_page_number }}&search={{ search_query }}&category={{ filter_category }}&type={{ filter_type }}" class="btn btn-ghost btn-sm">← Prev</a>
+    {% endif %}
+    <span>Page {{ scholarships.number }} of {{ scholarships.paginator.num_pages }}</span>
+    {% if scholarships.has_next %}
+    <a href="?page={{ scholarships.next_page_number }}&search={{ search_query }}&category={{ filter_category }}&type={{ filter_type }}" class="btn btn-ghost btn-sm">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</main>
+
+{% block extra_scripts %}
+<script>
+const searchInput = document.getElementById('scholarship-search');
+if (searchInput) {
+  let timer;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('search', searchInput.value);
+      url.searchParams.delete('page');
+      window.location.href = url.toString();
+    }, 500);
+  });
+}
+</script>
+{% endblock %}
+{% endblock %}

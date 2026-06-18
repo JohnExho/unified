@@ -1,0 +1,145 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}Application Detail - Scholarship Management{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <a href="{% if is_staff %}{% url 'scholarshipmanagement:staff_applications' %}{% else %}{% url 'scholarshipmanagement:my_applications' %}{% endif %}" class="back-link">← Back</a>
+      <h1>Application Detail</h1>
+    </div>
+    {% if is_admin %}
+    <div class="top-actions">
+      <form method="post" action="{% url 'scholarshipmanagement:decide_application' application.id %}" onsubmit="return confirm('Confirm decision?')">
+        {% csrf_token %}
+        <select name="decision" class="form-select form-select--inline">
+          <option value="">Select Decision...</option>
+          <option value="accepted">Accept</option>
+          <option value="rejected">Reject</option>
+          <option value="waitlisted">Waitlist</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Release Decision</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="detail-layout">
+    <div class="detail-main">
+      <!-- Application Info -->
+      <div class="detail-card">
+        <h2>{{ application.scholarship.name }}</h2>
+        <div class="detail-badges">
+          <span class="status-badge status--{{ application.status }}">{{ application.get_status_display }}</span>
+        </div>
+        <div class="detail-meta-grid">
+          <div class="detail-meta-item"><span class="meta-label">Student</span><span class="meta-value">{{ application.student.username }}</span></div>
+          <div class="detail-meta-item"><span class="meta-label">Award</span><span class="meta-value">₱{{ application.scholarship.award_amount }}</span></div>
+          <div class="detail-meta-item"><span class="meta-label">Submitted</span><span class="meta-value">{{ application.submitted_at|date:"M d, Y"|default:"—" }}</span></div>
+        </div>
+        {% if application.motivation_essay %}
+        <div class="detail-section">
+          <h3>Motivation Essay</h3>
+          <p>{{ application.motivation_essay }}</p>
+        </div>
+        {% endif %}
+        {% if application.achievements %}
+        <div class="detail-section">
+          <h3>Achievements</h3>
+          <p>{{ application.achievements }}</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Student Profile (Staff/Admin) -->
+      {% if is_staff and profile %}
+      <div class="detail-card">
+        <h2>Student Profile</h2>
+        <div class="detail-meta-grid">
+          <div class="detail-meta-item"><span class="meta-label">GPA</span><span class="meta-value">{{ profile.gpa }}</span></div>
+          <div class="detail-meta-item"><span class="meta-label">School</span><span class="meta-value">{{ profile.school_university }}</span></div>
+          <div class="detail-meta-item"><span class="meta-label">Course</span><span class="meta-value">{{ profile.course_strand }}</span></div>
+          <div class="detail-meta-item"><span class="meta-label">Annual Income</span><span class="meta-value">₱{{ profile.annual_family_income }}</span></div>
+          <div class="detail-meta-item"><span class="meta-label">Province</span><span class="meta-value">{{ profile.province }}</span></div>
+        </div>
+        {% if profile.academic_awards %}
+        <p><strong>Awards:</strong> {{ profile.academic_awards }}</p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Evaluation -->
+      {% if evaluation %}
+      <div class="detail-card">
+        <h2>Evaluation Scores</h2>
+        <div class="score-grid">
+          <div class="score-item"><span>Academic (40%)</span><strong>{{ evaluation.academic_score|default:"—" }}</strong></div>
+          <div class="score-item"><span>Financial Need (30%)</span><strong>{{ evaluation.financial_need_score|default:"—" }}</strong></div>
+          <div class="score-item"><span>Interview (20%)</span><strong>{{ evaluation.interview_score|default:"—" }}</strong></div>
+          <div class="score-item"><span>Extracurricular (10%)</span><strong>{{ evaluation.extracurricular_score|default:"—" }}</strong></div>
+          <div class="score-item score-item--total"><span>Total Score</span><strong>{{ evaluation.total_score|default:"—" }}</strong></div>
+        </div>
+        {% if evaluation.recommendation %}
+        <p><strong>Reviewer Recommendation:</strong> <span class="status-badge status--{{ evaluation.recommendation }}">{{ evaluation.get_recommendation_display }}</span></p>
+        {% endif %}
+        {% if evaluation.reviewer_comments %}
+        <p><strong>Comments:</strong> {{ evaluation.reviewer_comments }}</p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Rejection Analysis -->
+      {% if rejection_analysis %}
+      <div class="detail-card detail-card--alert">
+        <h2>Rejection Analysis</h2>
+        <p>{{ rejection_analysis.analysis_summary }}</p>
+        {% if rejection_analysis.failed_criteria %}
+        <h4>Failed Criteria:</h4>
+        <ul>{% for c in rejection_analysis.failed_criteria %}<li>{{ c }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% if rejection_analysis.improvement_suggestions %}
+        <h4>Improvement Suggestions:</h4>
+        <ul>{% for s in rejection_analysis.improvement_suggestions %}<li>{{ s }}</li>{% endfor %}</ul>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Scholarship Offer -->
+      {% if offer and offer.status == 'pending' and not is_staff %}
+      <div class="detail-card detail-card--offer">
+        <h2>🎉 Scholarship Offer</h2>
+        <p>You have been offered a scholarship of <strong>₱{{ offer.offer_amount }}</strong>.</p>
+        <p>Please respond to this offer:</p>
+        <form method="post" action="{% url 'scholarshipmanagement:respond_offer' application.id %}">
+          {% csrf_token %}
+          <div class="offer-actions">
+            <button type="submit" name="response" value="accept" class="btn btn-primary">Accept Offer</button>
+            <button type="submit" name="response" value="decline" class="btn btn-danger" onclick="return confirm('Are you sure you want to decline?')">Decline Offer</button>
+          </div>
+        </form>
+      </div>
+      {% elif offer %}
+      <div class="detail-card">
+        <h2>Scholarship Offer</h2>
+        <p>Status: <span class="status-badge status--{{ offer.status }}">{{ offer.get_status_display }}</span></p>
+        <p>Amount: ₱{{ offer.offer_amount }}</p>
+        {% if offer.responded_at %}<p>Responded: {{ offer.responded_at|date:"M d, Y" }}</p>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="detail-sidebar">
+      {% if is_staff and evaluation.status != 'completed' %}
+      <a href="{% url 'scholarshipmanagement:evaluate_application' application.id %}" class="btn btn-primary btn-full">Evaluate Application</a>
+      {% endif %}
+    </aside>
+  </div>
+</main>
+{% endblock %}

@@ -30,6 +30,7 @@ urlpatterns = [
     path('communityextensionservices/', include('communityextensionservices.urls')),
     path('informationmanagement/', include('informationmanagement.urls')),
     path('performanceevaluation/', include('performanceevaluation.urls')),
+    path('scholarshipmanagement/', include('scholarshipmanagement.urls')),
     path('favicon.ico', RedirectView.as_view(url=settings.STATIC_URL + 'favicon.png')),
 ]
 

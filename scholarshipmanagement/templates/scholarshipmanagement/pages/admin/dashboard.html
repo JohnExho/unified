@@ -1,0 +1,95 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}Admin Dashboard - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/dashboard.css' %}">
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <h1>Admin Dashboard</h1>
+      <p>Scholarship Management overview and administration.</p>
+    </div>
+    <div class="top-actions">
+      <a href="{% url 'scholarshipmanagement:create_scholarship' %}" class="btn btn-primary btn-sm">+ New Scholarship</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-body"><div class="stat-value">{{ total_scholarships }}</div><div class="stat-label">Total Scholarships</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-body"><div class="stat-value">{{ active_scholarships }}</div><div class="stat-label">Active (Published)</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-body"><div class="stat-value">{{ total_applications }}</div><div class="stat-label">Total Applications</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-body"><div class="stat-value">{{ pending_applications }}</div><div class="stat-label">Pending Review</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-body"><div class="stat-value">{{ accepted_applications }}</div><div class="stat-label">Accepted</div></div>
+    </div>
+  </div>
+
+  <!-- Recent Applications -->
+  <section class="content-section">
+    <div class="section-header">
+      <h2>Recent Applications</h2>
+      <a href="{% url 'scholarshipmanagement:admin_applications' %}" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Student</th><th>Scholarship</th><th>Status</th><th>Submitted</th><th></th></tr></thead>
+      <tbody>
+        {% for app in recent_applications %}
+        <tr>
+          <td>{{ app.student.username }}</td>
+          <td>{{ app.scholarship.name }}</td>
+          <td><span class="status-badge status--{{ app.status }}">{{ app.get_status_display }}</span></td>
+          <td>{{ app.submitted_at|date:"M d, Y"|default:"—" }}</td>
+          <td><a href="{% url 'scholarshipmanagement:application_detail' app.id %}" class="btn btn-ghost btn-xs">View</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="empty-cell">No applications yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Recent Scholarships -->
+  <section class="content-section">
+    <div class="section-header">
+      <h2>Recent Scholarships</h2>
+      <a href="{% url 'scholarshipmanagement:sm_scholarships' %}" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Category</th><th>Status</th><th>Slots</th><th>Deadline</th><th></th></tr></thead>
+      <tbody>
+        {% for s in recent_scholarships %}
+        <tr>
+          <td>{{ s.name }}</td>
+          <td>{{ s.get_category_display }}</td>
+          <td><span class="status-badge status--{{ s.status }}">{{ s.get_status_display }}</span></td>
+          <td>{{ s.slots_remaining }}/{{ s.number_of_slots }}</td>
+          <td>{{ s.application_end_date|date:"M d, Y" }}</td>
+          <td>
+            <a href="{% url 'scholarshipmanagement:edit_scholarship' s.id %}" class="btn btn-ghost btn-xs">Edit</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="empty-cell">No scholarships yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+{% endblock %}

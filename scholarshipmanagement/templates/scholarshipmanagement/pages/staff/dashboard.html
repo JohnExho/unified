@@ -1,0 +1,66 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}Staff Dashboard - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/dashboard.css' %}">
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <h1>Staff Dashboard</h1>
+      <p>Manage assigned applications and evaluations.</p>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-body">
+        <div class="stat-value">{{ total_assigned }}</div>
+        <div class="stat-label">Applications to Review</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-body">
+        <div class="stat-value">{{ completed_evaluations }}</div>
+        <div class="stat-label">Completed Evaluations</div>
+      </div>
+    </div>
+  </div>
+
+  <section class="content-section">
+    <div class="section-header">
+      <h2>Pending Evaluations</h2>
+      <a href="{% url 'scholarshipmanagement:staff_applications' %}" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    {% if assigned_applications %}
+    <table class="data-table">
+      <thead>
+        <tr><th>Student</th><th>Scholarship</th><th>Status</th><th>Submitted</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for app in assigned_applications %}
+        <tr>
+          <td>{{ app.student.username }}</td>
+          <td>{{ app.scholarship.name }}</td>
+          <td><span class="status-badge status--{{ app.status }}">{{ app.get_status_display }}</span></td>
+          <td>{{ app.submitted_at|date:"M d, Y"|default:"—" }}</td>
+          <td>
+            <a href="{% url 'scholarshipmanagement:evaluate_application' app.id %}" class="btn btn-primary btn-xs">Evaluate</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><p>No applications assigned for review.</p></div>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}

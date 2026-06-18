@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "communityextensionservices",
     "informationmanagement",
     "performanceevaluation",
+    "scholarshipmanagement",
     "captcha",
 ]
 

@@ -1,0 +1,71 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}Review Applications - Staff{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/applications.css' %}">
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <h1>Review Applications</h1>
+      <p>Evaluate and grade scholarship applicants.</p>
+    </div>
+    <div class="top-actions">
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path>
+        </svg>
+        <input type="text" id="app-search" placeholder="Search..." value="{{ search_query }}">
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <form method="get" class="filter-bar">
+    <select name="scholarship" class="form-select filter-select" onchange="this.form.submit()">
+      <option value="">All Scholarships</option>
+      {% for s in scholarship_list %}
+      <option value="{{ s.id }}" {% if filter_scholarship == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+      {% endfor %}
+    </select>
+    {% if search_query %}<input type="hidden" name="search" value="{{ search_query }}">{% endif %}
+  </form>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Student</th><th>Scholarship</th><th>Status</th><th>Submitted</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for app in applications %}
+      <tr>
+        <td>{{ app.student.username }}</td>
+        <td>{{ app.scholarship.name }}</td>
+        <td><span class="status-badge status--{{ app.status }}">{{ app.get_status_display }}</span></td>
+        <td>{{ app.submitted_at|date:"M d, Y"|default:"—" }}</td>
+        <td>
+          <a href="{% url 'scholarshipmanagement:evaluate_application' app.id %}" class="btn btn-primary btn-xs">Evaluate</a>
+          <a href="{% url 'scholarshipmanagement:application_detail' app.id %}" class="btn btn-ghost btn-xs">View</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="empty-cell">No applications to review.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if applications.has_other_pages %}
+  <div class="pagination">
+    {% if applications.has_previous %}<a href="?page={{ applications.previous_page_number }}" class="btn btn-ghost btn-sm">← Prev</a>{% endif %}
+    <span>Page {{ applications.number }} of {{ applications.paginator.num_pages }}</span>
+    {% if applications.has_next %}<a href="?page={{ applications.next_page_number }}" class="btn btn-ghost btn-sm">Next →</a>{% endif %}
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

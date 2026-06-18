@@ -68,24 +68,9 @@ class Command(BaseCommand):
             )
             authors[f"{first_name} {last_name}"] = author
 
-        user_specs = [
-            ("lib_admin_demo", "lib_admin_demo@example.com"),
-            ("lib_user_demo_1", "lib_user_demo_1@example.com"),
-            ("lib_user_demo_2", "lib_user_demo_2@example.com"),
-        ]
-        users = []
-        for username, email in user_specs:
-            user, created = User.objects.get_or_create(
-                username=username,
-                defaults={
-                    "email": email,
-                },
-            )
-            if created:
-                user.set_password("demo12345")
-                user.save(update_fields=["password"])
-            users.append(user)
-
+        library_admin = User.objects.get(username="LibraryAdmin")
+        users = [library_admin]
+                
         book_specs = [
             {
                 "accession_number": "LIB-0001",
@@ -201,7 +186,7 @@ class Command(BaseCommand):
                     "available_copies": spec["available_copies"],
                     "status": spec["status"],
                     "language": "English",
-                    "created_by": users[0],
+                    "created_by": library_admin,
                 },
             )
             book.authors.set([authors[spec["author"]]])
@@ -227,18 +212,18 @@ class Command(BaseCommand):
 
             for i in range(3):
                 BorrowingTransaction.objects.create(
-                    user=users[i % len(users)],
+                    user=library_admin,
                     book=book,
                     due_date=now + timedelta(days=14),
                     status="active",
                     notes=marker,
-                    issued_by=users[0],
+                    issued_by=library_admin,
                 )
                 borrowed_created += 1
 
             for i in range(2):
                 Reservation.objects.create(
-                    user=users[i % len(users)],
+                    user=library_admin,
                     book=book,
                     expiry_date=now + timedelta(days=3),
                     status="pending",
@@ -248,7 +233,7 @@ class Command(BaseCommand):
 
             for i in range(6):
                 UserActivity.objects.create(
-                    user=users[i % len(users)],
+                    user=library_admin,
                     book=book,
                     activity_type="view",
                     session_id=marker,
@@ -259,7 +244,7 @@ class Command(BaseCommand):
         for accession in set(books_by_accession.keys()) - high_demand_accessions:
             book = books_by_accession[accession]
             UserActivity.objects.create(
-                user=users[1],
+                user=library_admin,
                 book=book,
                 activity_type="view",
                 session_id=marker,

@@ -1,0 +1,157 @@
+/* ===== SCHOLARSHIP MANAGEMENT — Login / Register CSS ===== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container.login-page,
+.container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ── Layout ── */
+.login-layout,
+.register-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+  min-height: 520px;
+}
+
+/* ── Logo Side ── */
+.logo-section {
+  background: linear-gradient(160deg, #1e3a5f 0%, #2563eb 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  color: #fff;
+  gap: 16px;
+}
+
+.logo {
+  width: 80px; height: 80px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; font-weight: 800; color: #fff;
+  border: 2px solid rgba(255,255,255,0.3);
+  backdrop-filter: blur(8px);
+}
+
+.logo-text {
+  font-size: 1.1rem; font-weight: 600; color: rgba(255,255,255,0.9);
+  text-align: center; max-width: 200px;
+}
+
+.logo-tagline {
+  font-size: 0.82rem; color: rgba(255,255,255,0.6); text-align: center; max-width: 220px;
+}
+
+/* ── Form Side ── */
+.form-section {
+  padding: 48px 40px;
+  display: flex; flex-direction: column; justify-content: center; gap: 4px;
+  background: #fff;
+}
+
+.form-section h1,
+.form-section h2 {
+  font-size: 1.6rem; font-weight: 700; color: #0f172a; margin: 0 0 6px;
+}
+
+.form-section .subtitle {
+  font-size: 0.84rem; color: #64748b; margin: 0 0 24px;
+}
+
+/* ── Inputs ── */
+.input-wrapper {
+  display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; position: relative;
+}
+
+.input-wrapper label {
+  font-size: 0.8rem; font-weight: 600; color: #374151;
+}
+
+.input-wrapper input {
+  padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  font-size: 0.9rem; color: #1e293b; background: #f8fafc; outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.input-wrapper input:focus {
+  border-color: #2563eb; background: #fff;
+}
+
+.toggle-password {
+  position: absolute; right: 10px; top: 32px;
+  background: none; border: none; cursor: pointer; color: #94a3b8; padding: 4px;
+}
+.toggle-password:hover { color: #475569; }
+.toggle-password svg { width: 18px; height: 18px; }
+
+/* ── Submit Button ── */
+button[type="submit"],
+.btn-login {
+  width: 100%; padding: 12px;
+  background: #2563eb; color: #fff;
+  border: none; border-radius: 8px;
+  font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  transition: background 0.15s; margin-top: 8px;
+}
+button[type="submit"]:hover,
+.btn-login:hover { background: #1d4ed8; }
+
+/* ── Links ── */
+.login-links,
+.register-links {
+  text-align: center; margin-top: 16px; font-size: 0.82rem; color: #64748b;
+}
+.login-links a,
+.register-links a { color: #2563eb; text-decoration: none; font-weight: 500; }
+.login-links a:hover,
+.register-links a:hover { text-decoration: underline; }
+
+/* ── Error ── */
+.error {
+  background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;
+  border-radius: 6px; padding: 8px 12px; font-size: 0.82rem; margin-bottom: 12px;
+}
+
+/* ── CAPTCHA ── */
+.captcha-wrapper { margin-bottom: 16px; }
+
+/* ── Register multi-column grid ── */
+.form-grid-2 {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px;
+}
+
+/* ── Terms checkbox ── */
+.terms-wrapper {
+  display: flex; align-items: flex-start; gap: 8px; margin-bottom: 16px; font-size: 0.8rem;
+}
+.terms-wrapper input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; }
+.terms-wrapper a { color: #2563eb; }
+
+@media (max-width: 640px) {
+  .login-layout,
+  .register-layout { grid-template-columns: 1fr; }
+  .logo-section { padding: 32px 24px; min-height: 140px; }
+  .form-section { padding: 32px 24px; }
+  .form-grid-2 { grid-template-columns: 1fr; }
+}

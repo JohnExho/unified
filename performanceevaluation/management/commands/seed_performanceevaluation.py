@@ -74,12 +74,12 @@ class Command(BaseCommand):
         SystemMembership.objects.update_or_create(
             user=evaluatee,
             system_name="performanceevaluation",
-            defaults={"system_role": "admin" if evaluatee.is_superuser else "user"},
+            defaults={"system_role": "superadmin" if evaluatee.is_superuser else "user"},
         )
         SystemMembership.objects.update_or_create(
             user=evaluator,
             system_name="performanceevaluation",
-            defaults={"system_role": "user"},
+            defaults={"system_role": "superadmin" if evaluator.is_superuser else "user"},
         )
 
         term = AcademicTerm.objects.create(
@@ -96,44 +96,109 @@ class Command(BaseCommand):
             is_closed=False,
         )
 
-        category_teaching = EvaluationCategory.objects.create(cycle=cycle, name="Teaching Effectiveness", weight=50)
-        category_service = EvaluationCategory.objects.create(cycle=cycle, name="Service and Extension", weight=50)
+        # --- Kolehiyo ng Subic Faculty Peer Evaluation Instrument ---
+        # Rating scale: 5=Excellent, 4=Very Good, 3=Good, 2=Fair, 1=Poor
+        rubric_labels = {
+            5: "Excellent",
+            4: "Very Good",
+            3: "Good",
+            2: "Fair",
+            1: "Poor",
+        }
 
-        criterion_1 = EvaluationCriterion.objects.create(
-            category=category_teaching,
-            name="Instructional Delivery",
-            description="Clarity and engagement during classes.",
-            weight=30,
-        )
-        criterion_2 = EvaluationCriterion.objects.create(
-            category=category_teaching,
-            name="Assessment Quality",
-            description="Validity and timeliness of assessment tools.",
-            weight=20,
-        )
-        criterion_3 = EvaluationCriterion.objects.create(
-            category=category_service,
-            name="Community Involvement",
-            description="Participation in extension activities.",
-            weight=25,
-        )
-        criterion_4 = EvaluationCriterion.objects.create(
-            category=category_service,
-            name="Professional Development",
-            description="Seminars, trainings, and certifications.",
-            weight=25,
-        )
+        categories_data = [
+            {
+                "name": "A. Classroom Management",
+                "weight": 25,
+                "criteria": [
+                    "Regularly monitors class attendance",
+                    "Starts and ends the class on time",
+                    "Maintains proper discipline in the classroom",
+                    "Commands students' respect without force",
+                    "Handles cases of individual and group discipline appropriately",
+                    "Returns examination papers properly checked",
+                    "Gives fair treatment and grade to submitted examinations",
+                    "Exercises self-control in various classroom situation and interaction with students",
+                    "Plans in advanced the ways for dealing with potential problems and misbehavior",
+                    "Establishes rules for respect of different points of view and decision",
+                ],
+            },
+            {
+                "name": "B. Mastery of Subject Matter",
+                "weight": 25,
+                "criteria": [
+                    "Demonstrates in-depth knowledge of the subject matter",
+                    "Comes to class completely prepared",
+                    "Explains the lesson very well and very clear, making it understandable and realistic",
+                    "Gives specific and concrete example to create meaningful experiences",
+                    "Integrates values in subject matter and in teaching",
+                    "Links concepts to real life situations or to local and national issues",
+                    "Develops scientific attitudes such as objectivity, open mindedness, judgement, and originality",
+                    "Keep abreast of new ideas and understanding in the field",
+                    "Employs method and techniques that will show evidences of mastery of the subject matter",
+                    "Guides daily learning and discussing problems and needs",
+                ],
+            },
+            {
+                "name": "C. Teaching Strategies",
+                "weight": 25,
+                "criteria": [
+                    "Uses variety of techniques and strategies to encourage students' participation",
+                    "Uses appropriate instructional materials to make teaching meaningful",
+                    "Make the lesson interesting and pertinent",
+                    "Uses methods suited to the needs and capabilities of students",
+                    "Utilizes and presents proper teaching devices, equipment and materials",
+                    "Give praise incentives and recognition for outstanding achievement of student",
+                    "Develops the value of listening and skillful way of students' participation",
+                    "Uses strategies to prepare and motivate students for the day activity",
+                    "Uses varied evaluation measures",
+                    "Exerts effort to provide student with first hand experiences like field trips, research work and doing community works",
+                ],
+            },
+            {
+                "name": "D. Communication Skills",
+                "weight": 25,
+                "criteria": [
+                    "Speaks with a well-modulated voice",
+                    "Uses correct grammar and observe proper pronunciation",
+                    "Communicates ideas effectively",
+                    "Has good command of the language instruction",
+                    "Promotes a better medium of exchange of ideas and encourages respect for other members' point of view",
+                    "Speaks and writes appropriate and acceptable",
+                    "Emphasizes listening and reading improving or enhancing communication ability",
+                    "Expresses himself in appropriate and acceptable word and sentences at all times",
+                    "Realizes the meaning, value and relevance of communication in daily activities or routine",
+                    "Keeps abreast with recent trends and issues in language development",
+                ],
+            },
+        ]
 
-        for criterion in [criterion_1, criterion_2, criterion_3, criterion_4]:
-            for level in range(1, 6):
-                Rubric.objects.create(
-                    criterion=criterion,
-                    level=level,
-                    description=f"Level {level} benchmark for {criterion.name}.",
+        all_criteria = []
+        for cat_data in categories_data:
+            category = EvaluationCategory.objects.create(
+                cycle=cycle,
+                name=cat_data["name"],
+                weight=cat_data["weight"],
+            )
+            criterion_weight = round(cat_data["weight"] / len(cat_data["criteria"]), 2)
+            for item in cat_data["criteria"]:
+                criterion = EvaluationCriterion.objects.create(
+                    category=category,
+                    name=item,
+                    description="",
+                    weight=criterion_weight,
                 )
+                for level, label in rubric_labels.items():
+                    Rubric.objects.create(
+                        criterion=criterion,
+                        level=level,
+                        description=label,
+                    )
+                all_criteria.append(criterion)
 
-        form = EvaluationForm.objects.create(cycle=cycle, evaluator_type="supervisor", is_active=True)
+        form = EvaluationForm.objects.create(cycle=cycle, evaluator_type="peer", is_active=True)
         EvaluationForm.objects.create(cycle=cycle, evaluator_type="self", is_active=True)
+        EvaluationForm.objects.create(cycle=cycle, evaluator_type="supervisor", is_active=True)
 
         evaluation = Evaluation.objects.create(
             form=form,
@@ -143,10 +208,12 @@ class Command(BaseCommand):
             is_submitted=True,
         )
 
-        EvaluationScore.objects.create(evaluation=evaluation, criterion=criterion_1, score=4)
-        EvaluationScore.objects.create(evaluation=evaluation, criterion=criterion_2, score=5)
-        EvaluationScore.objects.create(evaluation=evaluation, criterion=criterion_3, score=4)
-        EvaluationScore.objects.create(evaluation=evaluation, criterion=criterion_4, score=5)
+        sample_scores = [5, 4, 4, 5, 4, 3, 5, 4, 4, 5,
+                         4, 5, 4, 4, 5, 4, 3, 4, 5, 4,
+                         4, 5, 4, 4, 4, 5, 4, 4, 3, 5,
+                         5, 4, 5, 4, 4, 4, 5, 4, 4, 4]
+        for criterion, score in zip(all_criteria, sample_scores):
+            EvaluationScore.objects.create(evaluation=evaluation, criterion=criterion, score=score)
 
         EvaluationComment.objects.create(
             evaluation=evaluation,

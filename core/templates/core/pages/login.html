@@ -26,6 +26,9 @@
   {% elif system_name == 'informationmanagement' or system_name == 'ims' %}
     <link rel="stylesheet"
           href="{% static 'informationmanagement/css/pages/login.css' %}" />
+  {% elif system_name == 'scholarshipmanagement' %}
+    <link rel="stylesheet"
+          href="{% static 'scholarshipmanagement/css/pages/login.css' %}" />
   {% else %}
     <link rel="stylesheet" href="{% static 'core/css/pages/login.css' %}" />
   {% endif %}
@@ -41,7 +44,10 @@
           </div>
         {% else %}
           <div class="logo">{{ system_name|slice:":1"|upper }}</div>
-          {% if system_info %}
+          {% if system_name == 'scholarshipmanagement' %}
+            <div class="logo-text">Scholarship Management</div>
+            <div class="logo-tagline">Gated scholarship application platform</div>
+          {% elif system_info %}
             <div class="logo-text">{{ system_info.display_name }}</div>
           {% else %}
             <div class="logo-text">{{ system_name|title }}</div>

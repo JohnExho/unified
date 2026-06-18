@@ -1,0 +1,77 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}My Applications - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/applications.css' %}">
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <h1>My Applications</h1>
+      <p>Track the status of your scholarship applications.</p>
+    </div>
+    <div class="top-actions">
+      <a href="{% url 'scholarshipmanagement:sm_scholarships' %}" class="btn btn-primary btn-sm">Browse Scholarships</a>
+    </div>
+  </div>
+
+  {% if applications %}
+  <div class="applications-list">
+    {% for app in applications %}
+    <div class="app-card">
+      <div class="app-card-header">
+        <div>
+          <h3>{{ app.scholarship.name }}</h3>
+          <p class="app-meta">{{ app.scholarship.get_category_display }} · {{ app.scholarship.get_scholarship_type_display }}</p>
+        </div>
+        <span class="status-badge status--{{ app.status }}">{{ app.get_status_display }}</span>
+      </div>
+
+      <div class="app-card-body">
+        <div class="app-info">
+          <span>Award: ₱{{ app.scholarship.award_amount|floatformat:0 }}</span>
+          <span>Submitted: {{ app.submitted_at|date:"M d, Y"|default:"Not submitted" }}</span>
+        </div>
+
+        {% if app.status in 'accepted offer_accepted' %}
+        <div class="app-offer-banner">
+          🎉 Congratulations! You have been awarded this scholarship.
+        </div>
+        {% elif app.status == 'rejected' %}
+        <div class="app-reject-banner">
+          Your application was not selected this time.
+          {% if app.rejection_analysis %}
+          <a href="{% url 'scholarshipmanagement:application_detail' app.id %}">View feedback →</a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="app-card-footer">
+        <a href="{% url 'scholarshipmanagement:application_detail' app.id %}" class="btn btn-ghost btn-sm">View Details</a>
+        {% if app.status == 'accepted' and app.offer and app.offer.status == 'pending' %}
+        <a href="{% url 'scholarshipmanagement:application_detail' app.id %}" class="btn btn-primary btn-sm">Respond to Offer</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+    </svg>
+    <h3>No applications yet</h3>
+    <p>Browse scholarships and apply for those that match your profile.</p>
+    <a href="{% url 'scholarshipmanagement:sm_scholarships' %}" class="btn btn-primary">Browse Scholarships</a>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

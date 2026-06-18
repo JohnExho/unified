@@ -1,0 +1,69 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}Settings - Scholarship Management{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <h1>Settings</h1>
+      <p>Manage your account settings.</p>
+    </div>
+  </div>
+
+  <div class="settings-layout">
+    <!-- Profile Update -->
+    <div class="settings-card">
+      <h2>Account Information</h2>
+      <form method="post" class="card-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_profile">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" name="first_name" class="form-input" value="{{ request.user.first_name }}">
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" name="last_name" class="form-input" value="{{ request.user.last_name }}">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="text" class="form-input" value="{{ request.user.email }}" disabled>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Password Change -->
+    <div class="settings-card">
+      <h2>Change Password</h2>
+      <form method="post" class="card-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="change_password">
+        <div class="form-group">
+          <label>Current Password</label>
+          <input type="password" name="old_password" class="form-input" autocomplete="current-password">
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <input type="password" name="new_password" class="form-input" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label>Confirm New Password</label>
+          <input type="password" name="confirm_password" class="form-input" autocomplete="new-password">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-secondary">Change Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

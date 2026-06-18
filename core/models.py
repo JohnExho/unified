@@ -75,6 +75,7 @@ class Systems(models.Model):
         ('communityextensionservices', 'Community Extension Services'),
         ('informationmanagement', 'Information Management'),
         ('performanceevaluation', 'Performance Evaluation'),
+        ('scholarshipmanagement', 'Scholarship Management'),
     ]
     name = models.CharField(max_length=50, choices=DefaultSystems, unique=True)
     description = models.TextField(blank=True)
@@ -94,6 +95,7 @@ class SystemMembership(models.Model):
         ('communityextensionservices', 'Community Extension Services'),
         ('informationmanagement', 'Information Management'),
         ('performanceevaluation', 'Performance Evaluation'),
+        ('scholarshipmanagement', 'Scholarship Management'),
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -112,6 +114,8 @@ class SystemMembership(models.Model):
             ('user', 'User'),
             ('instructor', 'Instructor'),
             ('superadmin', 'Super Admin'),
+            ('reviewer', 'Reviewer'),
+            ('student', 'Student'),
         ],
     )
     joined_at = models.DateTimeField(auto_now_add=True)
@@ -133,6 +137,7 @@ class Logs(models.Model):
         ('communityextensionservices', 'Community Extension Services'),
         ('informationmanagement', 'Information Management'),
         ('performanceevaluation', 'Performance Evaluation'),
+        ('scholarshipmanagement', 'Scholarship Management'),
     ]
 
 
