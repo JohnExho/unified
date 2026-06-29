@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -34,6 +36,10 @@ class Project(models.Model):
         ("Ongoing", "Ongoing"),
         ("Completed", "Completed"),
     ]
+    MEMBER_SELECTION_CHOICES = [
+        ("manual", "Select Members Manually"),
+        ("all_members", "ALL Members"),
+    ]
 
     name = models.CharField(max_length=200)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
@@ -47,6 +53,19 @@ class Project(models.Model):
         max_digits=5, decimal_places=2, null=True, blank=True
     )
     predicted_reach = models.PositiveIntegerField(null=True, blank=True)
+    beneficiary_groups = models.ManyToManyField(
+        "BeneficiaryGroup", blank=True, related_name="projects"
+    )
+    member_selection_mode = models.CharField(
+        max_length=20,
+        choices=MEMBER_SELECTION_CHOICES,
+        default="manual",
+    )
+    selected_members = models.ManyToManyField(
+        "communityextensionservices.Member",
+        blank=True,
+        related_name="information_projects",
+    )
 
     def __str__(self):
         return self.name
@@ -92,7 +111,31 @@ class Partner(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     engagement = models.CharField(max_length=20, choices=ENGAGEMENT_CHOICES)
     contribution = models.CharField(max_length=200)
+    contribution_amount = models.DecimalField(
+        max_digits=15, decimal_places=2, default=0
+    )
     contact_person = models.CharField(max_length=120, blank=True)
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        previous_amount = None
+        if not is_new:
+            previous = Partner.objects.filter(pk=self.pk).only("contribution_amount").first()
+            previous_amount = previous.contribution_amount if previous else None
+
+        super().save(*args, **kwargs)
+
+        if self.contribution_amount and (is_new or previous_amount != self.contribution_amount):
+            fund = AssociationFund.objects.order_by("-created_at").first()
+            if fund is None:
+                fund = AssociationFund.objects.create(name="Association Fund")
+            fund.apply_income(
+                amount=self.contribution_amount,
+                transaction_type="partner_contribution",
+                description=f"Partner contribution from {self.name}",
+                reference_model="partner",
+                reference_id=self.pk,
+            )
 
     def __str__(self):
         return self.name
@@ -191,6 +234,63 @@ class MLExperiment(models.Model):
 # ============================================================================
 
 
+class AssociationFund(models.Model):
+    name = models.CharField(max_length=200, default="Association Fund")
+    current_balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_income = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return self.name
+
+    def apply_income(self, amount, transaction_type="other_income", description="", reference_model="", reference_id=None):
+        amount = Decimal(str(amount or 0))
+        if amount <= 0:
+            return None
+        self.current_balance = self.current_balance + amount
+        self.total_income = self.total_income + amount
+        self.save(update_fields=["current_balance", "total_income", "updated_at"])
+        return AssociationFundTransaction.objects.create(
+            association_fund=self,
+            amount=amount,
+            transaction_type=transaction_type,
+            source_type=transaction_type,
+            description=description,
+            reference_model=reference_model,
+            reference_id=reference_id,
+        )
+
+
+class AssociationFundTransaction(models.Model):
+    TRANSACTION_TYPES = [
+        ("member_contribution", "Member Contribution"),
+        ("partner_contribution", "Partner Contribution"),
+        ("other_income", "Other Income"),
+        ("expense", "Expense"),
+    ]
+
+    association_fund = models.ForeignKey(
+        AssociationFund, on_delete=models.CASCADE, related_name="transactions"
+    )
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    transaction_type = models.CharField(max_length=30, choices=TRANSACTION_TYPES)
+    source_type = models.CharField(max_length=30, choices=TRANSACTION_TYPES, default="other_income")
+    description = models.CharField(max_length=255, blank=True)
+    reference_model = models.CharField(max_length=80, blank=True)
+    reference_id = models.PositiveIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.transaction_type} - {self.amount}"
+
+
 class ContributionFund(models.Model):
     """Represents a fund or project that receives allocated contributions"""
     
@@ -205,7 +305,7 @@ class ContributionFund(models.Model):
     )
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    budget_required = models.DecimalField(max_digits=15, decimal_places=2)
+    budget_required = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     start_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -333,6 +433,47 @@ class MemberContributionRecord(models.Model):
 
     def __str__(self):
         return f"{self.member_name} ({self.employee_id})"
+
+
+class MemberContributionEntry(models.Model):
+    member = models.ForeignKey(
+        MemberContributionRecord,
+        on_delete=models.CASCADE,
+        related_name="ledger_entries",
+    )
+    contribution_date = models.DateField(default=timezone.now)
+    amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    remarks = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-contribution_date", "-created_at"]
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new and self.amount > 0:
+            self.member.total_contributions = (
+                self.member.total_contributions + self.amount
+            )
+            self.member.current_balance = (
+                self.member.current_balance + self.amount
+            )
+            self.member.last_payment_date = self.contribution_date
+            self.member.save(update_fields=["total_contributions", "current_balance", "last_payment_date", "updated_at"])
+            fund = AssociationFund.objects.order_by("-created_at").first()
+            if fund is None:
+                fund = AssociationFund.objects.create(name="Association Fund")
+            fund.apply_income(
+                amount=self.amount,
+                transaction_type="member_contribution",
+                description=f"Contribution by {self.member.member_name}",
+                reference_model="member_contribution_entry",
+                reference_id=self.pk,
+            )
+
+    def __str__(self):
+        return f"{self.member.member_name} - {self.amount}"
 
 
 class MasterDataDepartment(models.Model):

@@ -38,20 +38,16 @@
     <div class="login-layout">
       <!-- Logo Section (Left side on desktop) -->
       <div class="logo-section">
-        {% if not system_name or system_name == 'core' %}
-          <div class="logo">
-            <img src="{% static 'core/images/core.webp' %}" alt="Logo" />
-          </div>
-        {% else %}
-          <div class="logo">{{ system_name|slice:":1"|upper }}</div>
-          {% if system_name == 'scholarshipmanagement' %}
-            <div class="logo-text">Scholarship Management</div>
-            <div class="logo-tagline">Gated scholarship application platform</div>
-          {% elif system_info %}
-            <div class="logo-text">{{ system_info.display_name }}</div>
-          {% else %}
-            <div class="logo-text">{{ system_name|title }}</div>
-          {% endif %}
+        <div class="logo">
+          <img src="{% static 'core/images/kolehiyo_logo.png' %}" alt="Kolehiyo ng Subic logo" />
+        </div>
+        {% if system_name == 'scholarshipmanagement' %}
+          <div class="logo-text">Scholarship Management</div>
+          <div class="logo-tagline">Gated scholarship application platform</div>
+        {% elif system_info %}
+          <div class="logo-text">{{ system_info.display_name }}</div>
+        {% elif system_name %}
+          <div class="logo-text">{{ system_name|title }}</div>
         {% endif %}
       </div>
       <!-- Form Section (Right side on desktop) -->

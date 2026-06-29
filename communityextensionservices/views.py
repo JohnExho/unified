@@ -294,7 +294,7 @@ def activity_delete(request, pk):
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def documents(request):
-    if not Services.has_access(request.user, "communityextensionservices"):
+    if not _has_ces_admin_access(request.user):
         return render(request, "404.html", status=404)
     context = {
         **_base_context(request),

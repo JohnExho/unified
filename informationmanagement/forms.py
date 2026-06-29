@@ -1,4 +1,5 @@
 from django import forms
+from communityextensionservices.models import Member
 from .models import (
     Project,
     BeneficiaryGroup,
@@ -18,6 +19,17 @@ from .models import (
 
 
 class ProjectForm(forms.ModelForm):
+    beneficiary_groups = forms.ModelMultipleChoiceField(
+        queryset=BeneficiaryGroup.objects.all(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={"class": "form-select"}),
+    )
+    selected_members = forms.ModelMultipleChoiceField(
+        queryset=Member.objects.all(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={"class": "form-select"}),
+    )
+
     class Meta:
         model = Project
         fields = [
@@ -27,15 +39,33 @@ class ProjectForm(forms.ModelForm):
             "status",
             "start_date",
             "end_date",
-            "beneficiaries_count",
             "progress",
             "predicted_success",
             "predicted_reach",
+            "member_selection_mode",
+            "beneficiary_groups",
+            "selected_members",
         ]
         widgets = {
             "start_date": forms.DateInput(attrs={"type": "date"}),
             "end_date": forms.DateInput(attrs={"type": "date"}),
         }
+
+    def save(self, commit=True):
+        project = super().save(commit=False)
+        beneficiary_groups = self.cleaned_data.get("beneficiary_groups") or []
+        project.beneficiaries_count = sum(group.households for group in beneficiary_groups)
+
+        if commit:
+            project.save()
+            self.save_m2m()
+            if project.member_selection_mode == "all_members":
+                project.selected_members.set(Member.objects.filter(status="active"))
+            else:
+                project.selected_members.set(self.cleaned_data.get("selected_members") or [])
+            project.beneficiary_groups.set(beneficiary_groups)
+            project.save(update_fields=["beneficiaries_count"])
+        return project
 
 
 class BeneficiaryGroupForm(forms.ModelForm):

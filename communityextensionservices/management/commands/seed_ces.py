@@ -1,5 +1,6 @@
 from datetime import timedelta
 from django.core.management.base import BaseCommand
+from django.db import models
 from django.utils import timezone
 from communityextensionservices.models import (
     Activity,
@@ -20,10 +21,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         today = timezone.now().date()
 
-        Service.objects.get_or_create(
-            name="Faculty Outreach Program",
+        service, _ = Service.objects.get_or_create(
+            name="KNS Faculty and Employee Association",
             defaults={
-                "description": "Extension and community engagement activities.",
+                "description": "Association fund for member contributions, project allotment, and shared community projects.",
                 "start_date": today - timedelta(days=90),
                 "end_date": today + timedelta(days=120),
             },
@@ -160,34 +161,53 @@ class Command(BaseCommand):
                 },
             )
 
+        contribution_amount = 50.00
         for member in Member.objects.all():
             DuesPayment.objects.update_or_create(
                 member=member,
                 due_date=today + timedelta(days=15),
                 defaults={
-                    "amount": 500.00,
+                    "amount": contribution_amount,
                     "status": "pending",
-                    "method": "cash",
-                    "late_payment_risk": 15.0,
+                    "method": "payroll",
+                    "late_payment_risk": 5.0,
+                    "remarks": "Association contribution due on payday.",
                 },
             )
 
-        first_member = Member.objects.order_by("id").first()
-        if (
-            first_member
-            and not Contribution.objects.filter(
-                member=first_member,
-                title="Volunteer Hours",
-                date=today - timedelta(days=30),
-            ).exists()
-        ):
-            Contribution.objects.create(
-                member=first_member,
-                title="Volunteer Hours",
-                category="volunteer",
-                amount=0,
-                date=today - timedelta(days=30),
-                remarks="Facilitated data collection training.",
+            Contribution.objects.update_or_create(
+                member=member,
+                title="Association Contribution",
+                defaults={
+                    "category": "cash",
+                    "amount": contribution_amount,
+                    "date": today,
+                    "remarks": "Member contribution collected on payday for the association fund.",
+                },
+            )
+
+        total_contribution_fund = float(
+            Contribution.objects.filter(title="Association Contribution").aggregate(
+                models.Sum("amount")
+            )["amount__sum"]
+            or 0
+        )
+        project_allotment = round(total_contribution_fund / max(Member.objects.count(), 1), 2)
+        self.stdout.write(
+            self.style.WARNING(
+                f"Association fund total: ₱{total_contribution_fund:.2f}; project allotment per member: ₱{project_allotment:.2f}"
+            )
+        )
+
+        if not Activity.objects.filter(title="Project Allotment Review").exists():
+            Activity.objects.create(
+                title="Project Allotment Review",
+                category="Finance",
+                start_date=today,
+                end_date=today,
+                location="Association Office",
+                status="scheduled",
+                description="Review the pooled association fund and allocate it to the shared project for all members.",
             )
 
         DocumentRecord.objects.update_or_create(

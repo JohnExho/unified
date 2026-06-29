@@ -584,35 +584,28 @@ class FinancialReportingService:
     @staticmethod
     def get_association_financial_summary(date_from=None, date_to=None):
         """Generate association-wide financial summary"""
-        from .models import FundAllocation, FundExpense, ContributionFund
+        from .models import AssociationFund, AssociationFundTransaction, FundAllocation, FundExpense, ContributionFund
         from django.db.models import Sum
-        
-        query_allocations = FundAllocation.objects.all()
-        query_expenses = FundExpense.objects.all()
-        
+
+        fund = AssociationFund.objects.order_by("-updated_at").first()
+        transactions = AssociationFundTransaction.objects.all()
+
         if date_from:
-            query_allocations = query_allocations.filter(allocated_date__gte=date_from)
-            query_expenses = query_expenses.filter(expense_date__gte=date_from)
-        
+            transactions = transactions.filter(created_at__gte=date_from)
         if date_to:
-            query_allocations = query_allocations.filter(allocated_date__lte=date_to)
-            query_expenses = query_expenses.filter(expense_date__lte=date_to)
-        
-        total_allocated = query_allocations.aggregate(
-            total=Sum("amount")
-        )["total"] or Decimal("0.00")
-        
-        total_expenses = query_expenses.aggregate(
-            total=Sum("amount")
-        )["total"] or Decimal("0.00")
-        
-        available_funds = total_allocated - total_expenses
-        
+            transactions = transactions.filter(created_at__lte=date_to)
+
+        total_income = transactions.filter(amount__gt=0).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        total_expenses = transactions.filter(transaction_type="expense").aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        available_funds = fund.current_balance if fund else Decimal("0.00")
+
         return {
-            "total_allocations": total_allocated,
+            "association_fund": fund,
+            "total_income": total_income,
             "total_expenses": total_expenses,
             "available_funds": available_funds,
             "num_active_funds": ContributionFund.objects.filter(status="active").count(),
+            "recent_transactions": transactions[:10],
             "date_from": date_from,
             "date_to": date_to,
         }
@@ -647,73 +640,76 @@ class FinancialReportingService:
     @staticmethod
     def get_monthly_contribution_report(year, month):
         """Generate monthly contribution report"""
-        from .models import FundAllocation
-        from dateutil import relativedelta
+        from .models import AssociationFundTransaction
         from datetime import date
-        
+
         start_date = date(year, month, 1)
         if month == 12:
             end_date = date(year + 1, 1, 1) - timedelta(days=1)
         else:
             end_date = date(year, month + 1, 1) - timedelta(days=1)
-        
-        allocations = FundAllocation.objects.filter(
-            allocated_date__range=[start_date, end_date]
+
+        transactions = AssociationFundTransaction.objects.filter(
+            created_at__date__range=[start_date, end_date]
         )
-        
-        total = allocations.aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
-        count = allocations.count()
-        
+
+        total = transactions.filter(amount__gt=0).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+        count = transactions.count()
+
         return {
             "year": year,
             "month": month,
             "start_date": start_date,
             "end_date": end_date,
             "total_contributions": total,
-            "number_of_allocations": count,
-            "allocations": allocations,
+            "number_of_transactions": count,
+            "transactions": transactions,
         }
 
     @staticmethod
     def get_annual_financial_report(year):
         """Generate annual financial report"""
-        from .models import FundAllocation, FundExpense
+        from .models import AssociationFundTransaction
         from datetime import date
-        
+
         start_date = date(year, 1, 1)
         end_date = date(year, 12, 31)
-        
-        total_allocated = FundAllocation.objects.filter(
-            allocated_date__range=[start_date, end_date]
+
+        total_income = AssociationFundTransaction.objects.filter(
+            created_at__date__range=[start_date, end_date],
+            amount__gt=0,
         ).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
-        
-        total_expenses = FundExpense.objects.filter(
-            expense_date__range=[start_date, end_date]
+
+        total_expenses = AssociationFundTransaction.objects.filter(
+            created_at__date__range=[start_date, end_date],
+            transaction_type="expense",
         ).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
-        
+
         monthly_data = []
         for month in range(1, 13):
-            month_allocations = FundAllocation.objects.filter(
-                allocated_date__year=year,
-                allocated_date__month=month
+            month_income = AssociationFundTransaction.objects.filter(
+                created_at__year=year,
+                created_at__month=month,
+                amount__gt=0,
             ).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
-            
-            month_expenses = FundExpense.objects.filter(
-                expense_date__year=year,
-                expense_date__month=month
+
+            month_expenses = AssociationFundTransaction.objects.filter(
+                created_at__year=year,
+                created_at__month=month,
+                transaction_type="expense",
             ).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
-            
+
             monthly_data.append({
                 "month": month,
-                "allocations": month_allocations,
+                "income": month_income,
                 "expenses": month_expenses,
             })
-        
+
         return {
             "year": year,
-            "total_allocated": total_allocated,
+            "total_income": total_income,
             "total_expenses": total_expenses,
-            "available_funds": total_allocated - total_expenses,
+            "available_funds": (AssociationFundTransaction.objects.filter(created_at__year=year).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")) - total_expenses,
             "monthly_breakdown": monthly_data,
         }
 

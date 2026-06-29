@@ -19,28 +19,59 @@
 <link rel="stylesheet" type="text/css" href="{% static 'core/css/default_register_styles.css' %}" />
 {% endif %}
 
-<script src="{% static 'core/js/register.js' %}" defer></script>
+{% if system_name == 'scholarshipmanagement' %}
+<style>
+  /* Ensure TOS modal is hidden by default and only visible when opened */
+  #termsModal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)}
+  /* Also allow showing via .active class (used by static JS) */
+  #termsModal.active{display:flex !important}
+  #termsModal .modal-content{background:#fff;max-width:820px;width:92%;max-height:80vh;overflow:auto;border-radius:8px;padding:18px}
+  #termsModal .modal-header{display:flex;align-items:center;justify-content:space-between}
+</style>
 
+<script>
+  function openTermsModal(){
+    const modal = document.getElementById('termsModal');
+    if(!modal) return;
+    modal.style.display = 'flex';
+    const cb = modal.querySelector('#agreeCheckbox');
+    const accept = modal.querySelector('#acceptBtn');
+    if(cb) cb.checked = false;
+    if(accept) accept.disabled = true;
+  }
+  function closeTermsModal(){
+    const modal = document.getElementById('termsModal');
+    if(!modal) return;
+    modal.style.display = 'none';
+  }
+  function toggleAcceptButton(){
+    const modal = document.getElementById('termsModal');
+    if(!modal) return;
+    const cb = modal.querySelector('#agreeCheckbox');
+    const accept = modal.querySelector('#acceptBtn');
+    if(accept) accept.disabled = !cb.checked;
+  }
+  function acceptTerms(){
+    const hidden = document.getElementById('termsAcceptedHidden');
+    if(hidden) hidden.value = 'true';
+    closeTermsModal();
+    const submit = document.querySelector('form button[type="submit"]');
+    if(submit) submit.disabled = false;
+  }
+</script>
+
+<script src="{% static 'core/js/register.js' %}" defer></script>
+{% endif %}
 <div class="container">
 
   <div class="register-layout">
     <!-- Logo Section -->
     <div class="logo-section">
       <div class="logo">
-        {% if system_name == 'researchmanagement' %}
-        P
-        {% elif system_name == 'librarymanagement' %}
-        L
-        {% elif system_name == 'inventorymanagement' %}
-        I
-        {% elif system_name == 'scholarshipmanagement' %}
-        S
-        {% else %}
-        {{ system_name|slice:":1"|upper }}
-        {% endif %}
+        <img src="{% static 'core/images/kolehiyo_logo.png' %}" alt="Kolehiyo ng Subic logo" />
       </div>
       <div class="logo-text">
-        {% if system_name == 'scholarshipmanagement' %}Scholarship Management{% else %}{{system_info.description}}{% endif %}
+        {% if system_name == 'scholarshipmanagement' %}Scholarship Management{% else %}{{ system_info.description }}{% endif %}
       </div>
       {% if system_name == 'scholarshipmanagement' %}
       <div class="logo-tagline">Gated scholarship application platform</div>

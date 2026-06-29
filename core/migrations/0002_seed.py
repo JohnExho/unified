@@ -17,6 +17,7 @@ def seed_systems_and_memberships(apps, schema_editor):
         ('communityextensionservices', 'Community Extension Services', 'Manage community outreach and extension programs.'),
         ('informationmanagement', 'Information Management', 'Centralized information and document management.'),
         ('performanceevaluation', 'Performance Evaluation', 'Evaluate and track employee performance.'),
+        ('scholarshipmanagement', 'Scholarship Management', 'Manage and administer scholarship programs and applications.'),
     ]
     
     # Create Systems entries

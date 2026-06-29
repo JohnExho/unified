@@ -5,19 +5,20 @@
 body {
   margin: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%);
+  background: linear-gradient(135deg, #07111f 0%, #123a6b 45%, #0f172a 100%);
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 24px;
 }
 
 .container.login-page,
 .container {
   width: 100%;
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0;
 }
 
 /* ── Layout ── */
@@ -25,33 +26,41 @@ body {
 .register-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: #fff;
-  border-radius: 16px;
+  background: rgba(255,255,255,0.98);
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 25px 60px rgba(0,0,0,0.4);
-  min-height: 520px;
+  box-shadow: 0 24px 70px rgba(2, 8, 23, 0.35);
+  min-height: 560px;
+  border: 1px solid rgba(255,255,255,0.25);
 }
 
 /* ── Logo Side ── */
 .logo-section {
-  background: linear-gradient(160deg, #1e3a5f 0%, #2563eb 100%);
+  background: linear-gradient(160deg, #123a6b 0%, #2563eb 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 32px;
+  padding: 48px 36px;
   color: #fff;
   gap: 16px;
 }
 
 .logo {
-  width: 80px; height: 80px;
-  background: rgba(255,255,255,0.15);
-  border-radius: 20px;
+  width: 86px; height: 86px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 22px;
   display: flex; align-items: center; justify-content: center;
   font-size: 2rem; font-weight: 800; color: #fff;
   border: 2px solid rgba(255,255,255,0.3);
   backdrop-filter: blur(8px);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+}
+
+.logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .logo-text {
@@ -65,7 +74,7 @@ body {
 
 /* ── Form Side ── */
 .form-section {
-  padding: 48px 40px;
+  padding: 48px 44px;
   display: flex; flex-direction: column; justify-content: center; gap: 4px;
   background: #fff;
 }
@@ -98,6 +107,62 @@ body {
   border-color: #2563eb; background: #fff;
 }
 
+.input-wrapper input[type="file"] {
+  padding: 10px 12px;
+  cursor: pointer;
+  background: #fff;
+}
+
+.password-match-indicator {
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-height: 16px;
+  color: #64748b;
+}
+
+.password-match-indicator.match {
+  color: #15803d;
+}
+
+.password-match-indicator.no-match {
+  color: #dc2626;
+}
+
+.terms-link-wrapper {
+  margin: 12px 0 10px;
+  text-align: center;
+}
+
+.view-terms-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.view-terms-link:hover {
+  text-decoration: underline;
+}
+
+.login-link {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+  font-size: 0.88rem;
+  color: #64748b;
+}
+
+.login-link a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
+}
+
 .toggle-password {
   position: absolute; right: 10px; top: 32px;
   background: none; border: none; cursor: pointer; color: #94a3b8; padding: 4px;
@@ -108,14 +173,27 @@ body {
 /* ── Submit Button ── */
 button[type="submit"],
 .btn-login {
-  width: 100%; padding: 12px;
-  background: #2563eb; color: #fff;
-  border: none; border-radius: 8px;
+  width: 100%; padding: 12px 14px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+  border: none; border-radius: 10px;
   font-size: 0.95rem; font-weight: 600; cursor: pointer;
-  transition: background 0.15s; margin-top: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  margin-top: 8px;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.2);
 }
 button[type="submit"]:hover,
-.btn-login:hover { background: #1d4ed8; }
+.btn-login:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.24);
+}
+button[type="submit"]:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
 
 /* ── Links ── */
 .login-links,

@@ -18,6 +18,10 @@ class Command(BaseCommand):
     def _get_seed_user(self):
         User = get_user_model()
 
+        user = User.objects.filter(username="Scholar").first()
+        if user:
+            return user
+
         return User.objects.create_user(
             username="Scholar",
             email="Scholar@example.com",
