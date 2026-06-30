@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from decimal import Decimal
+
 from django.test import TestCase
 
 from communityextensionservices.models import Member
@@ -8,9 +10,12 @@ from .models import (
     AssociationFund,
     AssociationFundTransaction,
     BeneficiaryGroup,
+    MemberContributionEntry,
+    MemberContributionRecord,
     Partner,
     Project,
 )
+from .services import FinancialReportingService
 
 
 class ProjectEnhancementTests(TestCase):
@@ -81,3 +86,33 @@ class PartnerContributionTests(TestCase):
                 source_type="partner_contribution"
             ).exists()
         )
+
+
+class MemberContributionLedgerTests(TestCase):
+    def test_member_contribution_entries_contribute_to_financial_summary(self):
+        AssociationFund.objects.create(
+            name="Association Fund",
+            current_balance=Decimal("0.00"),
+            total_income=Decimal("0.00"),
+        )
+
+        member = MemberContributionRecord.objects.create(
+            member_name="Maria Santos",
+            employee_id="EMP-1001",
+        )
+
+        MemberContributionEntry.objects.create(
+            member=member,
+            amount=Decimal("150.00"),
+            remarks="January contribution",
+        )
+        MemberContributionEntry.objects.create(
+            member=member,
+            amount=Decimal("75.00"),
+            remarks="February contribution",
+        )
+
+        summary = FinancialReportingService.get_association_financial_summary()
+
+        self.assertEqual(summary["total_contributions"], Decimal("225.00"))
+        self.assertEqual(summary["total_income"], Decimal("225.00"))

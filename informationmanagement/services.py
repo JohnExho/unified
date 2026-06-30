@@ -596,13 +596,17 @@ class FinancialReportingService:
             transactions = transactions.filter(created_at__lte=date_to)
 
         total_income = transactions.filter(amount__gt=0).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        total_contributions = transactions.filter(transaction_type="member_contribution", amount__gt=0).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
         total_expenses = transactions.filter(transaction_type="expense").aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+        total_allocations = FundAllocation.objects.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
         available_funds = fund.current_balance if fund else Decimal("0.00")
 
         return {
             "association_fund": fund,
             "total_income": total_income,
+            "total_contributions": total_contributions,
             "total_expenses": total_expenses,
+            "total_allocations": total_allocations,
             "available_funds": available_funds,
             "num_active_funds": ContributionFund.objects.filter(status="active").count(),
             "recent_transactions": transactions[:10],

@@ -37,6 +37,7 @@ from .forms import (
     FundAllocationForm,
     FundExpenseForm,
     MemberContributionRecordForm,
+    MemberContributionEntryForm,
     MemberContributionFilterForm,
     MasterDataDepartmentForm,
 )
@@ -1178,11 +1179,13 @@ def member_contribution_detail(request, pk):
     
     member = get_object_or_404(MemberContributionRecord, pk=pk)
     statement = MemberContributionService.generate_member_statement(member)
+    entries = member.ledger_entries.all()
     
     context = {
         **_base_context(request),
         "member": member,
         "statement": statement,
+        "entries": entries,
         "title": f"Member Statement: {member.member_name}",
     }
     return render(request, "informationmanagement/member_contribution_detail.html", context)
@@ -1216,6 +1219,31 @@ def member_contribution_create(request):
         "form": form,
         "title": "Create Member Contribution Record",
         "cancel_url": "informationmanagement:member-contributions-list",
+    }
+    return render(request, "informationmanagement/form.html", context)
+
+
+@login_required(login_url="/informationmanagement/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def member_contribution_entry_create(request, pk):
+    """Create a new contribution entry for a member record."""
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+
+    member = get_object_or_404(MemberContributionRecord, pk=pk)
+    form = MemberContributionEntryForm(request.POST or None, initial={"member": member})
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Contribution entry added successfully.")
+        return redirect("informationmanagement:member-contribution-detail", pk=member.pk)
+
+    context = {
+        **_base_context(request),
+        "form": form,
+        "title": f"Add Contribution: {member.member_name}",
+        "cancel_url": "informationmanagement:member-contribution-detail",
+        "cancel_url_kwargs": {"pk": member.pk},
     }
     return render(request, "informationmanagement/form.html", context)
 

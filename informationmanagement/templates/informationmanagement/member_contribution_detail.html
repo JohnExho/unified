@@ -9,6 +9,7 @@
       <div class="page-subtitle">Contribution record and payment history for {{ member.employee_id }}</div>
     </div>
     <div class="action-group">
+      <a class="button" href="{% url 'informationmanagement:member-contribution-entry-create' member.id %}">Add Contribution</a>
       <a class="button secondary" href="{% url 'informationmanagement:member-contribution-edit' member.id %}">Edit</a>
       <a class="button secondary" href="{% url 'informationmanagement:export-member-statement' member.id %}?format=pdf">PDF</a>
       <a class="button secondary" href="{% url 'informationmanagement:export-member-statement' member.id %}?format=excel">Excel</a>
@@ -119,6 +120,36 @@
     </div>
   </div>
   
+  <div class="card mb-24">
+    <div class="section-title">
+      <h3>Contribution History</h3>
+      <p>Monthly contribution entries for this member</p>
+    </div>
+
+    {% if entries %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+            <tr>
+              <td>{{ entry.contribution_date|date:"M d, Y" }}</td>
+              <td>${{ entry.amount|floatformat:2 }}</td>
+              <td>{{ entry.remarks|default:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">No monthly contribution entries yet.</div>
+    {% endif %}
+  </div>
+
   <div class="card">
     <div class="section-title">
       <h3>Member Statement</h3>

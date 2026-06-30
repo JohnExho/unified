@@ -13,8 +13,8 @@
   <div class="grid cols-4 mb-24">
     <div class="card">
       <div class="stat-box">
-        <span class="stat-label">Total Allocations</span>
-        <span class="stat-value">${{ summary.total_allocations|floatformat:2 }}</span>
+        <span class="stat-label">Total Contributions</span>
+        <span class="stat-value">${{ summary.total_contributions|floatformat:2 }}</span>
       </div>
     </div>
     <div class="card">
@@ -47,10 +47,10 @@
       <div class="list">
         <div class="list-item">
           <div>
-            <div class="text-strong">Total Allocations</div>
-            <div class="muted text-small">Funds allocated to projects</div>
+            <div class="text-strong">Total Contributions</div>
+            <div class="muted text-small">Member contribution income collected</div>
           </div>
-          <span class="pill">${{ summary.total_allocations|floatformat:2 }}</span>
+          <span class="pill">${{ summary.total_contributions|floatformat:2 }}</span>
         </div>
         <div class="list-item">
           <div>

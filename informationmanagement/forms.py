@@ -14,6 +14,7 @@ from .models import (
     FundAllocation,
     FundExpense,
     MemberContributionRecord,
+    MemberContributionEntry,
     MasterDataDepartment,
 )
 
@@ -214,19 +215,27 @@ class MemberContributionRecordForm(forms.ModelForm):
             "member_name",
             "employee_id",
             "department",
-            "total_contributions",
-            "current_balance",
             "due_amount",
             "late_payment_penalties",
             "payment_status",
-            "last_payment_date",
         ]
         widgets = {
-            "last_payment_date": forms.DateInput(attrs={"type": "date"}),
-            "total_contributions": forms.NumberInput(attrs={"step": 0.01}),
-            "current_balance": forms.NumberInput(attrs={"step": 0.01}),
             "due_amount": forms.NumberInput(attrs={"step": 0.01}),
             "late_payment_penalties": forms.NumberInput(attrs={"step": 0.01}),
+        }
+
+
+class MemberContributionEntryForm(forms.ModelForm):
+    """Form for recording an individual contribution entry for a member."""
+
+    class Meta:
+        model = MemberContributionEntry
+        fields = ["member", "contribution_date", "amount", "remarks"]
+        widgets = {
+            "member": forms.HiddenInput(),
+            "contribution_date": forms.DateInput(attrs={"type": "date"}),
+            "amount": forms.NumberInput(attrs={"step": 0.01}),
+            "remarks": forms.Textarea(attrs={"rows": 3}),
         }
 
 

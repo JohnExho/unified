@@ -153,6 +153,7 @@ urlpatterns = [
     path("members/contributions/", views.member_contributions_list, name="member-contributions-list"),
     path("members/contributions/<int:pk>/", views.member_contribution_detail, name="member-contribution-detail"),
     path("members/contributions/new/", views.member_contribution_create, name="member-contribution-create"),
+    path("members/contributions/<int:pk>/entries/new/", views.member_contribution_entry_create, name="member-contribution-entry-create"),
     path("members/contributions/<int:pk>/edit/", views.member_contribution_edit, name="member-contribution-edit"),
     path("members/contributions/<int:pk>/export/", views.export_member_statement, name="export-member-statement"),
     
