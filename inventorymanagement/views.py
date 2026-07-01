@@ -279,7 +279,10 @@ def requisitions(request):
         
         requisitions_queryset = requisitions_queryset.filter(
             Q(requested_by_id__in=matching_users) |
-            Q(purpose__icontains=search_query)
+            Q(purpose__icontains=search_query) |
+            Q(event_name__icontains=search_query) |
+            Q(borrower_first_name__icontains=search_query) |
+            Q(borrower_last_name__icontains=search_query)
         )
 
     if status_filter:
@@ -303,6 +306,46 @@ def requisitions(request):
     pending_count = Requisition.objects.filter(status='PENDING').count()
     approved_count = Requisition.objects.filter(status='APPROVED').count()
     rejected_count = Requisition.objects.filter(status='REJECTED').count()
+
+    requisitions_list = list(requisitions_queryset)
+
+    for requisition in requisitions_list:
+        borrower_name = f"{requisition.borrower_first_name} {requisition.borrower_middle_initial} {requisition.borrower_last_name}".replace('  ', ' ').strip()
+        requestor_display = requisition.requested_by.get_full_name() or requisition.requested_by.username
+        requisition.borrower_display = borrower_name or requestor_display
+        requisition.requestor_display = requestor_display if borrower_name and borrower_name != requestor_display else None
+        requisition.event_display = requisition.event_name or '—'
+        requisition.schedule_display = requisition.created_at.strftime('%Y-%m-%d')
+        requisition.purpose_display = requisition.purpose or '—'
+
+        if requisition.date_borrowed or requisition.date_returned:
+            start_text = f"{requisition.date_borrowed or '—'} {requisition.time_borrowed or ''}".strip()
+            end_text = f"{requisition.date_returned or '—'} {requisition.time_returned or ''}".strip()
+            requisition.schedule_display = f"{start_text} to {end_text}".strip()
+
+        # Legacy fallback for requisitions created before dedicated fields were added.
+        if not borrower_name and requisition.purpose:
+            purpose_lines = [line.strip() for line in requisition.purpose.splitlines() if line.strip()]
+            line_map = {}
+            for line in purpose_lines:
+                if ':' in line:
+                    key, value = line.split(':', 1)
+                    line_map[key.strip().lower()] = value.strip()
+
+            requisition.borrower_display = line_map.get('borrower', requisition.borrower_display)
+            requisition.event_display = line_map.get('name of event', '—')
+
+            date_borrowed = line_map.get('date borrowed')
+            date_returned = line_map.get('date returned')
+            time_borrowed = line_map.get('time borrowed')
+            time_returned = line_map.get('time returned')
+
+            if date_borrowed or date_returned:
+                start_text = f"{date_borrowed or '—'} {time_borrowed or ''}".strip()
+                end_text = f"{date_returned or '—'} {time_returned or ''}".strip()
+                requisition.schedule_display = f"{start_text} to {end_text}".strip()
+
+            requisition.purpose_display = line_map.get('purpose/notes', requisition.purpose_display)
 
     # Calculate average fulfillment time for ISSUED requisitions only
     fulfillment_stats = Requisition.objects.filter(status='ISSUED', approved_at__isnull=False).annotate(
@@ -333,14 +376,14 @@ def requisitions(request):
     # Check if it's an AJAX request
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return render(request, 'inventorymanagement/partials/_requisitions_table.html', {
-            'requisitions': requisitions_queryset,
+            'requisitions': requisitions_list,
             'is_admin': is_admin,
         })
 
     return render(request, 'inventorymanagement/pages/requisitions.html', {
         'systems': systems,
         'current_system': current_system,
-        'requisitions': requisitions_queryset,
+        'requisitions': requisitions_list,
         'search_query': search_query,
         'status_filter': status_filter,
         'approval_filter': approval_filter,
@@ -1707,6 +1750,17 @@ def create_requisition(request):
     """Create a new requisition"""
     if request.method == 'POST':
         purpose = request.POST.get('purpose', '').strip()
+        borrower_first_name = request.POST.get('borrower_first_name', '').strip()
+        borrower_middle_initial = request.POST.get('borrower_middle_initial', '').strip()
+        borrower_last_name = request.POST.get('borrower_last_name', '').strip()
+        borrower_address = request.POST.get('borrower_address', '').strip()
+        borrower_contact_no = request.POST.get('borrower_contact_no', '').strip()
+        borrower_position = request.POST.get('borrower_position', '').strip()
+        event_name = request.POST.get('event_name', '').strip()
+        date_borrowed = request.POST.get('date_borrowed', '').strip() or None
+        date_returned = request.POST.get('date_returned', '').strip() or None
+        time_borrowed = request.POST.get('time_borrowed', '').strip() or None
+        time_returned = request.POST.get('time_returned', '').strip() or None
         items_json = request.POST.get('items', '[]')
         
         try:
@@ -1719,6 +1773,17 @@ def create_requisition(request):
             requisition = Requisition.objects.create(
                 requested_by=request.user,
                 purpose=purpose,
+                borrower_first_name=borrower_first_name,
+                borrower_middle_initial=borrower_middle_initial,
+                borrower_last_name=borrower_last_name,
+                borrower_address=borrower_address,
+                borrower_contact_no=borrower_contact_no,
+                borrower_position=borrower_position,
+                event_name=event_name,
+                date_borrowed=date_borrowed,
+                date_returned=date_returned,
+                time_borrowed=time_borrowed,
+                time_returned=time_returned,
                 status='PENDING'
             )
             
@@ -1762,7 +1827,15 @@ def create_requisition(request):
     items = InventoryItem.objects.filter(is_active=True).select_related('category')
     return JsonResponse({
         'categories': [{'id': str(c.id), 'name': c.name} for c in categories],
-        'items': [{'id': str(i.id), 'name': i.name, 'category': i.category.name} for i in items]
+        'items': [
+            {
+                'id': str(i.id),
+                'name': i.name,
+                'category': i.category.name,
+                'description': i.description,
+            }
+            for i in items
+        ]
     })
 
 

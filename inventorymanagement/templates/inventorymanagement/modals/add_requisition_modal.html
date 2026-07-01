@@ -1,5 +1,5 @@
 <div id="addRequisitionModal" class="modal">
-	<div class="modal-content">
+	<div class="modal-content modal-content-requisition">
 		<div class="modal-header">
 			<h2>New Requisition</h2>
 			<button type="button" class="modal-close" onclick="closeModal('addRequisitionModal')">
@@ -13,34 +13,114 @@
 			{% csrf_token %}
 			
 			<div class="modal-body">
-				<div class="form-group">
-					<label>Purpose</label>
-					<textarea id="requisitionPurpose" name="purpose" placeholder="Describe the purpose of this requisition..." required style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; min-height: 80px;"></textarea>
-				</div>
-				
-				<div class="form-group">
-					<label>Items Required</label>
-					<div id="requisitionItemsContainer">
-						<div class="requisition-item-row">
-							<select class="item-select" onchange="updateItemRow(this)">
-								<option value="">Select an item...</option>
-							</select>
-							<input type="number" class="item-quantity" placeholder="Qty" min="1" required>
-							<button type="button" class="btn-remove-item" onclick="removeItemRow(this)" title="Remove">
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<line x1="18" y1="6" x2="6" y2="18"></line>
-									<line x1="6" y1="6" x2="18" y2="18"></line>
-								</svg>
+				<div class="requisition-paper-form">
+
+					<!-- ── Borrower Information ─────────────────────────────── -->
+					<div class="req-section">
+						<div class="req-section-head">
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+							Borrower Information
+						</div>
+						<div class="req-section-body">
+							<div class="req-field">
+								<label>Name of Borrower</label>
+								<div class="req-grid-3-name">
+									<input type="text" id="borrowerFirstName" placeholder="First Name" value="{{ request.user.first_name|default:'' }}" required>
+									<input type="text" id="borrowerMiddleInitial" placeholder="M.I.">
+									<input type="text" id="borrowerLastName" placeholder="Last Name" value="{{ request.user.last_name|default:'' }}" required>
+								</div>
+							</div>
+							<div class="req-grid-2">
+								<div class="req-field">
+									<label>Address</label>
+									<input type="text" id="borrowerAddress" placeholder="Complete address" required>
+								</div>
+								<div class="req-field">
+									<label>Position / Designation</label>
+									<input type="text" id="borrowerPosition" placeholder="Position or designation" required>
+								</div>
+							</div>
+							<div class="req-grid-2">
+								<div class="req-field">
+									<label>Contact No.</label>
+									<input type="text" id="borrowerContact" placeholder="Contact number" required>
+								</div>
+								<div class="req-field">
+									<label>Name of Event</label>
+									<input type="text" id="eventName" placeholder="Event name" required>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- ── Schedule ──────────────────────────────────────────── -->
+					<div class="req-section">
+						<div class="req-section-head">
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+							Schedule
+						</div>
+						<div class="req-section-body">
+							<div class="req-grid-4">
+								<div class="req-field">
+									<label>Date Borrowed</label>
+									<input type="date" id="dateBorrowed" required>
+								</div>
+								<div class="req-field">
+								<label>Date Returned</label>
+								<input type="date" id="dateReturned" required>
+							</div>
+							<div class="req-field">
+								<label>Time Borrowed</label>
+								<input type="time" id="timeBorrowed" required>
+								</div>
+								<div class="req-field">
+									<label>Time Returned</label>
+									<input type="time" id="timeReturned" required>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- ── Purpose / Notes ───────────────────────────────────── -->
+					<div class="req-section">
+						<div class="req-section-body">
+							<div class="req-field">
+								<label>Purpose / Notes <span class="optional-tag">optional</span></label>
+								<textarea id="requisitionPurpose" name="purpose" placeholder="Describe the purpose of this requisition..."></textarea>
+							</div>
+						</div>
+					</div>
+
+					<!-- ── Items / Equipment ─────────────────────────────────── -->
+					<div class="req-section">
+						<div class="req-section-head">
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+							Item / Equipment Borrowed
+						</div>
+						<div class="req-section-body">
+							<div class="items-grid-header">
+								<div>Quantity</div>
+								<div>Name</div>
+								<div>Description</div>
+								<div></div>
+							</div>
+							<div id="requisitionItemsContainer">
+								<div class="requisition-item-row">
+									<input type="number" class="item-quantity" placeholder="Qty" min="1" required>
+									<select class="item-select" onchange="updateItemRow(this)" required>
+										<option value="">Select item...</option>
+									</select>
+									<input type="text" class="item-description" placeholder="Auto-filled" readonly>
+									<button type="button" class="btn-remove-item" onclick="removeItemRow(this)" title="Remove">&#215;</button>
+								</div>
+							</div>
+							<button type="button" class="btn-add-item" onclick="addItemRow()">
+								<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+								Add Item
 							</button>
 						</div>
 					</div>
-					<button type="button" class="btn btn-secondary" onclick="addItemRow()" style="margin-top: 12px;">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<line x1="12" y1="5" x2="12" y2="19"></line>
-							<line x1="5" y1="12" x2="19" y2="12"></line>
-						</svg>
-						Add Item
-					</button>
+
 				</div>
 			</div>
 			
@@ -53,25 +133,42 @@
 </div>
 
 <script>
+let requisitionCatalog = [];
+
 function openAddRequisitionModal() {
 	// Load items
 	fetch('{% url "inventorymanagement:create_requisition" %}')
 		.then(response => response.json())
 		.then(data => {
+			requisitionCatalog = data.items || [];
 			// Populate all item selects
 			const selects = document.querySelectorAll('#addRequisitionModal .item-select');
 			selects.forEach(select => {
 				select.innerHTML = '<option value="">Select an item...</option>';
-				data.items.forEach(item => {
+				requisitionCatalog.forEach(item => {
 					const option = document.createElement('option');
 					option.value = item.id;
 					option.textContent = `${item.name} (${item.category})`;
+					option.dataset.description = item.description || `${item.category} item`;
 					select.appendChild(option);
 				});
+				updateItemRow(select);
 			});
 		})
 		.catch(error => console.error('Error:', error));
 	
+	document.getElementById('addRequisitionForm').reset();
+	const container = document.getElementById('requisitionItemsContainer');
+	if (container.children.length > 1) {
+		while (container.children.length > 1) {
+			container.removeChild(container.lastElementChild);
+		}
+	}
+	const firstRow = container.querySelector('.requisition-item-row');
+	if (firstRow) {
+		firstRow.querySelector('.item-description').value = '';
+	}
+
 	document.getElementById('addRequisitionModal').style.display = 'flex';
 }
 
@@ -80,47 +177,63 @@ function addItemRow() {
 	const row = document.createElement('div');
 	row.className = 'requisition-item-row';
 	row.innerHTML = `
-		<select class="item-select" onchange="updateItemRow(this)">
-			<option value="">Select an item...</option>
-		</select>
 		<input type="number" class="item-quantity" placeholder="Qty" min="1" required>
-		<button type="button" class="btn-remove-item" onclick="removeItemRow(this)" title="Remove">
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<line x1="18" y1="6" x2="6" y2="18"></line>
-				<line x1="6" y1="6" x2="18" y2="18"></line>
-			</svg>
-		</button>
+		<select class="item-select" onchange="updateItemRow(this)">
+			<option value="">Select item...</option>
+		</select>
+		<input type="text" class="item-description" placeholder="Auto-filled" readonly>
+		<button type="button" class="btn-remove-item" onclick="removeItemRow(this)" title="Remove">&#215;</button>
 	`;
-	
-	// Populate items in new row
-	fetch('{% url "inventorymanagement:create_requisition" %}')
-		.then(response => response.json())
-		.then(data => {
-			const select = row.querySelector('.item-select');
-			select.innerHTML = '<option value="">Select an item...</option>';
-			data.items.forEach(item => {
-				const option = document.createElement('option');
-				option.value = item.id;
-				option.textContent = `${item.name} (${item.category})`;
-				select.appendChild(option);
-			});
-		});
+
+	const select = row.querySelector('.item-select');
+	select.innerHTML = '<option value="">Select an item...</option>';
+	requisitionCatalog.forEach(item => {
+		const option = document.createElement('option');
+		option.value = item.id;
+		option.textContent = `${item.name} (${item.category})`;
+		option.dataset.description = item.description || `${item.category} item`;
+		select.appendChild(option);
+	});
 	
 	container.appendChild(row);
 }
 
 function removeItemRow(button) {
+	const container = document.getElementById('requisitionItemsContainer');
+	if (container.children.length === 1) {
+		return;
+	}
 	button.closest('.requisition-item-row').remove();
 }
 
 function updateItemRow(select) {
-	// Can be used for additional validation or UI updates
+	const row = select.closest('.requisition-item-row');
+	const descriptionInput = row.querySelector('.item-description');
+	const selectedOption = select.options[select.selectedIndex];
+	descriptionInput.value = selectedOption ? (selectedOption.dataset.description || '') : '';
 }
 
 function submitAddRequisitionForm(event) {
 	event.preventDefault();
 	
-	const purpose = document.getElementById('requisitionPurpose').value;
+	const borrowerFirstName = document.getElementById('borrowerFirstName').value.trim();
+	const borrowerMiddleInitial = document.getElementById('borrowerMiddleInitial').value.trim();
+	const borrowerLastName = document.getElementById('borrowerLastName').value.trim();
+	const borrowerAddress = document.getElementById('borrowerAddress').value.trim();
+	const borrowerContact = document.getElementById('borrowerContact').value.trim();
+	const borrowerPosition = document.getElementById('borrowerPosition').value.trim();
+	const dateBorrowed = document.getElementById('dateBorrowed').value;
+	const dateReturned = document.getElementById('dateReturned').value;
+	const timeBorrowed = document.getElementById('timeBorrowed').value;
+	const timeReturned = document.getElementById('timeReturned').value;
+	const eventName = document.getElementById('eventName').value.trim();
+	const purpose = document.getElementById('requisitionPurpose').value.trim();
+
+	if (!borrowerFirstName || !borrowerLastName || !borrowerAddress || !borrowerContact || !borrowerPosition || !dateBorrowed || !dateReturned || !timeBorrowed || !timeReturned || !eventName) {
+		alert('Please complete all required requisition details.');
+		return;
+	}
+
 	const rows = document.querySelectorAll('#requisitionItemsContainer .requisition-item-row');
 	
 	const items = [];
@@ -143,6 +256,17 @@ function submitAddRequisitionForm(event) {
 	
 	const formData = new FormData();
 	formData.append('purpose', purpose);
+	formData.append('borrower_first_name', borrowerFirstName);
+	formData.append('borrower_middle_initial', borrowerMiddleInitial);
+	formData.append('borrower_last_name', borrowerLastName);
+	formData.append('borrower_address', borrowerAddress);
+	formData.append('borrower_contact_no', borrowerContact);
+	formData.append('borrower_position', borrowerPosition);
+	formData.append('event_name', eventName);
+	formData.append('date_borrowed', dateBorrowed);
+	formData.append('date_returned', dateReturned);
+	formData.append('time_borrowed', timeBorrowed);
+	formData.append('time_returned', timeReturned);
 	formData.append('items', JSON.stringify(items));
 	formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
 	

@@ -9,23 +9,55 @@
 				</svg>
 			</button>
 		</div>
-		<form id="deleteRequisitionForm" method="post">
+		<form onsubmit="return false;">
 			{% csrf_token %}
 			<div class="modal-body">
 				<p>Are you sure you want to delete this requisition? This action cannot be undone.</p>
 			</div>
 			<div class="form-actions">
 				<button type="button" class="btn btn-secondary" onclick="closeModal('deleteRequisitionModal')">Cancel</button>
-				<button type="submit" class="btn btn-danger">Delete</button>
+				<button type="button" class="btn btn-danger" id="confirmDeleteRequisitionBtn" onclick="confirmDeleteRequisition()">Delete</button>
 			</div>
 		</form>
 	</div>
 </div>
 
 <script>
+let _deleteRequisitionUrl = '';
+
 function openDeleteRequisitionModal(requisitionId) {
-	const form = document.getElementById('deleteRequisitionForm');
-	form.action = `{% url 'inventorymanagement:delete_requisition' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', requisitionId);
+	_deleteRequisitionUrl = `{% url 'inventorymanagement:delete_requisition' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', requisitionId);
 	document.getElementById('deleteRequisitionModal').style.display = 'flex';
+}
+
+function confirmDeleteRequisition() {
+	const btn = document.getElementById('confirmDeleteRequisitionBtn');
+	btn.disabled = true;
+	btn.textContent = 'Deleting...';
+
+	const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+
+	fetch(_deleteRequisitionUrl, {
+		method: 'POST',
+		headers: {
+			'X-CSRFToken': csrfToken ? csrfToken.value : '{{ csrf_token }}',
+			'X-Requested-With': 'XMLHttpRequest',
+		},
+	})
+	.then(res => res.json())
+	.then(data => {
+		if (data.success) {
+			window.location.href = '{% url "inventorymanagement:requisitions" %}';
+		} else {
+			alert('Error: ' + (data.error || 'Could not delete requisition.'));
+			btn.disabled = false;
+			btn.textContent = 'Delete';
+		}
+	})
+	.catch(() => {
+		alert('Network error. Please try again.');
+		btn.disabled = false;
+		btn.textContent = 'Delete';
+	});
 }
 </script>

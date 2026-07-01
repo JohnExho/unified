@@ -166,6 +166,17 @@ class Requisition(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     purpose = models.TextField(blank=True)
+    borrower_first_name = models.CharField(max_length=100, blank=True)
+    borrower_middle_initial = models.CharField(max_length=10, blank=True)
+    borrower_last_name = models.CharField(max_length=100, blank=True)
+    borrower_address = models.TextField(blank=True)
+    borrower_contact_no = models.CharField(max_length=50, blank=True)
+    borrower_position = models.CharField(max_length=150, blank=True)
+    event_name = models.CharField(max_length=200, blank=True)
+    date_borrowed = models.DateField(null=True, blank=True)
+    date_returned = models.DateField(null=True, blank=True)
+    time_borrowed = models.TimeField(null=True, blank=True)
+    time_returned = models.TimeField(null=True, blank=True)
 
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

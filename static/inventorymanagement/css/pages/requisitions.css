@@ -170,31 +170,64 @@
   background: #fff;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .requisition-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  min-width: 1080px;
 }
 
 .requisition-table thead {
-  background: #fff;
+  background: #f8fafc;
 }
 
 .requisition-table th,
 .requisition-table td {
-  padding: 12px 14px;
+  padding: 13px 14px;
   border-bottom: 1px solid #e5e7eb;
   text-align: left;
   vertical-align: middle;
 }
 
 .requisition-table th {
-  color: #111827;
+  color: #0f172a;
   font-weight: 600;
   font-size: 13px;
+  white-space: nowrap;
+}
+
+.requisition-table tbody tr {
+  transition: background-color 0.18s ease;
+}
+
+.requisition-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.request-id {
+  font-family: "Courier New", monospace;
+  color: #0f172a;
+}
+
+.purpose-cell,
+.schedule-cell {
+  color: #334155;
+}
+
+.item-count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .pill {
@@ -280,46 +313,253 @@
   font-size: 14px;
 }
 
-/* Requisition Item Row Styles */
+/* ── Requisition modal sizing ───────────────────────────────────── */
+.modal-content-requisition {
+  max-width: 700px;
+  width: 96%;
+}
+
+#addRequisitionForm {
+  padding: 0;
+}
+
+#addRequisitionModal .modal-body {
+  max-height: 72vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 20px;
+}
+
+#addRequisitionModal .form-actions {
+  margin: 0;
+  padding: 14px 20px 18px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ── Paper form shell ────────────────────────────────────────────── */
+.requisition-paper-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Section cards ───────────────────────────────────────────────── */
+.req-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.req-section-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.req-section-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Field groups ────────────────────────────────────────────────── */
+.req-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.req-field label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+.req-field input,
+.req-field select,
+.req-field textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 7px;
+  font-size: 13.5px;
+  color: #0f172a;
+  background: #fff;
+  font-family: inherit;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.req-field input:focus,
+.req-field select:focus,
+.req-field textarea:focus {
+  outline: none;
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.07);
+}
+
+.req-field input::placeholder,
+.req-field textarea::placeholder {
+  color: #b0bcc8;
+}
+
+.req-field textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+/* ── Grid helpers ────────────────────────────────────────────────── */
+.req-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.req-grid-3-name {
+  display: grid;
+  grid-template-columns: 1fr 80px 1fr;
+  gap: 10px;
+}
+
+.req-grid-4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.optional-tag {
+  font-size: 10px;
+  font-weight: 500;
+  color: #94a3b8;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 4px;
+}
+
+/* ── Items table in modal ────────────────────────────────────────── */
+.items-grid-header {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1.6fr) minmax(0, 1fr) 30px;
+  gap: 8px;
+  padding: 0 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
 .requisition-item-row {
   display: grid;
-  grid-template-columns: 1fr 100px 40px;
-  gap: 12px;
+  grid-template-columns: 72px minmax(0, 1.6fr) minmax(0, 1fr) 30px;
+  gap: 8px;
   align-items: center;
-  margin-bottom: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.requisition-item-row:last-child {
+  border-bottom: none;
 }
 
 .item-select,
-.item-quantity {
-  padding: 10px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 14px;
+.item-quantity,
+.item-description {
+  padding: 8px 10px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 7px;
+  font-size: 13px;
   font-family: inherit;
+  color: #0f172a;
+  background: #fff;
+  transition: border-color 0.18s;
+}
+
+.item-description {
+  background: #f8fafc;
+  color: #64748b;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .item-select:focus,
 .item-quantity:focus {
   outline: none;
-  border-color: #111827;
-  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.1);
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.07);
 }
 
 .btn-remove-item {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #ef4444;
-  padding: 6px;
+  color: #94a3b8;
+  font-size: 18px;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  transition: all 0.2s ease;
+  padding: 4px;
+  transition: color 0.18s, background 0.18s;
 }
 
 .btn-remove-item:hover {
+  color: #ef4444;
   background: #fee2e2;
+}
+
+.btn-add-item {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 7px;
+  background: transparent;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s, color 0.18s, background 0.18s;
+}
+
+.btn-add-item:hover {
+  border-color: #0f172a;
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+/* ── Borrower cell in table ──────────────────────────────────────── */
+.borrower-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.borrower-cell .borrower-name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.borrower-cell .borrower-sub {
+  font-size: 11.5px;
+  color: #94a3b8;
 }
 
 @media (max-width: 768px) {
@@ -329,6 +569,24 @@
 
   .search-box {
     width: 100%;
+  }
+
+  .req-grid-2,
+  .req-grid-3-name,
+  .req-grid-4,
+  .items-grid-header,
+  .requisition-item-row {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content-requisition {
+    width: 98%;
+    max-width: 98%;
+  }
+
+  #addRequisitionModal .modal-body {
+    max-height: 78vh;
+    padding: 12px;
   }
 }
 

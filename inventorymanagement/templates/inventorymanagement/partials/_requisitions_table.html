@@ -3,11 +3,12 @@
 		<thead>
 			<tr>
 				<th>Request ID</th>
-				<th>Requested By</th>
+				<th>Borrower Name</th>
+				<th>Event</th>
+				<th>Schedule</th>
 				<th>Items</th>
-				<th>Purpose</th>
+				<th>Purpose / Notes</th>
 				<th>Status</th>
-				<th>Approved By</th>
 				<th>Submitted</th>
 				<th>Actions</th>
 			</tr>
@@ -15,17 +16,25 @@
 		<tbody>
 			{% for requisition in requisitions %}
 			<tr>
-				<td><strong>{{ requisition.id|truncatechars:13 }}</strong></td>
-				<td>{{ requisition.requested_by.get_full_name|default:requisition.requested_by.username }}</td>
-				<td>{{ requisition.item_count|default:requisition.items.count }} items</td>
-				<td>{{ requisition.purpose|truncatechars:50 }}</td>
+				<td class="request-id"><strong>{{ requisition.id|truncatechars:13 }}</strong></td>
+				<td>
+					<div class="borrower-cell">
+						<span class="borrower-name">{{ requisition.borrower_display|truncatechars:28 }}</span>
+						{% if requisition.requestor_display %}
+						<span class="borrower-sub">submitted by {{ requisition.requestor_display|truncatechars:22 }}</span>
+						{% endif %}
+					</div>
+				</td>
+				<td>{{ requisition.event_display|truncatechars:24 }}</td>
+				<td class="schedule-cell">{{ requisition.schedule_display|truncatechars:34 }}</td>
+				<td><span class="item-count-pill">{{ requisition.item_count|default:requisition.items.count }}</span> items</td>
+				<td class="purpose-cell">{{ requisition.purpose_display|default:'—'|truncatechars:64 }}</td>
 				<td>
 					{% if requisition.status == 'PENDING' %}<span class="pill status-pending">Pending</span>
 					{% elif requisition.status == 'APPROVED' %}<span class="pill status-approved">Approved</span>
 					{% elif requisition.status == 'REJECTED' %}<span class="pill status-rejected">Rejected</span>
 					{% else %}<span class="pill status-issued">Issued</span>{% endif %}
 				</td>
-				<td>{% if requisition.approved_by %}{{ requisition.approved_by.get_full_name|default:requisition.approved_by.username }}{% else %}—{% endif %}</td>
 				<td>{{ requisition.created_at|date:"M d, Y" }}</td>
 				<td class="actions">
 					<a href="{% url 'inventorymanagement:view_requisition' requisition.id %}" class="icon-btn" title="View">
@@ -45,7 +54,7 @@
 				</td>
 			</tr>
 			{% empty %}
-			<tr><td colspan="7" class="empty-state">No requisitions found.</td></tr>
+			<tr><td colspan="9" class="empty-state">No requisitions found.</td></tr>
 			{% endfor %}
 		</tbody>
 	</table>
