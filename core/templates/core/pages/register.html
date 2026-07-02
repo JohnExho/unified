@@ -28,40 +28,9 @@
   #termsModal .modal-content{background:#fff;max-width:820px;width:92%;max-height:80vh;overflow:auto;border-radius:8px;padding:18px}
   #termsModal .modal-header{display:flex;align-items:center;justify-content:space-between}
 </style>
-
-<script>
-  function openTermsModal(){
-    const modal = document.getElementById('termsModal');
-    if(!modal) return;
-    modal.style.display = 'flex';
-    const cb = modal.querySelector('#agreeCheckbox');
-    const accept = modal.querySelector('#acceptBtn');
-    if(cb) cb.checked = false;
-    if(accept) accept.disabled = true;
-  }
-  function closeTermsModal(){
-    const modal = document.getElementById('termsModal');
-    if(!modal) return;
-    modal.style.display = 'none';
-  }
-  function toggleAcceptButton(){
-    const modal = document.getElementById('termsModal');
-    if(!modal) return;
-    const cb = modal.querySelector('#agreeCheckbox');
-    const accept = modal.querySelector('#acceptBtn');
-    if(accept) accept.disabled = !cb.checked;
-  }
-  function acceptTerms(){
-    const hidden = document.getElementById('termsAcceptedHidden');
-    if(hidden) hidden.value = 'true';
-    closeTermsModal();
-    const submit = document.querySelector('form button[type="submit"]');
-    if(submit) submit.disabled = false;
-  }
-</script>
+{% endif %}
 
 <script src="{% static 'core/js/register.js' %}" defer></script>
-{% endif %}
 <div class="container">
 
   <div class="register-layout">

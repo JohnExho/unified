@@ -449,21 +449,37 @@ class MemberContributionEntry(models.Model):
     class Meta:
         ordering = ["-contribution_date", "-created_at"]
 
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        super().save(*args, **kwargs)
-        if is_new and self.amount > 0:
-            self.member.total_contributions = (
-                self.member.total_contributions + self.amount
-            )
-            self.member.current_balance = (
-                self.member.current_balance + self.amount
-            )
-            self.member.last_payment_date = self.contribution_date
-            self.member.save(update_fields=["total_contributions", "current_balance", "last_payment_date", "updated_at"])
-            fund = AssociationFund.objects.order_by("-created_at").first()
-            if fund is None:
-                fund = AssociationFund.objects.create(name="Association Fund")
+    def _recalculate_member_summary(self):
+        member = self.member
+        entries = member.ledger_entries.all()
+        total_contributions = sum(
+            (entry.amount or Decimal("0")) for entry in entries if entry.amount is not None
+        )
+        last_payment_date = None
+        if entries.exists():
+            last_payment_date = entries.order_by("-contribution_date").first().contribution_date
+
+        member.total_contributions = total_contributions
+        member.current_balance = total_contributions
+        member.last_payment_date = last_payment_date
+        member.save(update_fields=["total_contributions", "current_balance", "last_payment_date", "updated_at"])
+
+    def _sync_association_fund_transaction(self):
+        if self.amount <= 0:
+            return
+
+        fund = AssociationFund.objects.order_by("-created_at").first()
+        if fund is None:
+            fund = AssociationFund.objects.create(name="Association Fund")
+
+        transaction = AssociationFundTransaction.objects.filter(
+            association_fund=fund,
+            transaction_type="member_contribution",
+            reference_model="member_contribution_entry",
+            reference_id=self.pk,
+        ).order_by("-created_at").first()
+
+        if transaction is None:
             fund.apply_income(
                 amount=self.amount,
                 transaction_type="member_contribution",
@@ -471,6 +487,27 @@ class MemberContributionEntry(models.Model):
                 reference_model="member_contribution_entry",
                 reference_id=self.pk,
             )
+            return
+
+        delta = Decimal(str(self.amount)) - transaction.amount
+        if delta != 0:
+            fund.current_balance = fund.current_balance + delta
+            fund.total_income = fund.total_income + delta
+            fund.save(update_fields=["current_balance", "total_income", "updated_at"])
+
+        transaction.amount = self.amount
+        transaction.description = f"Contribution by {self.member.member_name}"
+        transaction.save(update_fields=["amount", "description"])
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if self.amount > 0:
+            self._recalculate_member_summary()
+            if is_new:
+                self._sync_association_fund_transaction()
+            else:
+                self._sync_association_fund_transaction()
 
     def __str__(self):
         return f"{self.member.member_name} - {self.amount}"

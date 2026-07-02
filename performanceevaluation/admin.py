@@ -12,6 +12,7 @@ from .models import (
     ComputedResult,
     Recommendation,
     Department,
+    TeacherSubjectAssignment,
     UserDepartmentAssignment
 )
 
@@ -92,6 +93,14 @@ class RecommendationAdmin(admin.ModelAdmin):
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'code')
     search_fields = ('name', 'code')
+
+@admin.register(TeacherSubjectAssignment)
+class TeacherSubjectAssignmentAdmin(admin.ModelAdmin):
+    list_display = ('teacher', 'subject_name', 'department', 'is_active', 'created_at')
+    list_filter = ('is_active', 'department', 'created_at')
+    search_fields = ('teacher__username', 'subject_name')
+    readonly_fields = ('created_at',)
+    date_hierarchy = 'created_at'
 
 @admin.register(UserDepartmentAssignment)
 class UserDepartmentAssignmentAdmin(admin.ModelAdmin):

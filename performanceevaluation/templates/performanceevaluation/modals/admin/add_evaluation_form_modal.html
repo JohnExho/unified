@@ -26,11 +26,27 @@
                             {% endfor %}
                         </select>
                     </div>
+                    <div class="form-group" id="teacherSubjectGroup" style="display: none;">
+                        <label for="addFormTeacherSubject">Teacher Subject (Student Evaluations)</label>
+                        <select id="addFormTeacherSubject" name="teacher_subject_assignment">
+                            <option value="">All Teachers</option>
+                            {% for assignment in teacher_subjects %}
+                                <option value="{{ assignment.id }}">{{ assignment.teacher.get_full_name|default:assignment.teacher.username }} - {{ assignment.subject_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small>Optional: Limit this form to specific teacher-subject combinations</small>
+                    </div>
                     <div class="form-group">
                         <label>
                             <input type="checkbox" name="is_active" checked /> Active
                         </label>
                     </div>
+                    <script>
+                        document.getElementById('addFormEvaluatorType').addEventListener('change', function() {
+                            const group = document.getElementById('teacherSubjectGroup');
+                            group.style.display = this.value === 'student' ? 'block' : 'none';
+                        });
+                    </script>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" data-dismiss="modal">Cancel</button>

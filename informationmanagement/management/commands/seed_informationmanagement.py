@@ -10,6 +10,8 @@ from informationmanagement.models import (
     MLModel,
     MLPipeline,
     MLExperiment,
+    MemberContributionRecord,
+    MemberContributionEntry,
 )
 
 
@@ -26,6 +28,8 @@ class Command(BaseCommand):
         MLModel.objects.all().delete()
         MLPipeline.objects.all().delete()
         MLExperiment.objects.all().delete()
+        MemberContributionEntry.objects.all().delete()
+        MemberContributionRecord.objects.all().delete()
 
         projects = [
             Project(
@@ -246,6 +250,24 @@ class Command(BaseCommand):
         ]
         MLExperiment.objects.bulk_create(experiments)
 
+        member = MemberContributionRecord.objects.create(
+            member_name="Sample Member",
+            employee_id="EMP-SEED-001",
+            due_amount=0,
+        )
+        MemberContributionEntry.objects.create(
+            member=member,
+            contribution_date=timezone.now().date() - timezone.timedelta(days=30),
+            amount=50,
+            remarks="June contribution",
+        )
+        MemberContributionEntry.objects.create(
+            member=member,
+            contribution_date=timezone.now().date(),
+            amount=50,
+            remarks="July contribution",
+        )
+
         self.stdout.write(
-            self.style.SUCCESS("Seeded Information Management with 23 items.")
+            self.style.SUCCESS("Seeded Information Management with 23 items and sample contribution history.")
         )

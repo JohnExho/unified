@@ -18,13 +18,17 @@
             <div class="header-copy">
                 <div class="eyebrow">Evaluation Form</div>
                 <h1>{{ evaluation_form.cycle.term.name }} - {{ evaluation_form.cycle.name }}</h1>
-                <p>{{ evaluation_form.get_evaluator_type_display }} evaluation for {{ evaluatee.get_full_name|default:evaluatee.username }}</p>
+                <p>{{ evaluation_form.get_evaluator_type_display }} evaluation for {{ evaluatee.get_full_name|default:evaluatee.username }}{% if selected_subject %} • {{ selected_subject }}{% endif %}</p>
             </div>
         </header>
 
         <form method="post" class="evaluation-form">
             {% csrf_token %}
             <input type="hidden" name="evaluatee" value="{{ evaluatee.id }}">
+            {% if evaluation_form.evaluator_type == 'student' %}
+            <input type="hidden" name="teacher" value="{{ evaluatee.id }}">
+            <input type="hidden" name="subject" value="{{ selected_subject }}">
+            {% endif %}
 
             {% for category in categories %}
             <section class="form-section">

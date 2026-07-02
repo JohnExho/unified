@@ -14,7 +14,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from .models import (
     EvaluationCriterion, EvaluationCategory, 
     AcademicTerm, EvaluationCycle, Rubric, Department, UserDepartmentAssignment, EvaluationForm,
-    Evaluation, EvaluationScore, EvaluationComment, ComputedResult, Recommendation
+    Evaluation, EvaluationScore, EvaluationComment, ComputedResult, Recommendation, TeacherSubjectAssignment
 )
 from core.decorators import require_system_access, require_system_role
 from django.contrib.auth import get_user_model
@@ -242,7 +242,7 @@ def user_evaluations(request):
     ).values_list('system_role', flat=True).first()
 
     role_forms_map = {
-        'user': ['student', 'self'],
+        'user': ['student'],
         'instructor': ['peer', 'self'],
         'admin': ['supervisor', 'self'],
     }
@@ -272,26 +272,59 @@ def user_evaluations(request):
     sort_field = sort_map.get(sort_by, 'cycle__start_date')
     active_forms = active_forms.order_by(sort_field)
 
-    department_ids = UserDepartmentAssignment.objects.filter(
+    department_ids = list(UserDepartmentAssignment.objects.filter(
         user=user
-    ).values_list('department_id', flat=True)
+    ).values_list('department_id', flat=True))
 
-    evaluatees = get_user_model().objects.filter(
-        userdepartmentassignment__department_id__in=department_ids,
-    ).filter(
+    # If the user has department assignments, scope evaluatees and teachers to those departments.
+    # Otherwise fall back to all users with the appropriate system role so the UI isn't empty.
+    if department_ids:
+        evaluatees_qs = get_user_model().objects.filter(
+            userdepartmentassignment__department_id__in=department_ids,
+        )
+        teachers_qs = get_user_model().objects.filter(
+            userdepartmentassignment__department_id__in=department_ids,
+        )
+    else:
+        evaluatees_qs = get_user_model().objects.all()
+        teachers_qs = get_user_model().objects.all()
+
+    evaluatees = evaluatees_qs.filter(
         systemmembership__system_name='performanceevaluation',
         systemmembership__system_role__in=['user', 'instructor', 'admin', 'superadmin'],
     ).exclude(id=user.id).exclude(is_superuser=True).distinct().order_by('username')
+
+    available_teachers = teachers_qs.filter(
+        systemmembership__system_name='performanceevaluation',
+        systemmembership__system_role__in=['instructor', 'admin', 'superadmin'],
+    ).exclude(id=user.id).exclude(is_superuser=True)
+
+    # If there are student evaluation forms visible, prefer teachers who have active subject assignments
+    visible_student_form_exists = any(f.evaluator_type == 'student' for f in active_forms)
+    if visible_student_form_exists:
+        available_teachers = available_teachers.filter(teacher_subject_assignments__is_active=True)
+
+    available_teachers = available_teachers.prefetch_related('teacher_subject_assignments').distinct().order_by('username')
 
     context = {
         'systems': systems,
         'current_system': current_system,
         'active_forms': active_forms,
         'evaluatees': evaluatees,
+        'available_teachers': available_teachers,
         'current_user': user,
         'search_query': search_query,
         'sort_by': sort_by,
     }
+
+    # Build a map of evaluations this user already submitted: {(form_id, teacher_id): [subjects...]}
+    user_evals = Evaluation.objects.filter(evaluator=user, is_submitted=True).values('form_id', 'evaluatee_id', 'subject_name')
+    done_map = {}
+    for ev in user_evals:
+        key = f"{ev['form_id']}:{ev['evaluatee_id']}"
+        done_map.setdefault(key, []).append(ev['subject_name'])
+
+    context['evaluations_done_map_json'] = json.dumps(done_map)
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         forms_html = render_to_string(
@@ -326,7 +359,7 @@ def user_evaluation_form(request, form_id):
     ).values_list('system_role', flat=True).first()
 
     role_forms_map = {
-        'user': ['student', 'self'],
+        'user': ['student'],
         'instructor': ['peer', 'self'],
         'admin': ['supervisor', 'self'],
     }
@@ -353,10 +386,44 @@ def user_evaluation_form(request, form_id):
         systemmembership__system_role__in=['user', 'instructor', 'admin', 'superadmin'],
     ).exclude(id=user.id).exclude(is_superuser=True).distinct()
 
+    if evaluation_form.evaluator_type == 'student':
+        allowed_evaluatees = allowed_evaluatees.filter(systemmembership__system_role__in=['instructor', 'admin', 'superadmin'])
+
     evaluatee_id = request.POST.get('evaluatee') or request.GET.get('evaluatee')
+    selected_teacher_id = request.POST.get('teacher') or request.GET.get('teacher')
+    selected_subject = (request.POST.get('subject') or request.GET.get('subject') or '').strip()
     is_self_form = evaluation_form.evaluator_type == 'self'
     if is_self_form:
         evaluatee_id = str(user.id)
+
+    if evaluation_form.evaluator_type == 'student':
+        if not selected_teacher_id or not selected_subject:
+            messages.error(request, 'Please select a teacher and subject before opening the form.')
+            return redirect('performanceevaluation:user_evaluations')
+
+        # Resolve the teacher object first to provide clearer errors instead of a 404
+        try:
+            teacher_obj = get_user_model().objects.get(pk=selected_teacher_id)
+        except Exception:
+            messages.error(request, 'Selected teacher not found.')
+            return redirect('performanceevaluation:user_evaluations')
+
+        # Ensure the selected teacher is allowed to be evaluated. If department scoping
+        # excluded them from `allowed_evaluatees`, but they still have the appropriate
+        # system membership, permit the selection. Otherwise, show a friendly error.
+        if not allowed_evaluatees.filter(pk=teacher_obj.pk).exists():
+            has_role = SystemMembership.objects.filter(
+                user=teacher_obj,
+                system_name=current_system,
+                system_role__in=['instructor', 'admin', 'superadmin']
+            ).exists()
+            if has_role:
+                evaluatee_id = teacher_obj.pk
+            else:
+                messages.error(request, 'Selected teacher is not eligible to be evaluated.')
+                return redirect('performanceevaluation:user_evaluations')
+        else:
+            evaluatee_id = teacher_obj.pk
 
     if not evaluatee_id:
         messages.error(request, 'Please select an evaluatee before opening the form.')
@@ -365,7 +432,27 @@ def user_evaluation_form(request, form_id):
     if is_self_form:
         evaluatee = user
     else:
-        evaluatee = get_object_or_404(allowed_evaluatees, id=evaluatee_id)
+        # Try to get the evaluatee from the allowed_evaluatees queryset first
+        try:
+            evaluatee = allowed_evaluatees.get(id=evaluatee_id)
+        except Exception:
+            # If not found there, but a resolved teacher_obj exists (from student flow)
+            # and the teacher has the appropriate system membership, use that object
+            teacher_obj = locals().get('teacher_obj')
+            if evaluation_form.evaluator_type == 'student' and teacher_obj:
+                has_role = SystemMembership.objects.filter(
+                    user=teacher_obj,
+                    system_name=current_system,
+                    system_role__in=['instructor', 'admin', 'superadmin']
+                ).exists()
+                if has_role:
+                    evaluatee = teacher_obj
+                else:
+                    messages.error(request, 'Selected teacher is not eligible to be evaluated.')
+                    return redirect('performanceevaluation:user_evaluations')
+            else:
+                messages.error(request, 'Selected evaluatee was not found.')
+                return redirect('performanceevaluation:user_evaluations')
 
     rubric_prefetch = Prefetch('rubric_set', queryset=Rubric.objects.order_by('level'))
     criteria_prefetch = Prefetch(
@@ -401,6 +488,7 @@ def user_evaluation_form(request, form_id):
                 form=evaluation_form,
                 evaluatee=evaluatee,
                 evaluator=user,
+                subject_name=selected_subject if evaluation_form.evaluator_type == 'student' else '',
                 submitted_at=timezone.now(),
                 is_submitted=True,
             )
@@ -424,6 +512,8 @@ def user_evaluation_form(request, form_id):
         'current_system': current_system,
         'evaluation_form': evaluation_form,
         'evaluatee': evaluatee,
+        'selected_teacher': evaluatee if evaluation_form.evaluator_type == 'student' else None,
+        'selected_subject': selected_subject if evaluation_form.evaluator_type == 'student' else '',
         'categories': categories,
     }
 
@@ -1060,6 +1150,7 @@ def evaluation_structure(request):
     rubrics = Paginator(rubrics_qs, 10).get_page(rubrics_page)
 
     evaluator_types = EvaluationForm._meta.get_field('evaluator_type').choices
+    teacher_subjects = TeacherSubjectAssignment.objects.filter(is_active=True).select_related('teacher', 'department').order_by('teacher', 'subject_name')
 
     context = {
         'systems': systems,
@@ -1070,6 +1161,7 @@ def evaluation_structure(request):
         'evaluation_criteria': evaluation_criteria,
         'rubrics': rubrics,
         'evaluator_types': evaluator_types,
+        'teacher_subjects': teacher_subjects,
     }
 
     return render(request, 'performanceevaluation/pages/admin/evaluation_structure.html', context)

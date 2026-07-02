@@ -1,5 +1,4 @@
-from decimal import Decimal
-
+from datetime import date
 from decimal import Decimal
 
 from django.test import TestCase
@@ -116,3 +115,37 @@ class MemberContributionLedgerTests(TestCase):
 
         self.assertEqual(summary["total_contributions"], Decimal("225.00"))
         self.assertEqual(summary["total_income"], Decimal("225.00"))
+
+    def test_editing_existing_entry_recalculates_totals_from_ledger_history(self):
+        AssociationFund.objects.create(
+            name="Association Fund",
+            current_balance=Decimal("0.00"),
+            total_income=Decimal("0.00"),
+        )
+
+        member = MemberContributionRecord.objects.create(
+            member_name="Jose Dela Cruz",
+            employee_id="EMP-2001",
+        )
+
+        first_entry = MemberContributionEntry.objects.create(
+            member=member,
+            amount=Decimal("100.00"),
+            contribution_date="2026-06-01",
+            remarks="June contribution",
+        )
+        second_entry = MemberContributionEntry.objects.create(
+            member=member,
+            amount=Decimal("50.00"),
+            contribution_date="2026-07-01",
+            remarks="July contribution",
+        )
+
+        first_entry.amount = Decimal("75.00")
+        first_entry.save()
+
+        member.refresh_from_db()
+
+        self.assertEqual(member.total_contributions, Decimal("125.00"))
+        self.assertEqual(member.current_balance, Decimal("125.00"))
+        self.assertEqual(member.last_payment_date, date(2026, 7, 1))

@@ -81,6 +81,7 @@ class Evaluation(models.Model):
         blank=True,
         related_name='evaluations_given'
     )
+    subject_name = models.CharField(max_length=150, blank=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
     is_submitted = models.BooleanField(default=False)
 
@@ -140,6 +141,24 @@ class Department(models.Model):
 
     def __str__(self):
         return self.name
+
+class TeacherSubjectAssignment(models.Model):
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='teacher_subject_assignments',
+    )
+    subject_name = models.CharField(max_length=150)
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['subject_name']
+
+    def __str__(self):
+        return f"{self.teacher} - {self.subject_name}"
+
 
 class MLInsight(models.Model):
     STATUS_CHOICES = [

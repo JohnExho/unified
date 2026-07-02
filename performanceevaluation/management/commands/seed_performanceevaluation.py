@@ -20,6 +20,7 @@ from performanceevaluation.models import (
     MLInsight,
     Recommendation,
     Rubric,
+    TeacherSubjectAssignment,
     UserDepartmentAssignment,
 )
 
@@ -29,27 +30,27 @@ class Command(BaseCommand):
 
     def _get_seed_users(self):
         user_model = get_user_model()
-        users = list(user_model.objects.order_by("date_joined")[:2])
-        if len(users) >= 2:
-            return users[0], users[1]
+        student = user_model.objects.filter(username="seed_student").first()
+        teacher = user_model.objects.filter(username="seed_teacher").first()
 
-        first = users[0] if users else user_model.objects.create_user(
-            username="seed_user",
-            email="seed_user@example.com",
-            password="seed-password-123",
-        )
-        second = user_model.objects.filter(username="seed_reviewer").first()
-        if not second:
-            second = user_model.objects.create_user(
-                username="seed_reviewer",
-                email="seed_reviewer@example.com",
+        if student is None:
+            student = user_model.objects.create_user(
+                username="seed_student",
+                email="seed_student@example.com",
                 password="seed-password-123",
             )
-        return first, second
+        if teacher is None:
+            teacher = user_model.objects.create_user(
+                username="seed_teacher",
+                email="seed_teacher@example.com",
+                password="seed-password-123",
+            )
+
+        return student, teacher
 
     @transaction.atomic
     def handle(self, *args, **options):
-        evaluatee, evaluator = self._get_seed_users()
+        student, teacher = self._get_seed_users()
         today = timezone.localdate()
 
         Recommendation.objects.all().delete()
@@ -63,23 +64,24 @@ class Command(BaseCommand):
         EvaluationCategory.objects.all().delete()
         EvaluationCycle.objects.all().delete()
         AcademicTerm.objects.all().delete()
+        TeacherSubjectAssignment.objects.all().delete()
         UserDepartmentAssignment.objects.all().delete()
         Department.objects.all().delete()
         MLInsight.objects.all().delete()
 
         department = Department.objects.create(name="Computer Studies", code="CS", is_active=True)
-        UserDepartmentAssignment.objects.create(user=evaluatee, department=department)
-        UserDepartmentAssignment.objects.create(user=evaluator, department=department)
+        UserDepartmentAssignment.objects.create(user=student, department=department)
+        UserDepartmentAssignment.objects.create(user=teacher, department=department)
 
         SystemMembership.objects.update_or_create(
-            user=evaluatee,
+            user=student,
             system_name="performanceevaluation",
-            defaults={"system_role": "superadmin" if evaluatee.is_superuser else "user"},
+            defaults={"system_role": "student"},
         )
         SystemMembership.objects.update_or_create(
-            user=evaluator,
+            user=teacher,
             system_name="performanceevaluation",
-            defaults={"system_role": "superadmin" if evaluator.is_superuser else "user"},
+            defaults={"system_role": "instructor"},
         )
 
         term = AcademicTerm.objects.create(
@@ -196,14 +198,29 @@ class Command(BaseCommand):
                     )
                 all_criteria.append(criterion)
 
-        form = EvaluationForm.objects.create(cycle=cycle, evaluator_type="peer", is_active=True)
+        TeacherSubjectAssignment.objects.create(
+            teacher=teacher,
+            subject_name="English 101",
+            department=department,
+            is_active=True,
+        )
+        TeacherSubjectAssignment.objects.create(
+            teacher=teacher,
+            subject_name="Mathematics 202",
+            department=department,
+            is_active=True,
+        )
+
+        peer_form = EvaluationForm.objects.create(cycle=cycle, evaluator_type="peer", is_active=True)
         EvaluationForm.objects.create(cycle=cycle, evaluator_type="self", is_active=True)
         EvaluationForm.objects.create(cycle=cycle, evaluator_type="supervisor", is_active=True)
+        student_form = EvaluationForm.objects.create(cycle=cycle, evaluator_type="student", is_active=True)
 
+        # Student evaluates teacher using the student form
         evaluation = Evaluation.objects.create(
-            form=form,
-            evaluatee=evaluatee,
-            evaluator=evaluator,
+            form=student_form,
+            evaluatee=teacher,
+            evaluator=student,
             submitted_at=timezone.now(),
             is_submitted=True,
         )
@@ -221,7 +238,7 @@ class Command(BaseCommand):
         )
 
         result = ComputedResult.objects.create(
-            evaluatee=evaluatee,
+            evaluatee=teacher,
             cycle=cycle,
             total_score=4.50,
             performance_level="Very Satisfactory",
