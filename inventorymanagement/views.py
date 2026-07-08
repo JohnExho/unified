@@ -20,6 +20,26 @@ import csv
 import json
 from datetime import datetime, timedelta
 
+
+def _is_inventory_admin(request):
+    current_system = getattr(request, 'current_system', None) or request.session.get('current_system', 'inventorymanagement')
+    if request.user.is_superuser:
+        return True
+    return SystemMembership.objects.filter(
+        user=request.user,
+        system_name=current_system,
+        system_role__in=['admin', 'superadmin']
+    ).exists()
+
+
+def _handle_non_admin_access(request):
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
+        return JsonResponse({'error': 'You do not have permission to access this module.'}, status=403)
+
+    messages.error(request, 'Only administrators can manage inventory and assets modules.')
+    return redirect('inventorymanagement:requisitions')
+
+
 @login_required
 @require_system_access
 def dashboard(request):
@@ -114,6 +134,9 @@ def dashboard(request):
 @login_required
 @require_system_access
 def inventory(request):
+    if not _is_inventory_admin(request):
+        return _handle_non_admin_access(request)
+
     current_system = request.current_system
     systems = request.session.get('accessible_systems', [])
     search_query = request.GET.get('search', '').strip()
@@ -150,6 +173,7 @@ def inventory(request):
         'inventories': inventories,
         'systems': systems,
         'current_system': current_system,
+        'is_admin': _is_inventory_admin(request),
         'search_query': search_query,
         'categories': categories,
         'category_filter': category_filter,
@@ -166,9 +190,13 @@ def inventory(request):
 @require_system_access
 def asset_detail(request, asset_id):
     """Show detailed view of a single asset with maintenance history"""
+    if not _is_inventory_admin(request):
+        return _handle_non_admin_access(request)
+
     asset = get_object_or_404(Asset, id=asset_id)
     latest_assignment = asset.assignments.filter(returned_at__isnull=True).first()
     assigned_to = latest_assignment.assigned_to if latest_assignment else None
+    assigned_to_display = latest_assignment.get_assigned_to_display() if latest_assignment else 'Not Assigned'
     
     # Check if user is admin
     current_system = request.current_system
@@ -181,6 +209,7 @@ def asset_detail(request, asset_id):
     return render(request, 'inventorymanagement/pages/asset_detail.html', {
         'asset': asset,
         'assigned_to': assigned_to,
+        'assigned_to_display': assigned_to_display,
         'is_admin': is_admin,
     })
 
@@ -188,6 +217,9 @@ def asset_detail(request, asset_id):
 @login_required
 @require_system_access
 def assets(request):
+    if not _is_inventory_admin(request):
+        return _handle_non_admin_access(request)
+
     current_system = request.current_system
     systems = request.session.get('accessible_systems', [])
     search_query = request.GET.get('search', '').strip()
@@ -222,6 +254,7 @@ def assets(request):
     for asset in assets_queryset:
         latest_assignment = asset.assignments.filter(returned_at__isnull=True).first()
         assigned_to = latest_assignment.assigned_to if latest_assignment else None
+        assigned_to_display = latest_assignment.get_assigned_to_display() if latest_assignment else 'Not Assigned'
         
         # Apply assignment filter
         if assignment_filter == 'assigned' and not assigned_to:
@@ -231,7 +264,8 @@ def assets(request):
         
         assets_with_assignment.append({
             'asset': asset,
-            'assigned_to': assigned_to
+            'assigned_to': assigned_to,
+            'assigned_to_display': assigned_to_display,
         })
 
     # Check if this is an AJAX request for partial HTML
@@ -243,6 +277,7 @@ def assets(request):
     return render(request, 'inventorymanagement/pages/assets.html', {
         'assets_data': assets_with_assignment,
         'systems': systems,
+        'is_admin': _is_inventory_admin(request),
         'current_system': current_system,
         'search_query': search_query,
         'status_filter': status_filter,
@@ -1228,6 +1263,7 @@ def manage_user_access(request, user_id):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 def create_inventory_item(request):
     """Create a new inventory item"""
     if request.method == 'POST':
@@ -1297,6 +1333,7 @@ def create_inventory_item(request):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 def edit_inventory_item(request, item_id):
     """Edit an inventory item"""
     item = get_object_or_404(InventoryItem, id=item_id)
@@ -1374,6 +1411,7 @@ def edit_inventory_item(request, item_id):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 @require_POST
 def delete_inventory_item(request, item_id):
     """Delete an inventory item"""
@@ -1416,6 +1454,7 @@ def delete_inventory_item(request, item_id):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 def create_inventory_category(request):
     """Create a new inventory category"""
     if request.method == 'POST':
@@ -1460,6 +1499,7 @@ def create_inventory_category(request):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 @require_POST
 def delete_inventory_category(request, category_id):
     """Delete an inventory category"""
@@ -1698,6 +1738,7 @@ def export_report(request):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 def export_inventory(request):
     """Export inventory items to CSV"""
     items = InventoryItem.objects.select_related('category').all()
@@ -2141,6 +2182,7 @@ def export_requisitions(request):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 def create_asset(request):
     """Create a new asset"""
     if request.method == 'POST':
@@ -2188,6 +2230,7 @@ def create_asset(request):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 def edit_asset(request, asset_id):
     """Edit an existing asset"""
     asset = get_object_or_404(Asset, id=asset_id)
@@ -2238,6 +2281,7 @@ def edit_asset(request, asset_id):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 @require_POST
 def delete_asset(request, asset_id):
     """Delete an asset"""
@@ -2269,6 +2313,7 @@ def delete_asset(request, asset_id):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 def create_asset_category(request):
     """Create a new asset category"""
     if request.method == 'POST':
@@ -2307,6 +2352,7 @@ def create_asset_category(request):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 @require_POST
 def delete_asset_category(request, category_id):
     """Delete an asset category"""
@@ -2343,25 +2389,30 @@ def delete_asset_category(request, category_id):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 def assign_asset(request, asset_id):
     """Assign an asset to a user"""
     asset = get_object_or_404(Asset, id=asset_id)
     
     if request.method == 'POST':
         user_id = request.POST.get('user', '').strip()
+        assigned_to_name = request.POST.get('assigned_to_name', '').strip()
         remarks = request.POST.get('remarks', '').strip()
         
-        if not user_id:
-            return JsonResponse({'success': False, 'error': 'User is required'})
+        if not user_id and not assigned_to_name:
+            return JsonResponse({'success': False, 'error': 'Please provide the person or office name'})
         
         try:
             User = get_user_model()
-            assigned_user = get_object_or_404(User, id=user_id)
+            assigned_user = get_object_or_404(User, id=user_id) if user_id else None
+            
+            assignment_name = assigned_to_name or (assigned_user.get_full_name() or assigned_user.username if assigned_user else '')
             
             # Create assignment
             assignment = AssetAssignment.objects.create(
                 asset=asset,
                 assigned_to=assigned_user,
+                assigned_to_name=assignment_name,
                 remarks=remarks
             )
             
@@ -2382,7 +2433,7 @@ def assign_asset(request, asset_id):
                 user_agent=get_user_agent(request),
             )
             
-            messages.success(request, f"Asset assigned to {assigned_user.get_full_name() or assigned_user.username}")
+            messages.success(request, f"Asset assigned to {assignment_name}")
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
@@ -2392,6 +2443,7 @@ def assign_asset(request, asset_id):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 @require_POST
 def return_asset(request, asset_id):
     """Return an assigned asset"""
@@ -2433,6 +2485,7 @@ def return_asset(request, asset_id):
 
 @login_required
 @require_system_access
+@require_system_role(['admin', 'superadmin'])
 def export_assets(request):
     """Export assets to CSV"""
     import csv
@@ -2486,7 +2539,6 @@ def get_asset_categories(request):
     return JsonResponse({'categories': list(categories)})
 
 
-@login_required
 @login_required
 @require_system_access
 def get_system_members(request):

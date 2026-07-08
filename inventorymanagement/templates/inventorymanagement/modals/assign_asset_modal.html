@@ -8,10 +8,14 @@
 			{% csrf_token %}
 			<input type="hidden" id="assignAssetId" name="asset_id" />
 			<div class="form-group">
-				<label for="assignUser">Assign To *</label>
-				<select id="assignUser" name="user" required>
+				<label for="assignUser">Assign To (User)</label>
+				<select id="assignUser" name="user">
 					<option value="">Select user...</option>
 				</select>
+			</div>
+			<div class="form-group">
+				<label for="assignToName">Or Person / Office Name *</label>
+				<input type="text" id="assignToName" name="assigned_to_name" placeholder="e.g. Office of the Dean / Juan Dela Cruz" required>
 			</div>
 			<div class="form-group">
 				<label for="assignRemarks">Remarks</label>

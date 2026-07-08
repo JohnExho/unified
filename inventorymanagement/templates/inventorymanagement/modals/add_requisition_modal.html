@@ -63,19 +63,19 @@
 							<div class="req-grid-4">
 								<div class="req-field">
 									<label>Date Borrowed</label>
-									<input type="date" id="dateBorrowed" required>
+									<input type="date" id="dateBorrowed">
 								</div>
 								<div class="req-field">
 								<label>Date Returned</label>
-								<input type="date" id="dateReturned" required>
+								<input type="date" id="dateReturned">
 							</div>
 							<div class="req-field">
 								<label>Time Borrowed</label>
-								<input type="time" id="timeBorrowed" required>
+								<input type="time" id="timeBorrowed">
 								</div>
 								<div class="req-field">
 									<label>Time Returned</label>
-									<input type="time" id="timeReturned" required>
+									<input type="time" id="timeReturned">
 								</div>
 							</div>
 						</div>
@@ -229,7 +229,7 @@ function submitAddRequisitionForm(event) {
 	const eventName = document.getElementById('eventName').value.trim();
 	const purpose = document.getElementById('requisitionPurpose').value.trim();
 
-	if (!borrowerFirstName || !borrowerLastName || !borrowerAddress || !borrowerContact || !borrowerPosition || !dateBorrowed || !dateReturned || !timeBorrowed || !timeReturned || !eventName) {
+	if (!borrowerFirstName || !borrowerLastName || !borrowerAddress || !borrowerContact || !borrowerPosition || !eventName) {
 		alert('Please complete all required requisition details.');
 		return;
 	}

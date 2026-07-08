@@ -39,6 +39,7 @@
           </td>
           <td>{{ item.updated_at|date:"Y-m-d" }}</td>
           <td class="actions">
+            {% if is_admin %}
             <button class="icon-btn" title="Edit" onclick="openEditItemModal('{{ item.id }}', '{{ item.name }}', '{{ item.category.id }}', '{{ item.unit }}', '{{ item.quantity }}', '{{ item.low_stock_threshold }}', '{{ item.description }}', {{ item.is_active|lower }})">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 20h9"></path>
@@ -54,6 +55,7 @@
                 <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
               </svg>
             </button>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}

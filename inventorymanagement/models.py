@@ -119,16 +119,26 @@ class AssetAssignment(models.Model):
 
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
     )
+    assigned_to_name = models.CharField(max_length=200, blank=True)
 
     assigned_at = models.DateTimeField(auto_now_add=True)
     returned_at = models.DateTimeField(blank=True, null=True)
 
     remarks = models.TextField(blank=True)
 
+    def get_assigned_to_display(self):
+        if self.assigned_to_name:
+            return self.assigned_to_name
+        if self.assigned_to:
+            return self.assigned_to.get_full_name() or self.assigned_to.username
+        return 'Not Assigned'
+
     def __str__(self):
-        return f"{self.asset.asset_code} → {self.assigned_to}"
+        return f"{self.asset.asset_code} → {self.get_assigned_to_display()}"
 
 class AssetMaintenance(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -14,6 +14,7 @@
 			<div class="breadcrumb">Dashboard <span class="breadcrumb-sep">›</span> Inventory Management</div>
 			<h1>Inventory Management</h1>
 		</div>
+		{% if is_admin %}
 		<div class="top-actions">
 			<button class="btn btn-primary" onclick="openAddItemModal()">
 				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -23,11 +24,13 @@
 				Add Item
 			</button>
 		</div>
+		{% endif %}
 	</div>
 
 	<div class="content-wrap">
 		<div class="toolbar">
 			<div class="toolbar-actions">
+				{% if is_admin %}
 				<button class="btn btn-secondary" onclick="openAddCategoryModal()">
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<rect x="3" y="3" width="18" height="18" rx="2"></rect>
@@ -44,6 +47,7 @@
 					</svg>
 					Export
 				</a>
+				{% endif %}
 			</div>
 			<div class="toolbar-search">
 				<form class="search-box" method="get" action="{{ request.path }}">

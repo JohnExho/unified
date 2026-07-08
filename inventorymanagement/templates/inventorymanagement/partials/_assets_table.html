@@ -24,15 +24,15 @@
 						</span>
 					</td>
 					<td>
-						{% if item.assigned_to %}
-							{{ item.assigned_to.get_full_name|default:item.assigned_to.username }}
+						{% if item.assigned_to_display %}
+							{{ item.assigned_to_display }}
 						{% else %}
 							Not Assigned
 						{% endif %}
 					</td>
 					<td>{{ item.asset.created_at|date:"Y-m-d" }}</td>
 					<td class="actions">
-						{% if item.asset.status == 'AVAILABLE' %}
+						{% if is_admin and item.asset.status == 'AVAILABLE' %}
 						<button class="icon-btn" title="Assign" onclick="openAssignAssetModal('{{ item.asset.id }}')">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -40,7 +40,7 @@
 								<path d="M12 12h0"></path>
 							</svg>
 						</button>
-						{% elif item.asset.status == 'ASSIGNED' %}
+						{% elif is_admin and item.asset.status == 'ASSIGNED' %}
 						<button class="icon-btn" title="Return" onclick="returnAsset('{{ item.asset.id }}')">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<polyline points="5 12 3 12 12 3 21 12 19 12"></polyline>
@@ -55,6 +55,7 @@
 							</svg>
 						</a>
 						{% endif %}
+						{% if is_admin %}
 						<button class="icon-btn" title="Edit" onclick="openEditAssetModal('{{ item.asset.id }}', '{{ item.asset.asset_code }}', '{{ item.asset.name }}', '{{ item.asset.category.id }}', '{{ item.asset.status }}', '{{ item.asset.description|escapejs }}')">
 							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<path d="M12 20h9"></path>
@@ -70,6 +71,7 @@
 								<path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
 							</svg>
 						</button>
+						{% endif %}
 					</td>
 				</tr>
 				{% endfor %}
