@@ -1,6 +1,7 @@
 from django.test import TestCase, RequestFactory
+from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.fallback import FallbackStorage
-from django.urls import resolve
+from django.urls import resolve, reverse
 
 from core.models import Systems
 from core.views import core_register
@@ -37,3 +38,21 @@ class UrlPrefixTests(TestCase):
 
         self.assertEqual(community_resolved.view_name, "communityextensionservices:ces-dashboard")
         self.assertEqual(information_resolved.view_name, "informationmanagement:information-dashboard")
+
+    def test_system_selection_page_uses_updated_system_urls(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="selector", password="secret123")
+        self.client.force_login(user)
+
+        session = self.client.session
+        session["accessible_systems"] = [
+            {"url": "communityextensionservices", "role": "admin"},
+            {"url": "informationmanagement", "role": "admin"},
+        ]
+        session.save()
+
+        response = self.client.get(reverse("core:system_selection"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'href="/communitymembership/dashboard/"')
+        self.assertContains(response, 'href="/informationsystem/dashboard/"')
