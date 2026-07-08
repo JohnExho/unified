@@ -9,7 +9,7 @@ def root_redirect(request):
     if request.user.is_authenticated:
         return redirect("informationmanagement:information-dashboard")
     else:
-        return redirect("/informationmanagement/login")
+        return redirect("/informationsystem/login")
 
 
 urlpatterns = [

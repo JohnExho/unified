@@ -25,10 +25,10 @@ class SystemAwareLoginRedirectMiddleware:
                     return redirect(f'/inventorymanagement/login/?next={next_url}')
                 elif next_url.startswith('/librarymanagement/'):
                     return redirect(f'/librarymanagement/login/?next={next_url}')
-                elif next_url.startswith('/communityextensionservices/'):
-                    return redirect(f'/communityextensionservices/login/?next={next_url}')
-                elif next_url.startswith('/informationmanagement/'):
-                    return redirect(f'/informationmanagement/login/?next={next_url}')
+                elif next_url.startswith('/communitymembership/'):
+                    return redirect(f'/communitymembership/login/?next={next_url}')
+                elif next_url.startswith('/informationsystem/'):
+                    return redirect(f'/informationsystem/login/?next={next_url}')
                 elif next_url.startswith('/scholarshipmanagement/'):
                     return redirect(f'/scholarshipmanagement/login/?next={next_url}')
             

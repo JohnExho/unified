@@ -60,18 +60,16 @@
             <div class="nav-text"><h3>Notifications</h3><p>Updates & alerts</p></div>
           </a>
         </li>
-        {% if user_role == 'student' or not user_role and not request.user.is_superuser %}
         <li>
-          <a href="{% url 'scholarshipmanagement:ml_recommendations' %}">
+          <a href="{% url 'scholarshipmanagement:ml_model' %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
               <path d="M2 17l10 5 10-5"></path>
               <path d="M2 12l10 5 10-5"></path>
             </svg>
-            <div class="nav-text"><h3>ML Recommendations</h3><p>AI-matched scholarships</p></div>
+            <div class="nav-text"><h3>ML Model</h3><p>AI scholarship matching</p></div>
           </a>
         </li>
-        {% endif %}
         <li>
           <a href="{% url 'scholarshipmanagement:sm_settings' %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -197,7 +195,7 @@
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 4h16v16H4z"></path><path d="M4 9h16"></path><path d="M9 4v16"></path>
             </svg>
-            <div class="nav-text"><h3>Information Mgmt</h3><p>Information system</p></div>
+            <div class="nav-text"><h3>InformationSystem</h3><p>Information system</p></div>
           </a>
         </li>
         <li>
@@ -207,7 +205,7 @@
               <line x1="12" y1="8" x2="12" y2="12"></line>
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
-            <div class="nav-text"><h3>CES System</h3><p>Community services</p></div>
+            <div class="nav-text"><h3>CommunityMembership</h3><p>Community services</p></div>
           </a>
         </li>
         <li>

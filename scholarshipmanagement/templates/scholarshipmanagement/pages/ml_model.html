@@ -1,0 +1,96 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}ML Model - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/dashboard.css' %}">
+<style>
+  .model-shell { display: grid; gap: 18px; padding: 28px; }
+  .model-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05); }
+  .model-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; }
+  .metric-list { display: grid; gap: 10px; margin-top: 12px; }
+  .metric-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 10px; background: #f8fafc; color: #334155; }
+  .badge-pill { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; font-size: 0.78rem; font-weight: 600; }
+  .rec-list { display: grid; gap: 12px; }
+  .rec-item { border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; background: #fff; }
+  .rec-title { font-weight: 700; color: #0f172a; }
+  .muted { color: #64748b; font-size: 0.9rem; }
+  @media (max-width: 900px) { .model-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="model-shell">
+    <div class="top-bar">
+      <div class="page-header">
+        <h1>Scholarship ML Model</h1>
+        <p>Monitor the scholarship recommendation engine and review the current model insights.</p>
+      </div>
+      <div class="top-actions">
+        {% if stage_1_complete %}
+          <span class="badge badge--success">Profile Complete ✓</span>
+        {% else %}
+          <a href="{% url 'scholarshipmanagement:profile_setup' %}" class="btn btn-secondary btn-sm">Complete Profile</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="model-grid">
+      <div class="model-card">
+        <span class="badge-pill">{{ model_summary.type }}</span>
+        <h2 style="margin-top: 10px;">{{ model_summary.name }}</h2>
+        <p class="muted" style="margin-top: 8px;">{{ model_summary.description }}</p>
+        <div class="metric-list">
+          <div class="metric-item"><strong>Status</strong><span>{{ model_summary.status }}</span></div>
+          <div class="metric-item"><strong>Profile Ready</strong><span>{% if stage_1_complete %}Yes{% else %}No{% endif %}</span></div>
+          <div class="metric-item"><strong>Recommendations Ready</strong><span>{{ recommendations|length }}</span></div>
+        </div>
+      </div>
+
+      <div class="model-card">
+        <h3>How the model works</h3>
+        <ul class="muted" style="margin: 10px 0 0 18px; line-height: 1.7;">
+          <li>Scores your GPA against the scholarship’s minimum requirement.</li>
+          <li>Measures financial need and course/province fit.</li>
+          <li>Ranks scholarships by match quality and predicted success.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="model-card">
+      <div class="split" style="margin-bottom: 12px;">
+        <h3>Top ranked recommendations</h3>
+        {% if stage_1_complete %}
+          <a href="{% url 'scholarshipmanagement:ml_recommendations' %}" class="btn btn-primary btn-sm">See Full Results</a>
+        {% endif %}
+      </div>
+
+      {% if recommendations %}
+        <div class="rec-list">
+          {% for rec in recommendations %}
+            <div class="rec-item">
+              <div class="rec-title">{{ rec.scholarship.name }}</div>
+              <div class="muted" style="margin-top: 4px;">{{ rec.scholarship.description|truncatechars:120 }}</div>
+              <div class="metric-list" style="margin-top: 10px;">
+                <div class="metric-item"><strong>Match score</strong><span>{{ rec.match_score|floatformat:0 }}%</span></div>
+                <div class="metric-item"><strong>Eligibility probability</strong><span>{{ rec.eligibility_probability|floatformat:0 }}%</span></div>
+                <div class="metric-item"><strong>Success probability</strong><span>{{ rec.success_probability|floatformat:0 }}%</span></div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <h3>No model output yet</h3>
+          <p>Complete your profile to unlock scholarship recommendations and model scoring.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}

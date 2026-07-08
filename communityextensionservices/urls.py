@@ -10,7 +10,7 @@ def root_redirect(request):
     if request.user.is_authenticated:
         return redirect("communityextensionservices:ces-dashboard")
     else:
-        return redirect("/communityextensionservices/login")
+        return redirect("/communitymembership/login")
 
 
 urlpatterns = [

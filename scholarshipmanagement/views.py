@@ -884,6 +884,40 @@ def settings(request):
 
 
 # =====================================================================
+# ML MODEL PAGE
+# =====================================================================
+@login_required
+@require_system_access
+def ml_model_page(request):
+    current_system = getattr(request, 'current_system', None) or 'scholarshipmanagement'
+    user_role = _get_user_role(request)
+
+    try:
+        profile = request.user.scholarship_profile
+    except StudentProfile.DoesNotExist:
+        profile = StudentProfile.objects.create(user=request.user)
+
+    recommendations = []
+    if profile.is_stage_1_complete:
+        published = Scholarship.objects.filter(status='published')
+        recommendations = generate_recommendations(profile, published)[:6]
+
+    return render(request, 'scholarshipmanagement/pages/ml_model.html', {
+        'current_system': current_system,
+        'user_role': user_role,
+        'profile': profile,
+        'recommendations': recommendations,
+        'stage_1_complete': profile.is_stage_1_complete,
+        'model_summary': {
+            'name': 'Scholarship Match Model',
+            'type': 'Rule-based ML scoring',
+            'status': 'Active',
+            'description': 'Ranks scholarships using your academic profile, financial need, and eligibility rules.',
+        },
+    })
+
+
+# =====================================================================
 # ML RECOMMENDATIONS PAGE
 # =====================================================================
 @login_required

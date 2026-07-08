@@ -62,6 +62,7 @@ urlpatterns = [
 
     # ML Recommendations
     path('recommendations/', views.ml_recommendations, name='ml_recommendations'),
+    path('ml-model/', views.ml_model_page, name='ml_model'),
 
     # Settings
     path('settings/', views.settings, name='sm_settings'),

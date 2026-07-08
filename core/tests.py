@@ -1,5 +1,6 @@
 from django.test import TestCase, RequestFactory
 from django.contrib.messages.storage.fallback import FallbackStorage
+from django.urls import resolve
 
 from core.models import Systems
 from core.views import core_register
@@ -27,3 +28,12 @@ class RegisterTermsModalTests(TestCase):
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         self.assertIn("core/js/register.js", html)
+
+
+class UrlPrefixTests(TestCase):
+    def test_new_system_prefixes_resolve_to_the_correct_views(self):
+        community_resolved = resolve("/communitymembership/dashboard/")
+        information_resolved = resolve("/informationsystem/dashboard/")
+
+        self.assertEqual(community_resolved.view_name, "communityextensionservices:ces-dashboard")
+        self.assertEqual(information_resolved.view_name, "informationmanagement:information-dashboard")
