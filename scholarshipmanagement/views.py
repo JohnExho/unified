@@ -898,7 +898,7 @@ def ml_model_page(request):
         profile = StudentProfile.objects.create(user=request.user)
 
     recommendations = []
-    if profile.is_stage_1_complete:
+    if profile.is_ml_ready:
         published = Scholarship.objects.filter(status='published')
         recommendations = generate_recommendations(profile, published)[:6]
 
@@ -933,8 +933,9 @@ def ml_recommendations(request):
 
     recommendations = []
     stage_1_complete = profile.is_stage_1_complete
+    ml_ready = profile.is_ml_ready
 
-    if stage_1_complete:
+    if ml_ready:
         published = Scholarship.objects.filter(status='published')
         recommendations = generate_recommendations(profile, published)
 
@@ -959,6 +960,7 @@ def ml_recommendations(request):
         'profile': profile,
         'recommendations': recommendations,
         'stage_1_complete': stage_1_complete,
+        'ml_ready': ml_ready,
     })
 
 

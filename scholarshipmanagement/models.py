@@ -70,6 +70,17 @@ class StudentProfile(models.Model):
     def is_stage_1_complete(self):
         return self.stage_1_status == 'complete'
 
+    @property
+    def is_ml_ready(self):
+        required_fields = [
+            self.full_name,
+            self.course_strand,
+            self.gpa is not None,
+            self.annual_family_income is not None,
+            self.province,
+        ]
+        return all(required_fields)
+
     def check_and_update_stage_1(self):
         """Validate Stage 1 completion criteria and update status."""
         required_fields_ok = all([

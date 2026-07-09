@@ -47,7 +47,7 @@
         <p class="muted" style="margin-top: 8px;">{{ model_summary.description }}</p>
         <div class="metric-list">
           <div class="metric-item"><strong>Status</strong><span>{{ model_summary.status }}</span></div>
-          <div class="metric-item"><strong>Profile Ready</strong><span>{% if stage_1_complete %}Yes{% else %}No{% endif %}</span></div>
+          <div class="metric-item"><strong>Profile Ready</strong><span>{% if profile.is_ml_ready %}Yes{% else %}No{% endif %}</span></div>
           <div class="metric-item"><strong>Recommendations Ready</strong><span>{{ recommendations|length }}</span></div>
         </div>
       </div>
@@ -65,7 +65,7 @@
     <div class="model-card">
       <div class="split" style="margin-bottom: 12px;">
         <h3>Top ranked recommendations</h3>
-        {% if stage_1_complete %}
+        {% if profile.is_ml_ready %}
           <a href="{% url 'scholarshipmanagement:ml_recommendations' %}" class="btn btn-primary btn-sm">See Full Results</a>
         {% endif %}
       </div>
