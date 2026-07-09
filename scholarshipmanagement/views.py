@@ -26,7 +26,7 @@ from .services import (
     get_stage_1_checklist, refresh_stage_1, check_eligibility,
     submit_application, release_decision, respond_to_offer, _log_audit,
 )
-from .ml_recommendation import generate_recommendations, compute_match_score
+from .ml_recommendation import generate_recommendations, compute_match_score, build_overall_prediction_summary
 
 import csv
 import json
@@ -892,21 +892,40 @@ def ml_model_page(request):
     current_system = getattr(request, 'current_system', None) or 'scholarshipmanagement'
     user_role = _get_user_role(request)
 
+    if not _is_admin(request):
+        return render(request, '404.html', status=404)
+
     try:
         profile = request.user.scholarship_profile
     except StudentProfile.DoesNotExist:
         profile = StudentProfile.objects.create(user=request.user)
 
     recommendations = []
+    overall_prediction_summary = {
+        'total_profiles': 0,
+        'ml_ready_profiles': 0,
+        'total_scholarships': 0,
+        'average_match_score': 0.0,
+        'average_eligibility_probability': 0.0,
+        'average_success_probability': 0.0,
+        'top_scholarship': None,
+        'overall_predictions': [],
+    }
+
     if profile.is_ml_ready:
         published = Scholarship.objects.filter(status='published')
         recommendations = generate_recommendations(profile, published)[:6]
+        overall_prediction_summary = build_overall_prediction_summary(
+            StudentProfile.objects.all(),
+            published,
+        )
 
     return render(request, 'scholarshipmanagement/pages/ml_model.html', {
         'current_system': current_system,
         'user_role': user_role,
         'profile': profile,
         'recommendations': recommendations,
+        'overall_prediction_summary': overall_prediction_summary,
         'stage_1_complete': profile.is_stage_1_complete,
         'model_summary': {
             'name': 'Scholarship Match Model',
@@ -925,6 +944,9 @@ def ml_model_page(request):
 def ml_recommendations(request):
     current_system = getattr(request, 'current_system', None) or 'scholarshipmanagement'
     user_role = _get_user_role(request)
+
+    if not _is_admin(request):
+        return render(request, '404.html', status=404)
 
     try:
         profile = request.user.scholarship_profile

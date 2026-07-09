@@ -64,12 +64,36 @@
 
     <div class="model-card">
       <div class="split" style="margin-bottom: 12px;">
-        <h3>Top ranked recommendations</h3>
+        <h3>Overall prediction outlook</h3>
         {% if profile.is_ml_ready %}
           <a href="{% url 'scholarshipmanagement:ml_recommendations' %}" class="btn btn-primary btn-sm">See Full Results</a>
         {% endif %}
       </div>
 
+      <div class="metric-list" style="margin-top: 0;">
+        <div class="metric-item"><strong>Profiles analyzed</strong><span>{{ overall_prediction_summary.ml_ready_profiles }}</span></div>
+        <div class="metric-item"><strong>Average match score</strong><span>{{ overall_prediction_summary.average_match_score|floatformat:0 }}%</span></div>
+        <div class="metric-item"><strong>Average eligibility</strong><span>{{ overall_prediction_summary.average_eligibility_probability|floatformat:0 }}%</span></div>
+        <div class="metric-item"><strong>Top scholarship</strong><span>{% if overall_prediction_summary.top_scholarship %}{{ overall_prediction_summary.top_scholarship.name }}{% else %}—{% endif %}</span></div>
+      </div>
+
+      {% if overall_prediction_summary.overall_predictions %}
+        <div class="rec-list" style="margin-top: 12px;">
+          {% for item in overall_prediction_summary.overall_predictions %}
+            <div class="rec-item">
+              <div class="rec-title">{{ item.scholarship.name }}</div>
+              <div class="muted" style="margin-top: 4px;">{{ item.prediction_label }} · {{ item.match_count }} profile match{{ item.match_count|pluralize }}</div>
+              <div class="metric-list" style="margin-top: 10px;">
+                <div class="metric-item"><strong>Average match</strong><span>{{ item.avg_match_score|floatformat:0 }}%</span></div>
+                <div class="metric-item"><strong>Average eligibility</strong><span>{{ item.avg_eligibility_probability|floatformat:0 }}%</span></div>
+                <div class="metric-item"><strong>Average success</strong><span>{{ item.avg_success_probability|floatformat:0 }}%</span></div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <h3 style="margin-top: 18px;">Your top matches</h3>
       {% if recommendations %}
         <div class="rec-list">
           {% for rec in recommendations %}

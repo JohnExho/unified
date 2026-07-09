@@ -60,6 +60,7 @@
             <div class="nav-text"><h3>Notifications</h3><p>Updates & alerts</p></div>
           </a>
         </li>
+        {% if user_role == 'admin' or user_role == 'superadmin' or request.user.is_superuser %}
         <li>
           <a href="{% url 'scholarshipmanagement:ml_model' %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -70,6 +71,7 @@
             <div class="nav-text"><h3>ML Model</h3><p>AI scholarship matching</p></div>
           </a>
         </li>
+        {% endif %}
         <li>
           <a href="{% url 'scholarshipmanagement:sm_settings' %}">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

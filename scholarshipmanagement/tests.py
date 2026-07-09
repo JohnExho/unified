@@ -1,11 +1,14 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.core.management import call_command
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
-from .models import StudentProfile
+from .models import Scholarship, StudentProfile
+from .ml_recommendation import build_overall_prediction_summary
 
 
 class ScholarshipSeederTests(TestCase):
@@ -21,6 +24,15 @@ class ScholarshipSeederTests(TestCase):
 class ScholarshipMlModelPageTests(TestCase):
     def test_ml_model_page_route_is_available(self):
         self.assertEqual(reverse("scholarshipmanagement:ml_model"), "/scholarshipmanagement/ml-model/")
+
+    def test_ml_model_page_requires_admin_access(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="studentuser", password="secret123")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("scholarshipmanagement:ml_model"))
+
+        self.assertEqual(response.status_code, 404)
 
 
 class StudentProfileMlReadinessTests(TestCase):
@@ -44,3 +56,36 @@ class StudentProfileMlReadinessTests(TestCase):
         profile = StudentProfile.objects.create(user=user)
 
         self.assertFalse(profile.is_ml_ready)
+
+    def test_build_overall_prediction_summary_returns_aggregate_metrics(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="mluser3", password="secret123")
+        profile = StudentProfile.objects.create(
+            user=user,
+            full_name="Jane Doe",
+            course_strand="BSCS",
+            gpa=3.5,
+            annual_family_income=Decimal("200000"),
+            province="Cebu",
+        )
+        scholarship = Scholarship.objects.create(
+            name="Aggregate Test Scholarship",
+            description="Test scholarship",
+            category="merit_based",
+            scholarship_type="government",
+            status="published",
+            award_amount=Decimal("10000.00"),
+            number_of_slots=5,
+            renewable=False,
+            eligibility_rules={"min_gpa": 3.0},
+            required_documents=["government_id"],
+            application_start_date=timezone.now() - timedelta(days=1),
+            application_end_date=timezone.now() + timedelta(days=10),
+        )
+
+        summary = build_overall_prediction_summary([profile], [scholarship])
+
+        self.assertEqual(summary["total_profiles"], 1)
+        self.assertEqual(summary["total_scholarships"], 1)
+        self.assertEqual(summary["top_scholarship"], scholarship)
+        self.assertGreaterEqual(summary["average_match_score"], 0)

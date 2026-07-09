@@ -7,6 +7,76 @@ from pathlib import Path
 MODEL_DIR = Path(__file__).resolve().parent / "ml_models"
 
 
+def build_overall_prediction_summary(profiles, scholarships):
+    """Build an aggregate prediction summary across multiple profiles and scholarships."""
+    profiles = list(profiles or [])
+    scholarships = list(scholarships or [])
+
+    valid_profiles = [profile for profile in profiles if profile.is_ml_ready]
+    valid_scholarships = [scholarship for scholarship in scholarships if scholarship.is_accepting_applications]
+
+    if not valid_profiles or not valid_scholarships:
+        return {
+            'total_profiles': len(profiles),
+            'ml_ready_profiles': len(valid_profiles),
+            'total_scholarships': len(scholarships),
+            'average_match_score': 0.0,
+            'average_eligibility_probability': 0.0,
+            'average_success_probability': 0.0,
+            'top_scholarship': None,
+            'overall_predictions': [],
+        }
+
+    scholarship_totals = {}
+    score_samples = []
+
+    for profile in valid_profiles:
+        for scholarship in valid_scholarships:
+            score_data = compute_match_score(profile, scholarship)
+            if score_data['eligibility_probability'] <= 0:
+                continue
+
+            score_samples.append(score_data)
+            entry = scholarship_totals.setdefault(scholarship.id, {
+                'scholarship': scholarship,
+                'match_total': 0.0,
+                'eligibility_total': 0.0,
+                'success_total': 0.0,
+                'count': 0,
+            })
+            entry['match_total'] += score_data['match_score']
+            entry['eligibility_total'] += score_data['eligibility_probability'] * 100
+            entry['success_total'] += score_data['success_probability'] * 100
+            entry['count'] += 1
+
+    overall_predictions = []
+    for entry in scholarship_totals.values():
+        count = entry['count'] or 1
+        overall_predictions.append({
+            'scholarship': entry['scholarship'],
+            'avg_match_score': round(entry['match_total'] / count, 1),
+            'avg_eligibility_probability': round(entry['eligibility_total'] / count, 1),
+            'avg_success_probability': round(entry['success_total'] / count, 1),
+            'prediction_label': 'High demand' if (entry['match_total'] / count) >= 70 else 'Steady interest',
+            'match_count': count,
+        })
+
+    overall_predictions.sort(key=lambda item: (-item['avg_match_score'], -item['avg_success_probability']))
+
+    top_scholarship = overall_predictions[0]['scholarship'] if overall_predictions else None
+
+    return {
+        'total_profiles': len(profiles),
+        'ml_ready_profiles': len(valid_profiles),
+        'total_scholarships': len(scholarships),
+        'average_match_score': round(sum(item['match_score'] for item in score_samples) / len(score_samples), 1) if score_samples else 0.0,
+        'average_eligibility_probability': round(sum(item['eligibility_probability'] for item in score_samples) / len(score_samples) * 100, 1) if score_samples else 0.0,
+        'average_success_probability': round(sum(item['success_probability'] for item in score_samples) / len(score_samples) * 100, 1) if score_samples else 0.0,
+        'top_scholarship': top_scholarship,
+        'overall_predictions': overall_predictions[:5],
+    }
+
+
 def compute_match_score(profile, scholarship) -> dict:
     """
     Rule-enhanced match scoring between a student profile and a scholarship.
