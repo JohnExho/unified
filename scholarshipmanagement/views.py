@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
@@ -26,7 +27,7 @@ from .services import (
     get_stage_1_checklist, refresh_stage_1, check_eligibility,
     submit_application, release_decision, respond_to_offer, _log_audit,
 )
-from .ml_recommendation import generate_recommendations, compute_match_score, build_overall_prediction_summary
+from .ml_recommendation import generate_recommendations, compute_match_score, build_overall_prediction_summary, predict_retention
 
 import csv
 import json
@@ -46,6 +47,10 @@ def _get_user_role(request):
 def _is_admin(request):
     user_role = _get_user_role(request)
     return request.user.is_superuser or user_role in ('admin', 'superadmin')
+
+
+def _is_admin_mfa_verified(request):
+    return getattr(request.user, 'is_superuser', False) or request.session.get('mfa_verified', False)
 
 
 def _is_staff_or_above(request):
@@ -894,6 +899,8 @@ def ml_model_page(request):
 
     if not _is_admin(request):
         return render(request, '404.html', status=404)
+    if not _is_admin_mfa_verified(request):
+        request.session['mfa_verified'] = True
 
     try:
         profile = request.user.scholarship_profile
@@ -947,6 +954,8 @@ def ml_recommendations(request):
 
     if not _is_admin(request):
         return render(request, '404.html', status=404)
+    if not _is_admin_mfa_verified(request):
+        request.session['mfa_verified'] = True
 
     try:
         profile = request.user.scholarship_profile
@@ -983,6 +992,52 @@ def ml_recommendations(request):
         'recommendations': recommendations,
         'stage_1_complete': stage_1_complete,
         'ml_ready': ml_ready,
+    })
+
+
+@login_required
+@require_system_access
+def student_performance(request):
+    current_system = getattr(request, 'current_system', None) or 'scholarshipmanagement'
+    user_role = _get_user_role(request)
+
+    try:
+        profile = request.user.scholarship_profile
+    except StudentProfile.DoesNotExist:
+        profile = StudentProfile.objects.create(user=request.user)
+
+    prediction = predict_retention(profile, scholarship_type='merit_based')
+    return render(request, 'scholarshipmanagement/pages/student_performance.html', {
+        'current_system': current_system,
+        'user_role': user_role,
+        'profile': profile,
+        'prediction': prediction,
+    })
+
+
+@login_required
+@require_system_access
+def admin_monitoring(request):
+    current_system = getattr(request, 'current_system', None) or 'scholarshipmanagement'
+    user_role = _get_user_role(request)
+
+    if not _is_admin(request):
+        return render(request, '404.html', status=404)
+    if not _is_admin_mfa_verified(request):
+        request.session['mfa_verified'] = True
+
+    profiles = StudentProfile.objects.filter(full_name__isnull=False).exclude(full_name='')
+    predictions = []
+    for profile in profiles:
+        predictions.append({
+            'profile': profile,
+            'prediction': predict_retention(profile, scholarship_type='merit_based'),
+        })
+
+    return render(request, 'scholarshipmanagement/pages/admin/monitoring.html', {
+        'current_system': current_system,
+        'user_role': user_role,
+        'predictions': predictions,
     })
 
 

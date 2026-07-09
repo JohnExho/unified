@@ -47,6 +47,19 @@ class StudentProfile(models.Model):
         validators=[MinValueValidator(0.0), MaxValueValidator(100.0)]
     )
 
+    # Retention / performance indicators
+    failed_subjects = models.PositiveIntegerField(default=0)
+    units_enrolled = models.PositiveIntegerField(default=0)
+    attendance_rate = models.FloatField(
+        default=0.0,
+        validators=[MinValueValidator(0.0), MaxValueValidator(100.0)]
+    )
+    socioeconomic_status = models.CharField(
+        max_length=20,
+        choices=[('low', 'Low'), ('middle', 'Middle'), ('high', 'High')],
+        default='middle'
+    )
+
     # Location
     province = models.CharField(max_length=100, blank=True)
     location_coords = models.CharField(max_length=100, blank=True)

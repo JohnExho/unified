@@ -1,7 +1,15 @@
+import re
+
 from django import forms
+from django.core.validators import RegexValidator
 from .models import (
     StudentProfile, Scholarship, Application, Evaluation,
     Document, RenewalApplication,
+)
+
+phone_validator = RegexValidator(
+    regex=r'^\+?\d{10,15}$',
+    message='Enter a valid phone number with 10-15 digits.',
 )
 
 
@@ -25,6 +33,27 @@ class StudentProfileForm(forms.ModelForm):
             'annual_family_income': forms.NumberInput(attrs={'class': 'form-input', 'step': '1000', 'placeholder': 'Annual family income in PHP'}),
             'province': forms.TextInput(attrs={'class': 'form-input'}),
         }
+
+    def clean_full_name(self):
+        value = self.cleaned_data.get('full_name', '')
+        return re.sub(r'<[^>]+>', '', value).strip()
+
+    def clean_address(self):
+        value = self.cleaned_data.get('address', '')
+        return re.sub(r'<[^>]+>', '', value).strip()
+
+    def clean_contact_number(self):
+        value = self.cleaned_data.get('contact_number', '')
+        phone_validator(value)
+        return value
+
+    def clean_course_strand(self):
+        value = self.cleaned_data.get('course_strand', '')
+        return re.sub(r'<[^>]+>', '', value).strip()
+
+    def clean_province(self):
+        value = self.cleaned_data.get('province', '')
+        return re.sub(r'<[^>]+>', '', value).strip()
 
 
 class DocumentUploadForm(forms.ModelForm):
@@ -69,6 +98,14 @@ class ApplicationForm(forms.ModelForm):
             'motivation_essay': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 5, 'placeholder': 'Tell us why you deserve this scholarship...'}),
             'achievements': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 4, 'placeholder': 'List relevant academic and extracurricular achievements...'}),
         }
+
+    def clean_motivation_essay(self):
+        value = self.cleaned_data.get('motivation_essay', '')
+        return re.sub(r'<[^>]+>', '', value).strip()
+
+    def clean_achievements(self):
+        value = self.cleaned_data.get('achievements', '')
+        return re.sub(r'<[^>]+>', '', value).strip()
 
 
 class EvaluationForm(forms.ModelForm):

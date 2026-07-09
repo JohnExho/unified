@@ -4,7 +4,55 @@ Uses a simple scoring/ranking approach with sklearn for ranking by match.
 """
 from pathlib import Path
 
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
 MODEL_DIR = Path(__file__).resolve().parent / "ml_models"
+
+
+def predict_retention(profile, scholarship_type='general'):
+    """Classify a student into Retained / At-Risk / Not Retained using thesis-aligned inputs."""
+    features = np.array([
+        [
+            float(profile.gpa or 0.0),
+            float(getattr(profile, 'failed_subjects', 0) or 0),
+            float(getattr(profile, 'units_enrolled', 0) or 0),
+            float(getattr(profile, 'attendance_rate', 0) or 0),
+            1.0 if scholarship_type == 'merit_based' else 0.0,
+            1.0 if getattr(profile, 'socioeconomic_status', '') == 'low' else 0.0,
+        ]
+    ])
+
+    X_train = np.array([
+        [3.8, 0, 24, 92, 1, 0],
+        [3.5, 1, 21, 86, 1, 0],
+        [2.8, 2, 18, 74, 1, 1],
+        [2.3, 3, 16, 63, 0, 1],
+        [1.8, 4, 12, 48, 0, 1],
+        [1.4, 5, 9, 35, 0, 1],
+    ])
+    y_train = np.array(['Retained', 'Retained', 'At-Risk', 'At-Risk', 'Not Retained', 'Not Retained'])
+
+    tree_model = DecisionTreeClassifier(max_depth=3, random_state=7)
+    tree_model.fit(X_train, y_train)
+
+    logistic_model = make_pipeline(StandardScaler(), LogisticRegression(max_iter=2000, random_state=7))
+    logistic_model.fit(X_train, y_train)
+
+    tree_prob = tree_model.predict_proba(features)[0]
+    logistic_prob = logistic_model.predict_proba(features)[0]
+    classes = tree_model.classes_
+    combined = np.zeros(len(classes))
+    for idx, label in enumerate(classes):
+        combined[idx] = (tree_prob[idx] + logistic_prob[idx]) / 2.0
+
+    label = classes[np.argmax(combined)]
+    confidence = round(float(np.max(combined)) * 100, 1)
+
+    return {'label': label, 'confidence': confidence}
 
 
 def build_overall_prediction_summary(profiles, scholarships):

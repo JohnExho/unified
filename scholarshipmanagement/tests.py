@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import Scholarship, StudentProfile
-from .ml_recommendation import build_overall_prediction_summary
+from .ml_recommendation import build_overall_prediction_summary, predict_retention
 
 
 class ScholarshipSeederTests(TestCase):
@@ -31,6 +31,20 @@ class ScholarshipMlModelPageTests(TestCase):
         self.client.force_login(user)
 
         response = self.client.get(reverse("scholarshipmanagement:ml_model"))
+
+        self.assertEqual(response.status_code, 404)
+
+
+class AdminMonitoringTests(TestCase):
+    def test_admin_monitoring_route_is_available(self):
+        self.assertEqual(reverse("scholarshipmanagement:admin_monitoring"), "/scholarshipmanagement/admin/monitoring/")
+
+    def test_admin_monitoring_requires_admin_access(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="studentuser2", password="secret123")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("scholarshipmanagement:admin_monitoring"))
 
         self.assertEqual(response.status_code, 404)
 
@@ -89,3 +103,24 @@ class StudentProfileMlReadinessTests(TestCase):
         self.assertEqual(summary["total_scholarships"], 1)
         self.assertEqual(summary["top_scholarship"], scholarship)
         self.assertGreaterEqual(summary["average_match_score"], 0)
+
+    def test_predict_retention_returns_one_of_expected_labels(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="mluser4", password="secret123")
+        profile = StudentProfile.objects.create(
+            user=user,
+            full_name="John Smith",
+            course_strand="BSIT",
+            gpa=3.2,
+            annual_family_income=Decimal("180000"),
+            province="Cebu",
+            failed_subjects=2,
+            units_enrolled=24,
+            attendance_rate=78.0,
+            socioeconomic_status='low',
+        )
+
+        prediction = predict_retention(profile, scholarship_type='merit_based')
+
+        self.assertIn(prediction['label'], ['Retained', 'At-Risk', 'Not Retained'])
+        self.assertGreaterEqual(prediction['confidence'], 0)

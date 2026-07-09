@@ -1,0 +1,56 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}My Performance - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/dashboard.css' %}">
+<style>
+  .perf-shell { display: grid; gap: 18px; padding: 28px; }
+  .perf-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05); }
+  .perf-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; }
+  .metric-list { display: grid; gap: 10px; margin-top: 12px; }
+  .metric-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 10px; background: #f8fafc; color: #334155; }
+  .pill { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; font-size: 0.78rem; font-weight: 600; }
+  @media (max-width: 900px) { .perf-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="perf-shell">
+    <div class="top-bar">
+      <div class="page-header">
+        <h1>My Performance</h1>
+        <p>View your scholarship performance summary and current retention outlook.</p>
+      </div>
+    </div>
+
+    <div class="perf-grid">
+      <div class="perf-card">
+        <span class="pill">Performance Overview</span>
+        <h2 style="margin-top: 10px;">{{ prediction.label }}</h2>
+        <p style="margin-top: 8px; color: #64748b;">Confidence: {{ prediction.confidence|floatformat:0 }}%</p>
+        <div class="metric-list">
+          <div class="metric-item"><strong>GWA</strong><span>{{ profile.gpa|default:'—' }}</span></div>
+          <div class="metric-item"><strong>Annual Income</strong><span>₱{{ profile.annual_family_income|default:'—' }}</span></div>
+          <div class="metric-item"><strong>Province</strong><span>{{ profile.province|default:'—' }}</span></div>
+          <div class="metric-item"><strong>Course</strong><span>{{ profile.course_strand|default:'—' }}</span></div>
+        </div>
+      </div>
+
+      <div class="perf-card">
+        <h3>Current status</h3>
+        <ul style="margin: 10px 0 0 18px; line-height: 1.7; color: #64748b;">
+          <li>Application activity is tracked through the scholarship system.</li>
+          <li>Performance monitoring is updated from your profile and scholarship activity.</li>
+          <li>Admin analytics use the same predictive model for oversight.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

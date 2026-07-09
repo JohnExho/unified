@@ -1,0 +1,42 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}Monitoring - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/dashboard.css' %}">
+<style>
+  .monitor-shell { display: grid; gap: 18px; padding: 28px; }
+  .monitor-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05); }
+</style>
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <div class="monitor-shell">
+    <div class="top-bar">
+      <div class="page-header">
+        <h1>Admin Monitoring</h1>
+        <p>Review retention predictions and identify students who may need intervention.</p>
+      </div>
+    </div>
+
+    <div class="monitor-card">
+      <table class="data-table">
+        <thead>
+          <tr><th>Student</th><th>Prediction</th><th>Confidence</th><th>Course</th></tr>
+        </thead>
+        <tbody>
+          {% for item in predictions %}
+          <tr>
+            <td>{{ item.profile.full_name|default:item.profile.user.username }}</td>
+            <td><span class="badge badge--success">{{ item.prediction.label }}</span></td>
+            <td>{{ item.prediction.confidence|floatformat:0 }}%</td>
+            <td>{{ item.profile.course_strand|default:'—' }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="empty-cell">No monitoring data available.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+{% endblock %}

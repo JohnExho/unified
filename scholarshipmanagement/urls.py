@@ -63,6 +63,8 @@ urlpatterns = [
     # ML Recommendations
     path('recommendations/', views.ml_recommendations, name='ml_recommendations'),
     path('ml-model/', views.ml_model_page, name='ml_model'),
+    path('performance/', views.student_performance, name='student_performance'),
+    path('admin/monitoring/', views.admin_monitoring, name='admin_monitoring'),
 
     # Settings
     path('settings/', views.settings, name='sm_settings'),
