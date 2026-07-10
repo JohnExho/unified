@@ -13,7 +13,7 @@ from scholarshipmanagement.models import (
 
 
 class Command(BaseCommand):
-    help = "Seed Scholarship Management with sample scholarships, profiles, and applications."
+    help = "Seed Scholarship Management with renewal-focused retention sample data."
 
     def _get_seed_user(self):
         User = get_user_model()
@@ -67,97 +67,32 @@ class Command(BaseCommand):
             validation_checks_passed=True,
         )
 
-        # Create scholarships
-        scholarships_data = [
-            {
-                "name": "DOST-SEI Merit Scholarship",
-                "description": "Full scholarship for science and engineering students with outstanding academic performance.",
-                "category": "merit_based",
-                "scholarship_type": "government",
-                "award_amount": Decimal("60000.00"),
-                "number_of_slots": 50,
-                "renewable": True,
-                "eligibility_rules": {"min_gpa": 3.5, "required_course": ["BSCS", "BSIT", "BSECE"]},
-                "required_documents": ["government_id", "transcript"],
-                "status": "published",
-                "application_start_date": today - timedelta(days=5),
-                "application_end_date": today + timedelta(days=25),
-            },
-            {
-                "name": "Ayala Foundation Need-Based Grant",
-                "description": "Financial assistance for deserving students from low-income families.",
-                "category": "need_based",
-                "scholarship_type": "corporate",
-                "award_amount": Decimal("40000.00"),
-                "number_of_slots": 30,
-                "renewable": False,
-                "eligibility_rules": {"max_annual_income": 250000},
-                "required_documents": ["government_id", "transcript", "income_proof"],
-                "status": "published",
-                "application_start_date": today - timedelta(days=10),
-                "application_end_date": today + timedelta(days=20),
-            },
-            {
-                "name": "SMC Talent Arts Scholarship",
-                "description": "For students with exceptional talent in visual arts, music, or cultural performance.",
-                "category": "talent_based",
-                "scholarship_type": "private",
-                "award_amount": Decimal("30000.00"),
-                "number_of_slots": 15,
-                "renewable": False,
-                "eligibility_rules": {},
-                "required_documents": ["government_id", "transcript"],
-                "status": "published",
-                "application_start_date": today - timedelta(days=3),
-                "application_end_date": today + timedelta(days=30),
-            },
-            {
-                "name": "LGU Zambales Province Scholarship",
-                "description": "Scholarship exclusively for residents of Zambales province.",
-                "category": "need_based",
-                "scholarship_type": "government",
-                "award_amount": Decimal("25000.00"),
-                "number_of_slots": 100,
-                "renewable": True,
-                "eligibility_rules": {"required_province": ["Zambales"]},
-                "required_documents": ["government_id", "income_proof"],
-                "status": "published",
-                "application_start_date": today - timedelta(days=15),
-                "application_end_date": today + timedelta(days=15),
-            },
-            {
-                "name": "Historical Archives Grant (Closed)",
-                "description": "Closed scholarship for records.",
-                "category": "merit_based",
-                "scholarship_type": "organization",
-                "award_amount": Decimal("20000.00"),
-                "number_of_slots": 10,
-                "renewable": False,
-                "eligibility_rules": {},
-                "required_documents": ["government_id"],
-                "status": "closed",
-                "application_start_date": today - timedelta(days=60),
-                "application_end_date": today - timedelta(days=30),
-            },
-        ]
-
-        scholarships = []
-        for data in scholarships_data:
-            s = Scholarship.objects.create(
-                admin=user,
-                created_by=user,
-                **data
-            )
-            scholarships.append(s)
-            self.stdout.write(f"  Created scholarship: {s.name}")
+        # Create a single renewal cycle record used for retention evaluation.
+        renewal_cycle = Scholarship.objects.create(
+            admin=user,
+            created_by=user,
+            name="Kolehiyo ng Subic Renewal Cycle 2026",
+            description="Internal renewal cycle for continuing scholars and passing-grade retention checks.",
+            category="merit_based",
+            scholarship_type="government",
+            award_amount=Decimal("1.00"),
+            number_of_slots=9999,
+            renewable=True,
+            eligibility_rules={"renewal_only": True, "min_gpa": 2.0},
+            required_documents=["transcript"],
+            status="published",
+            application_start_date=today - timedelta(days=5),
+            application_end_date=today + timedelta(days=25),
+        )
+        self.stdout.write(f"  Created renewal cycle: {renewal_cycle.name}")
 
         # Create a sample application
         app = Application.objects.create(
             student=user,
-            scholarship=scholarships[0],
+            scholarship=renewal_cycle,
             status='under_review',
-            motivation_essay="I have always been passionate about computer science and wish to contribute to Philippine technology sector.",
-            achievements="Dean's List, ICPC Regional Finalist, Open-source contributor.",
+            motivation_essay="I am requesting scholarship renewal and confirming compliance with passing-grade requirements.",
+            achievements="Maintained passing grades and completed required units this term.",
             submitted_at=today - timedelta(days=2),
         )
 
@@ -176,20 +111,20 @@ class Command(BaseCommand):
         Notification.objects.create(
             recipient=user,
             notification_type='application_status',
-            title='Application Under Review',
-            message=f'Your application for "{scholarships[0].name}" is under review.',
+            title='Renewal Assessment In Progress',
+            message=f'Your renewal assessment for "{renewal_cycle.name}" is under review.',
             related_application=app,
-            related_scholarship=scholarships[0],
+            related_scholarship=renewal_cycle,
         )
 
         Notification.objects.create(
             recipient=user,
             notification_type='stage_unlocked',
-            title='Stage 2 Unlocked!',
-            message='Your profile is complete. You can now browse and apply for scholarships.',
+            title='Renewal Profile Complete',
+            message='Your profile is complete. You can now proceed with renewal retention review.',
         )
 
         self.stdout.write(self.style.SUCCESS(
             f"\nScholarship Management seeded successfully. "
-            f"Created {len(scholarships)} scholarships, 1 application, 1 evaluation."
+            f"Created 1 renewal cycle, 1 renewal application, 1 evaluation."
         ))
