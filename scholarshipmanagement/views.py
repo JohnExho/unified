@@ -715,8 +715,8 @@ def reports(request):
         'accepted': Application.objects.filter(status__in=['accepted', 'offer_accepted']).count(),
         'rejected': Application.objects.filter(status='rejected').count(),
         'waitlisted': Application.objects.filter(status='waitlisted').count(),
-        'avg_eval_score': Evaluation.objects.filter(total_score__isnull=False).aggregate(
-            avg=Avg('total_score')
+        'avg_eval_score': Evaluation.objects.filter(prediction_confidence__isnull=False).aggregate(
+            avg=Avg('prediction_confidence')
         )['avg'],
         'recent_audit_logs': AuditLog.objects.order_by('-created_at')[:20],
     }
