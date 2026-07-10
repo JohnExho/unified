@@ -109,19 +109,15 @@ class ApplicationForm(forms.ModelForm):
 
 
 class EvaluationForm(forms.ModelForm):
+    """Simplified evaluation form for renewal decisions based on retention prediction."""
     class Meta:
         model = Evaluation
         fields = [
-            'academic_score', 'financial_need_score', 'interview_score',
-            'extracurricular_score', 'recommendation', 'reviewer_comments',
+            'recommendation', 'reviewer_comments',
         ]
         widgets = {
-            'academic_score': forms.NumberInput(attrs={'class': 'form-input score-input', 'min': 0, 'max': 100, 'step': '0.1'}),
-            'financial_need_score': forms.NumberInput(attrs={'class': 'form-input score-input', 'min': 0, 'max': 100, 'step': '0.1'}),
-            'interview_score': forms.NumberInput(attrs={'class': 'form-input score-input', 'min': 0, 'max': 100, 'step': '0.1'}),
-            'extracurricular_score': forms.NumberInput(attrs={'class': 'form-input score-input', 'min': 0, 'max': 100, 'step': '0.1'}),
             'recommendation': forms.Select(attrs={'class': 'form-select'}),
-            'reviewer_comments': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 4}),
+            'reviewer_comments': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 4, 'placeholder': 'Optional: reason for decision or override justification'}),
         }
 
 

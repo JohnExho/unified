@@ -5,6 +5,15 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 
 
+# =====================================================================
+# SINGLE-SCHOOL SCHOLARSHIP MANAGEMENT SYSTEM
+# =====================================================================
+# This system manages scholarships for a single institution (not multi-tenant).
+# Students complete profiles → apply for scholarships → renewals evaluated via
+# retention prediction model (Retain/At-Risk/Failed) and staff review.
+# =====================================================================
+
+
 # ----------------------
 # Student Profile (Stage 1)
 # ----------------------
@@ -305,15 +314,15 @@ class Application(models.Model):
 # Evaluations
 # ----------------------
 class Evaluation(models.Model):
+    """Simplified evaluation for single-school renewal assessment (not multi-tenant)."""
     STATUS_CHOICES = [
         ('pending', 'Pending Review'),
-        ('in_progress', 'In Progress'),
         ('completed', 'Completed'),
     ]
     RECOMMENDATION_CHOICES = [
-        ('accept', 'Accept'),
-        ('reject', 'Reject'),
-        ('waitlist', 'Waitlist'),
+        ('retain', 'Retain'),
+        ('at_risk', 'At-Risk'),
+        ('failed', 'Failed'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -330,65 +339,30 @@ class Evaluation(models.Model):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
 
-    # Weighted rubric scores (0–100 each)
-    academic_score = models.FloatField(
-        null=True, blank=True,
+    # Simplified: overall assessment for renewal (uses ML prediction as baseline)
+    prediction_label = models.CharField(
+        max_length=20, blank=True,
+        help_text='Retention prediction from ML model (Retain/At-Risk/Failed)'
+    )
+    prediction_confidence = models.FloatField(
+        default=0.0,
         validators=[MinValueValidator(0.0), MaxValueValidator(100.0)],
-        help_text='Academic performance (0-100)'
+        help_text='ML model confidence (0-100)'
     )
-    financial_need_score = models.FloatField(
-        null=True, blank=True,
-        validators=[MinValueValidator(0.0), MaxValueValidator(100.0)],
-        help_text='Financial need assessment (0-100)'
-    )
-    interview_score = models.FloatField(
-        null=True, blank=True,
-        validators=[MinValueValidator(0.0), MaxValueValidator(100.0)],
-        help_text='Interview score (0-100)'
-    )
-    extracurricular_score = models.FloatField(
-        null=True, blank=True,
-        validators=[MinValueValidator(0.0), MaxValueValidator(100.0)],
-        help_text='Extracurricular activities (0-100)'
-    )
-    total_score = models.FloatField(
-        null=True, blank=True,
-        validators=[MinValueValidator(0.0), MaxValueValidator(100.0)]
-    )
-
     recommendation = models.CharField(
         max_length=20,
         choices=RECOMMENDATION_CHOICES,
-        null=True, blank=True
+        null=True, blank=True,
+        help_text='Final decision (may override prediction if needed)'
     )
-    reviewer_comments = models.TextField(blank=True)
+    reviewer_comments = models.TextField(blank=True, help_text='Override reason or additional notes')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def compute_total_score(self):
-        """Compute weighted total: Academic 40%, Financial 30%, Interview 20%, Extracurricular 10%."""
-        weights = {
-            'academic': 0.40,
-            'financial': 0.30,
-            'interview': 0.20,
-            'extracurricular': 0.10,
-        }
-        scores = {
-            'academic': self.academic_score,
-            'financial': self.financial_need_score,
-            'interview': self.interview_score,
-            'extracurricular': self.extracurricular_score,
-        }
-        total_weight = sum(w for k, w in weights.items() if scores[k] is not None)
-        if total_weight == 0:
-            return None
-        weighted_sum = sum(
-            scores[k] * w for k, w in weights.items() if scores[k] is not None
-        )
-        return round(weighted_sum / total_weight, 2)
-
     def save(self, *args, **kwargs):
-        self.total_score = self.compute_total_score()
+        # Auto-set recommendation to match prediction if not overridden
+        if not self.recommendation and self.prediction_label:
+            self.recommendation = self.prediction_label
         super().save(*args, **kwargs)
 
     def __str__(self):

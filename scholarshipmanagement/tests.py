@@ -122,5 +122,5 @@ class StudentProfileMlReadinessTests(TestCase):
 
         prediction = predict_retention(profile, scholarship_type='merit_based')
 
-        self.assertIn(prediction['label'], ['Retained', 'At-Risk', 'Not Retained'])
+        self.assertIn(prediction['label'], ['Retain', 'At-Risk', 'Failed'])
         self.assertGreaterEqual(prediction['confidence'], 0)

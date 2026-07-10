@@ -161,17 +161,15 @@ class Command(BaseCommand):
             submitted_at=today - timedelta(days=2),
         )
 
-        # Create evaluation
+        # Create evaluation (simplified for single-school renewal)
         Evaluation.objects.create(
             application=app,
             reviewer=user,
             status='completed',
-            academic_score=88.0,
-            financial_need_score=74.0,
-            interview_score=82.0,
-            extracurricular_score=70.0,
-            recommendation='accept',
-            reviewer_comments='Strong academic background and clear motivation.',
+            prediction_label='Retain',
+            prediction_confidence=85.5,
+            recommendation='retain',
+            reviewer_comments='Strong academic background and clear motivation. Recommended for retention.',
         )
 
         # Notification

@@ -29,8 +29,8 @@ class ApplicationAdmin(admin.ModelAdmin):
 
 @admin.register(Evaluation)
 class EvaluationAdmin(admin.ModelAdmin):
-    list_display = ('application', 'reviewer', 'status', 'total_score', 'recommendation', 'updated_at')
-    list_filter = ('status', 'recommendation')
+    list_display = ('application', 'reviewer', 'status', 'prediction_label', 'recommendation', 'updated_at')
+    list_filter = ('status', 'recommendation', 'prediction_label')
     search_fields = ('application__student__username', 'reviewer__username')
 
 

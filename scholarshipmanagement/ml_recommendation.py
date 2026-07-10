@@ -1,6 +1,13 @@
 """
-ML-based scholarship recommendation engine.
-Uses a simple scoring/ranking approach with sklearn for ranking by match.
+ML-based retention prediction and scholarship recommendation for single-school system.
+
+Primary model: predict_retention(profile) → classifies existing scholars into
+  Retain / At-Risk / Failed (for renewal assessment).
+
+Secondary (optional): generate_recommendations(profile, scholarships) → ranks
+  scholarships by match score (used only for student browsing).
+
+This is a simplified single-institution system (not multi-tenant).
 """
 from pathlib import Path
 
@@ -14,7 +21,7 @@ MODEL_DIR = Path(__file__).resolve().parent / "ml_models"
 
 
 def predict_retention(profile, scholarship_type='general'):
-    """Classify a student into Retained / At-Risk / Not Retained using thesis-aligned inputs."""
+    """Classify a student into Retain / At-Risk / Failed using thesis-aligned inputs for renewal classification."""
     features = np.array([
         [
             float(profile.gpa or 0.0),
@@ -34,7 +41,7 @@ def predict_retention(profile, scholarship_type='general'):
         [1.8, 4, 12, 48, 0, 1],
         [1.4, 5, 9, 35, 0, 1],
     ])
-    y_train = np.array(['Retained', 'Retained', 'At-Risk', 'At-Risk', 'Not Retained', 'Not Retained'])
+    y_train = np.array(['Retain', 'Retain', 'At-Risk', 'At-Risk', 'Failed', 'Failed'])
 
     tree_model = DecisionTreeClassifier(max_depth=3, random_state=7)
     tree_model.fit(X_train, y_train)

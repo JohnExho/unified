@@ -568,6 +568,7 @@ def staff_applications(request):
 @require_system_access
 @require_system_role(['staff', 'reviewer', 'admin', 'superadmin'])
 def evaluate_application(request, application_id):
+    """Simplified evaluation for single-school renewal: use ML prediction, override if needed."""
     current_system = getattr(request, 'current_system', None) or 'scholarshipmanagement'
     user_role = _get_user_role(request)
     application = get_object_or_404(Application, id=application_id)
@@ -577,15 +578,24 @@ def evaluate_application(request, application_id):
         application.status = 'under_review'
         application.save(update_fields=['status'])
 
-    evaluation, _ = Evaluation.objects.get_or_create(
-        application=application,
-        defaults={'reviewer': request.user, 'status': 'in_progress'}
-    )
-
     try:
         profile = application.student.scholarship_profile
     except StudentProfile.DoesNotExist:
         profile = None
+
+    # Get retention prediction for this student
+    prediction = predict_retention(profile, scholarship_type='merit_based') if profile else None
+
+    evaluation, created = Evaluation.objects.get_or_create(
+        application=application,
+        defaults={'reviewer': request.user, 'status': 'pending'}
+    )
+
+    # Auto-populate prediction on first view
+    if created and prediction:
+        evaluation.prediction_label = prediction['label']
+        evaluation.prediction_confidence = prediction['confidence']
+        evaluation.save(update_fields=['prediction_label', 'prediction_confidence'])
 
     if request.method == 'POST':
         form = EvaluationForm(request.POST, instance=evaluation)
@@ -595,9 +605,9 @@ def evaluate_application(request, application_id):
             ev.status = 'completed'
             ev.save()
             _log_audit(request.user, 'review', 'Evaluation', ev.id,
-                       f"Evaluated application {application_id}",
+                       f"Evaluated {application.student.username} renewal: {ev.recommendation}",
                        get_client_ip(request), get_user_agent(request))
-            messages.success(request, 'Evaluation saved.')
+            messages.success(request, f"Renewal decision saved: {ev.recommendation.upper()}")
             return redirect('scholarshipmanagement:staff_applications')
         else:
             messages.error(request, 'Please correct the errors.')
@@ -610,6 +620,7 @@ def evaluate_application(request, application_id):
         'application': application,
         'profile': profile,
         'evaluation': evaluation,
+        'prediction': prediction,
         'form': form,
     })
 
