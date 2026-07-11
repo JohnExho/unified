@@ -1,6 +1,7 @@
 import re
 
 from django import forms
+from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
 from .models import (
     StudentProfile, Scholarship, Application, Evaluation,
@@ -131,3 +132,59 @@ class RenewalApplicationForm(forms.ModelForm):
             'progress_report': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 4}),
             'behavioral_evaluation': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3}),
         }
+
+
+class StudentIntakeForm(forms.Form):
+    username = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-input'}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-input'}))
+    password = forms.CharField(min_length=8, widget=forms.PasswordInput(attrs={'class': 'form-input'}))
+
+    full_name = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'form-input'}))
+    contact_number = forms.CharField(max_length=20, widget=forms.TextInput(attrs={'class': 'form-input', 'placeholder': '+639171234567'}))
+    address = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-textarea', 'rows': 2}))
+    school_university = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'form-input'}))
+    course_strand = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'form-input'}))
+    province = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-input'}))
+
+    gpa = forms.FloatField(min_value=0.0, max_value=4.0, widget=forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}))
+    annual_family_income = forms.DecimalField(min_value=0, max_digits=12, decimal_places=2, widget=forms.NumberInput(attrs={'class': 'form-input', 'step': '1000'}))
+
+    failed_subjects = forms.IntegerField(min_value=0, initial=0, widget=forms.NumberInput(attrs={'class': 'form-input'}))
+    units_enrolled = forms.IntegerField(min_value=0, initial=21, widget=forms.NumberInput(attrs={'class': 'form-input'}))
+    attendance_rate = forms.FloatField(min_value=0.0, max_value=100.0, initial=85.0, widget=forms.NumberInput(attrs={'class': 'form-input', 'step': '0.1'}))
+    socioeconomic_status = forms.ChoiceField(
+        choices=[('low', 'Low'), ('middle', 'Middle'), ('high', 'High')],
+        initial='middle',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    def clean_username(self):
+        User = get_user_model()
+        username = self.cleaned_data['username'].strip()
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError('Username already exists.')
+        return username
+
+    def clean_email(self):
+        User = get_user_model()
+        email = self.cleaned_data['email'].strip().lower()
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError('Email already exists.')
+        return email
+
+    def clean_full_name(self):
+        return re.sub(r'<[^>]+>', '', self.cleaned_data.get('full_name', '')).strip()
+
+    def clean_address(self):
+        return re.sub(r'<[^>]+>', '', self.cleaned_data.get('address', '')).strip()
+
+    def clean_course_strand(self):
+        return re.sub(r'<[^>]+>', '', self.cleaned_data.get('course_strand', '')).strip()
+
+    def clean_province(self):
+        return re.sub(r'<[^>]+>', '', self.cleaned_data.get('province', '')).strip()
+
+    def clean_contact_number(self):
+        value = self.cleaned_data.get('contact_number', '').strip()
+        phone_validator(value)
+        return value

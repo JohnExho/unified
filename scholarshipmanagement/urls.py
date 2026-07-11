@@ -47,6 +47,7 @@ urlpatterns = [
 
     # Admin: Reports
     path('admin/reports/', views.reports, name='sm_reports'),
+    path('admin/student-intake/', views.student_intake_recommendations, name='student_intake_recommendations'),
 
     # Admin: User Management
     path('admin/dashboard/', views.admin_dashboard, name='sm_admin_dashboard'),

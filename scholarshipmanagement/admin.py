@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     StudentProfile, Scholarship, Application, Evaluation,
     Document, Notification, ScholarshipOffer, RenewalApplication,
-    RecommendationModel, RejectionAnalysis, AuditLog
+    RecommendationModel, StudentRecommendationRecord, RejectionAnalysis, AuditLog
 )
 
 
@@ -66,6 +66,13 @@ class RecommendationModelAdmin(admin.ModelAdmin):
     list_display = ('student', 'scholarship', 'match_score', 'eligibility_probability', 'rank', 'created_at')
     list_filter = ()
     search_fields = ('student__full_name', 'scholarship__name')
+
+
+@admin.register(StudentRecommendationRecord)
+class StudentRecommendationRecordAdmin(admin.ModelAdmin):
+    list_display = ('student', 'scholarship', 'retention_label', 'retention_confidence', 'match_score', 'created_at')
+    list_filter = ('retention_label',)
+    search_fields = ('student__full_name', 'student__user__username', 'scholarship__name')
 
 
 @admin.register(RejectionAnalysis)

@@ -1,0 +1,190 @@
+{% extends 'scholarshipmanagement/base.html' %}
+{% load static %}
+{% block title %}Student Intake & Recommendations - Scholarship Management{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'scholarshipmanagement/css/pages/dashboard.css' %}">
+<style>
+.intake-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+@media (max-width: 980px) { .intake-layout { grid-template-columns: 1fr; } }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-grid .full { grid-column: 1 / -1; }
+.inline-form { display: inline; }
+.muted { color: #64748b; font-size: 0.85rem; }
+.badge-compact { font-size: 0.74rem; padding: 3px 8px; border-radius: 999px; background: #eef2ff; color: #3730a3; }
+.section-stack { display: grid; gap: 18px; }
+</style>
+{% endblock %}
+{% block content %}
+<main class="main-content">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <div class="top-bar">
+    <div class="page-header">
+      <h1>Student Intake & Recommendation</h1>
+      <p>Add a new student profile and generate ML-backed recommendation records.</p>
+    </div>
+  </div>
+
+  <div class="intake-layout">
+    <section class="content-section section-stack">
+      <div class="section-header">
+        <h2>Add New Student</h2>
+      </div>
+
+      <form method="post" class="card-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_student">
+
+        <div class="form-grid">
+          <div>
+            <label>Username</label>
+            {{ intake_form.username }}
+            {{ intake_form.username.errors }}
+          </div>
+          <div>
+            <label>Email</label>
+            {{ intake_form.email }}
+            {{ intake_form.email.errors }}
+          </div>
+          <div>
+            <label>Password</label>
+            {{ intake_form.password }}
+            {{ intake_form.password.errors }}
+          </div>
+          <div>
+            <label>Contact Number</label>
+            {{ intake_form.contact_number }}
+            {{ intake_form.contact_number.errors }}
+          </div>
+
+          <div class="full">
+            <label>Full Name</label>
+            {{ intake_form.full_name }}
+            {{ intake_form.full_name.errors }}
+          </div>
+          <div class="full">
+            <label>Address</label>
+            {{ intake_form.address }}
+            {{ intake_form.address.errors }}
+          </div>
+
+          <div>
+            <label>School / University</label>
+            {{ intake_form.school_university }}
+            {{ intake_form.school_university.errors }}
+          </div>
+          <div>
+            <label>Course / Strand</label>
+            {{ intake_form.course_strand }}
+            {{ intake_form.course_strand.errors }}
+          </div>
+          <div>
+            <label>Province</label>
+            {{ intake_form.province }}
+            {{ intake_form.province.errors }}
+          </div>
+
+          <div>
+            <label>GPA</label>
+            {{ intake_form.gpa }}
+            {{ intake_form.gpa.errors }}
+          </div>
+          <div>
+            <label>Annual Family Income</label>
+            {{ intake_form.annual_family_income }}
+            {{ intake_form.annual_family_income.errors }}
+          </div>
+
+          <div>
+            <label>Failed Subjects</label>
+            {{ intake_form.failed_subjects }}
+            {{ intake_form.failed_subjects.errors }}
+          </div>
+          <div>
+            <label>Units Enrolled</label>
+            {{ intake_form.units_enrolled }}
+            {{ intake_form.units_enrolled.errors }}
+          </div>
+          <div>
+            <label>Attendance Rate (%)</label>
+            {{ intake_form.attendance_rate }}
+            {{ intake_form.attendance_rate.errors }}
+          </div>
+          <div>
+            <label>Socioeconomic Status</label>
+            {{ intake_form.socioeconomic_status }}
+            {{ intake_form.socioeconomic_status.errors }}
+          </div>
+        </div>
+
+        <div class="form-actions" style="margin-top: 14px;">
+          <button type="submit" class="btn btn-primary">Create Student</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="content-section section-stack">
+      <div class="section-header">
+        <h2>Generate Recommendation</h2>
+      </div>
+
+      <div class="card-form">
+        <p class="muted">Select a student from the list below to generate retention prediction and ranked recommendations.</p>
+
+        <table class="data-table">
+          <thead>
+            <tr><th>Student</th><th>GPA</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for p in recent_profiles %}
+            <tr>
+              <td>{{ p.full_name|default:p.user.username }}<br><span class="muted">{{ p.user.username }}</span></td>
+              <td>{{ p.gpa|default:'-' }}</td>
+              <td>
+                <form method="post" class="inline-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="generate_recommendation">
+                  <input type="hidden" name="profile_id" value="{{ p.id }}">
+                  <button type="submit" class="btn btn-primary btn-xs">Generate</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="empty-cell">No student profiles yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if selected_profile %}
+      <div class="card-form">
+        <h3>Latest Records: {{ selected_profile.full_name|default:selected_profile.user.username }}</h3>
+        <p class="muted">Retention and scholarship recommendation history for this student.</p>
+
+        <table class="data-table">
+          <thead>
+            <tr><th>Time</th><th>Retention</th><th>Target</th><th>Match</th></tr>
+          </thead>
+          <tbody>
+            {% for rec in selected_records %}
+            <tr>
+              <td>{{ rec.created_at|date:"M d, Y H:i" }}</td>
+              <td><span class="badge-compact">{{ rec.retention_label }} ({{ rec.retention_confidence|floatformat:1 }}%)</span></td>
+              <td>{{ rec.scholarship.name|default:'Retention Only' }}</td>
+              <td>{{ rec.match_score|floatformat:1|default:'-' }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="empty-cell">No generated records yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}

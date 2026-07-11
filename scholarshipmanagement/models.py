@@ -514,6 +514,51 @@ class RecommendationModel(models.Model):
 
 
 # ----------------------
+# Admin-generated recommendations for student intake
+# ----------------------
+class StudentRecommendationRecord(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    student = models.ForeignKey(
+        StudentProfile,
+        on_delete=models.CASCADE,
+        related_name='recommendation_records'
+    )
+    generated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='generated_recommendation_records'
+    )
+    scholarship = models.ForeignKey(
+        Scholarship,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='recommendation_records'
+    )
+    retention_label = models.CharField(max_length=20)
+    retention_confidence = models.FloatField(
+        validators=[MinValueValidator(0.0), MaxValueValidator(100.0)]
+    )
+    match_score = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0.0), MaxValueValidator(100.0)]
+    )
+    reason_tags = models.JSONField(default=list, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        target = self.scholarship.name if self.scholarship else 'Retention Only'
+        return f"{self.student} | {target} | {self.retention_label}"
+
+
+# ----------------------
 # ML: Rejection Analysis
 # ----------------------
 class RejectionAnalysis(models.Model):

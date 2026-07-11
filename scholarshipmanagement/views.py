@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
+from django.db import transaction
 from django.db.models import Q, Count, Avg
 from django.views.decorators.http import require_POST, require_http_methods
 from django.core.paginator import Paginator
@@ -17,11 +18,11 @@ from core.decorators import require_system_access, require_system_role, require_
 from .models import (
     StudentProfile, Scholarship, Application, Evaluation,
     Document, Notification, ScholarshipOffer, RenewalApplication,
-    RecommendationModel, RejectionAnalysis, AuditLog,
+    RecommendationModel, StudentRecommendationRecord, RejectionAnalysis, AuditLog,
 )
 from .forms import (
     StudentProfileForm, DocumentUploadForm, ScholarshipForm,
-    ApplicationForm, EvaluationForm, RenewalApplicationForm,
+    ApplicationForm, EvaluationForm, RenewalApplicationForm, StudentIntakeForm,
 )
 from .services import (
     get_stage_1_checklist, refresh_stage_1, check_eligibility,
@@ -760,6 +761,143 @@ def admin_dashboard(request):
         'memberships': memberships,
         'search_query': search_query,
         'total_users': memberships.count(),
+    })
+
+
+@login_required
+@require_system_access
+@require_system_role(['admin', 'superadmin'])
+def student_intake_recommendations(request):
+    """Create new student accounts and generate retention recommendations from one admin page."""
+    current_system = getattr(request, 'current_system', None) or 'scholarshipmanagement'
+    user_role = _get_user_role(request)
+
+    intake_form = StudentIntakeForm()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'create_student':
+            intake_form = StudentIntakeForm(request.POST)
+            if intake_form.is_valid():
+                data = intake_form.cleaned_data
+                with transaction.atomic():
+                    new_user = User.objects.create_user(
+                        username=data['username'],
+                        email=data['email'],
+                        password=data['password'],
+                    )
+                    SystemMembership.objects.get_or_create(
+                        user=new_user,
+                        system_name='scholarshipmanagement',
+                        defaults={'system_role': 'student'},
+                    )
+
+                    profile = StudentProfile.objects.create(
+                        user=new_user,
+                        full_name=data['full_name'],
+                        contact_number=data['contact_number'],
+                        address=data['address'],
+                        school_university=data['school_university'],
+                        course_strand=data['course_strand'],
+                        province=data['province'],
+                        gpa=data['gpa'],
+                        annual_family_income=data['annual_family_income'],
+                        failed_subjects=data['failed_subjects'],
+                        units_enrolled=data['units_enrolled'],
+                        attendance_rate=data['attendance_rate'],
+                        socioeconomic_status=data['socioeconomic_status'],
+                        stage_1_status='complete',
+                        stage_1_completed_at=timezone.now(),
+                        all_required_fields_filled=True,
+                        all_required_documents_uploaded=True,
+                        validation_checks_passed=True,
+                    )
+
+                _log_audit(
+                    request.user,
+                    'create',
+                    'StudentProfile',
+                    profile.id,
+                    f"Created student intake profile for {new_user.username}",
+                    get_client_ip(request),
+                    get_user_agent(request),
+                )
+                messages.success(request, f"Student {new_user.username} added successfully.")
+                return redirect(f"{request.path}?profile={profile.id}")
+
+            messages.error(request, 'Please correct student intake form errors.')
+
+        elif action == 'generate_recommendation':
+            profile_id = request.POST.get('profile_id')
+            profile = get_object_or_404(StudentProfile, id=profile_id)
+
+            prediction = predict_retention(profile, scholarship_type='merit_based')
+            published = Scholarship.objects.filter(status='published')
+            recommendations = generate_recommendations(profile, published)[:5]
+
+            created_count = 0
+            if recommendations:
+                for rec in recommendations:
+                    StudentRecommendationRecord.objects.create(
+                        student=profile,
+                        generated_by=request.user,
+                        scholarship=rec['scholarship'],
+                        retention_label=prediction['label'],
+                        retention_confidence=prediction['confidence'],
+                        match_score=rec['match_score'],
+                        reason_tags=rec['reason_tags'],
+                        notes=rec['explanation'],
+                    )
+                    created_count += 1
+            else:
+                StudentRecommendationRecord.objects.create(
+                    student=profile,
+                    generated_by=request.user,
+                    scholarship=None,
+                    retention_label=prediction['label'],
+                    retention_confidence=prediction['confidence'],
+                    match_score=None,
+                    reason_tags=['retention_only'],
+                    notes='No published scholarship records available for ranking. Retention prediction stored.',
+                )
+                created_count = 1
+
+            _log_audit(
+                request.user,
+                'create',
+                'StudentRecommendationRecord',
+                profile.id,
+                f"Generated {created_count} recommendation records for {profile.user.username}",
+                get_client_ip(request),
+                get_user_agent(request),
+            )
+
+            messages.success(
+                request,
+                f"Generated recommendations for {profile.user.username}: {prediction['label']} ({prediction['confidence']}% confidence)."
+            )
+            return redirect(f"{request.path}?profile={profile.id}")
+
+    selected_profile = None
+    selected_records = []
+    profile_param = request.GET.get('profile')
+    if profile_param:
+        selected_profile = StudentProfile.objects.filter(id=profile_param).select_related('user').first()
+        if selected_profile:
+            selected_records = StudentRecommendationRecord.objects.filter(
+                student=selected_profile
+            ).select_related('scholarship', 'generated_by')[:15]
+
+    recent_profiles = StudentProfile.objects.select_related('user').order_by('-created_at')[:30]
+
+    return render(request, 'scholarshipmanagement/pages/admin/student_intake_recommendations.html', {
+        'current_system': current_system,
+        'user_role': user_role,
+        'intake_form': intake_form,
+        'recent_profiles': recent_profiles,
+        'selected_profile': selected_profile,
+        'selected_records': selected_records,
     })
 
 
