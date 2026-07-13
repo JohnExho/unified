@@ -17,14 +17,34 @@ from django.db import IntegrityError
 
 User = get_user_model()
 
+SYSTEM_URL_ALIASES = {
+    "communitymembership": "communityextensionservices",
+    "informationsystem": "informationmanagement",
+}
+
+PUBLIC_SYSTEM_URLS = {
+    "communityextensionservices": "communitymembership",
+    "informationmanagement": "informationsystem",
+}
+
+
+def get_canonical_system_name(system_name):
+    return SYSTEM_URL_ALIASES.get(system_name, system_name)
+
+
+def get_public_system_url(system_name):
+    return PUBLIC_SYSTEM_URLS.get(system_name, system_name)
+
 
 def core_register(request, system_name):
     User = get_user_model()
+    canonical_system_name = get_canonical_system_name(system_name)
+    public_system_name = get_public_system_url(canonical_system_name)
 
     # Fetch the system and its terms of service
     # Note: 'name' is the field in Systems table, not 'system_name'
     try:
-        system = Systems.objects.get(name=system_name)
+        system = Systems.objects.get(name=canonical_system_name)
         system_info = {
             "name": system.name,
             "description": system.description,
@@ -37,12 +57,14 @@ def core_register(request, system_name):
         }
     except Systems.DoesNotExist:
         system_info = {
-            "name": system_name,
+            "name": canonical_system_name,
             "description": None,
             "terms_of_service": None,
-            "display_name": system_name.title(),
+            "display_name": canonical_system_name.title(),
         }
-        messages.warning(request, f"System '{system_name}' not found in database.")
+        messages.warning(
+            request, f"System '{canonical_system_name}' not found in database."
+        )
 
     if request.method == "POST":
         username = request.POST.get("username")
@@ -66,7 +88,8 @@ def core_register(request, system_name):
                 "core/pages/register.html",
                 {
                     "error": "Accept the Terms and Conditions",
-                    "system_name": system_name,
+                    "system_name": canonical_system_name,
+                    "public_system_name": public_system_name,
                     "system_info": system_info,
                 },
             )
@@ -78,7 +101,8 @@ def core_register(request, system_name):
                 "core/pages/register.html",
                 {
                     "error": "Fill all required fields",
-                    "system_name": system_name,
+                    "system_name": canonical_system_name,
+                    "public_system_name": public_system_name,
                     "system_info": system_info,
                 },
             )
@@ -90,7 +114,8 @@ def core_register(request, system_name):
                 "core/pages/register.html",
                 {
                     "error": "Password too short",
-                    "system_name": system_name,
+                    "system_name": canonical_system_name,
+                    "public_system_name": public_system_name,
                     "system_info": system_info,
                 },
             )
@@ -103,7 +128,8 @@ def core_register(request, system_name):
                 "core/pages/register.html",
                 {
                     "error": "Passwords do not match",
-                    "system_name": system_name,
+                    "system_name": canonical_system_name,
+                    "public_system_name": public_system_name,
                     "system_info": system_info,
                 },
             )
@@ -115,7 +141,8 @@ def core_register(request, system_name):
                 "core/pages/register.html",
                 {
                     "error": "Username already exists",
-                    "system_name": system_name,
+                    "system_name": canonical_system_name,
+                    "public_system_name": public_system_name,
                     "system_info": system_info,
                 },
             )
@@ -138,46 +165,54 @@ def core_register(request, system_name):
         # Log registration
         Logs.objects.create(
             user=user,
-            system_name=system_name,
+            system_name=canonical_system_name,
             action="REGISTER",
             target_model="User",
             target_id=user.id,
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
             description=f"User '{username}' registered.",
-            hidden_description=f"User '{username}' registered for {system_name}",
+            hidden_description=(
+                f"User '{username}' registered for {canonical_system_name}"
+            ),
         )
 
         # Assign system membership
         SystemMembership.objects.create(
-            user=user, system_name=system_name, system_role="user"
+            user=user, system_name=canonical_system_name, system_role="user"
         )
 
         messages.success(request, "Registration successful. Please log in.")
 
         # Redirect to system-specific login
-        if system_name != "core":
+        if canonical_system_name != "core":
             messages.info(request, f"You can now log in.")
-            return redirect(f"/{system_name}/login/")
+            return redirect(f"/{public_system_name}/login/")
         return redirect("core:core_login")
 
     # GET request: render form with terms
     return render(
         request,
         "core/pages/register.html",
-        {"system_name": system_name, "system_info": system_info},
+        {
+            "system_name": canonical_system_name,
+            "public_system_name": public_system_name,
+            "system_info": system_info,
+        },
     )
 
 
 def core_login(request, system_name=None):
     User = get_user_model()
     form = LoginForm(request.POST or None)
+    canonical_system_name = get_canonical_system_name(system_name)
+    public_system_name = get_public_system_url(canonical_system_name)
 
     # Fetch system info if system_name is provided
     system_info = None
-    if system_name:
+    if canonical_system_name:
         try:
-            system = Systems.objects.get(name=system_name)
+            system = Systems.objects.get(name=canonical_system_name)
             system_info = {
                 "name": system.name,
                 "description": system.description,
@@ -189,9 +224,9 @@ def core_login(request, system_name=None):
             }
         except Systems.DoesNotExist:
             system_info = {
-                "name": system_name,
+                "name": canonical_system_name,
                 "description": None,
-                "display_name": system_name.title(),
+                "display_name": canonical_system_name.title(),
             }
 
     if request.method == "POST" and form.is_valid():
@@ -206,7 +241,12 @@ def core_login(request, system_name=None):
             return render(
                 request,
                 "core/pages/login.html",
-                {"form": form, "system_name": system_name, "system_info": system_info},
+                {
+                    "form": form,
+                    "system_name": canonical_system_name,
+                    "public_system_name": public_system_name,
+                    "system_info": system_info,
+                },
             )
 
         # User exists, now authenticate
@@ -217,13 +257,18 @@ def core_login(request, system_name=None):
             return render(
                 request,
                 "core/pages/login.html",
-                {"form": form, "system_name": system_name, "system_info": system_info},
+                {
+                    "form": form,
+                    "system_name": canonical_system_name,
+                    "public_system_name": public_system_name,
+                    "system_info": system_info,
+                },
             )
 
         # Check if user has access to the specific system
-        if system_name:
+        if canonical_system_name:
             has_access = SystemMembership.objects.filter(
-                user=user, system_name=system_name
+                user=user, system_name=canonical_system_name
             ).exists()
 
             if not has_access:
@@ -233,7 +278,8 @@ def core_login(request, system_name=None):
                     "core/pages/login.html",
                     {
                         "form": form,
-                        "system_name": system_name,
+                        "system_name": canonical_system_name,
+                        "public_system_name": public_system_name,
                         "system_info": system_info,
                     },
                 )
@@ -244,7 +290,12 @@ def core_login(request, system_name=None):
             return render(
                 request,
                 "core/pages/login.html",
-                {"form": form, "system_name": system_name, "system_info": system_info},
+                {
+                    "form": form,
+                    "system_name": canonical_system_name,
+                    "public_system_name": public_system_name,
+                    "system_info": system_info,
+                },
             )
 
         login(request, user)
@@ -252,7 +303,11 @@ def core_login(request, system_name=None):
         # Fetch systems the user belongs to
         memberships = SystemMembership.objects.filter(user=user)
         accessible_systems = [
-            {"url": m.system_name, "name": m.system_name.title(), "role": m.system_role}
+            {
+                "url": m.system_name,
+                "name": m.system_name.title(),
+                "role": m.system_role,
+            }
             for m in memberships
         ]
 
@@ -271,27 +326,31 @@ def core_login(request, system_name=None):
                 system.get("role") == "admin"
                 and system.get("url") in systems_with_admin_dashboard
             ):
-                return f"/{system['url']}/admin/dashboard/"
+                return f"/{get_public_system_url(system['url'])}/admin/dashboard/"
             if system["url"] == "core":
                 return "/dashboard/"
-            return f"/{system['url']}/dashboard/"
+            return f"/{get_public_system_url(system['url'])}/dashboard/"
 
         # 1. Login via specific system URL
-        if system_name and any(s["url"] == system_name for s in accessible_systems):
+        if canonical_system_name and any(
+            s["url"] == canonical_system_name for s in accessible_systems
+        ):
             target_system = next(
-                s for s in accessible_systems if s["url"] == system_name
+                s for s in accessible_systems if s["url"] == canonical_system_name
             )
             request.session["current_system"] = target_system["url"]
             Logs.objects.create(
                 user=user,
                 target_model="User",
-                system_name=system_name,
+                system_name=canonical_system_name,
                 target_id=user.id,
                 action="LOGIN",
                 ip_address=get_client_ip(request),
                 user_agent=get_user_agent(request),
                 description=f"User logged in.",
-                hidden_description=f"User logged in for {system_name}",
+                hidden_description=(
+                    f"User logged in for {canonical_system_name}"
+                ),
             )
             messages.success(request, f"Welcome {user.username}!")
             return redirect(get_dashboard_url(target_system))
@@ -326,7 +385,12 @@ def core_login(request, system_name=None):
     return render(
         request,
         "core/pages/login.html",
-        {"form": form, "system_name": system_name, "system_info": system_info},
+        {
+            "form": form,
+            "system_name": canonical_system_name,
+            "public_system_name": public_system_name,
+            "system_info": system_info,
+        },
     )
 
 
@@ -381,8 +445,10 @@ def system_selection(request):
                 selected_system_data.get("role") == "admin"
                 and selected_system in systems_with_admin_dashboard
             ):
-                return redirect(f"/{selected_system}/admin/dashboard/")
-            return redirect(f"/{selected_system}")
+                return redirect(
+                    f"/{get_public_system_url(selected_system)}/admin/dashboard/"
+                )
+            return redirect(f"/{get_public_system_url(selected_system)}")
 
         messages.error(request, "Invalid system selection.")
         return redirect("core:core_login")
@@ -428,7 +494,7 @@ def core_logout(request, system_name=None):
 
     # Non-core systems redirect to their own login
     if current_system != "core":
-        return redirect(f"/{current_system}/login/")
+        return redirect(f"/{get_public_system_url(current_system)}/login/")
 
     return redirect("core:core_login")
 

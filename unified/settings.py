@@ -69,6 +69,7 @@ MIDDLEWARE = [
     'inventorymanagement.middleware.InventoryManagementAdminMiddleware',
     'performanceevaluation.middleware.PerformanceEvaluationSystemMiddleware',
     'performanceevaluation.middleware.PerformanceEvaluationAdminMiddleware',
+    'scholarshipmanagement.middleware.ScholarshipSystemMiddleware',
 ]
 
 ROOT_URLCONF = "unified.urls"

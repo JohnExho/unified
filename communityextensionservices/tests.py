@@ -19,3 +19,14 @@ class SeedCETestCase(TestCase):
         for contribution in Contribution.objects.filter(title="Association Contribution"):
             self.assertEqual(contribution.amount, 50.00)
             self.assertIn("payday", contribution.remarks.lower())
+
+
+class PublicLoginRedirectTests(TestCase):
+    def test_dashboard_redirects_to_public_communitymembership_login(self):
+        response = self.client.get("/communitymembership/dashboard/")
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.headers["Location"],
+            "/communitymembership/login?next=/communitymembership/dashboard/",
+        )

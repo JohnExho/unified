@@ -36,7 +36,7 @@ def _has_ces_admin_access(user):
     )
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def dashboard(request):
@@ -59,7 +59,7 @@ def dashboard(request):
     return render(request, "communityextensionservices/dashboard.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 @require_POST
@@ -99,7 +99,7 @@ def train_member_kmeans(request):
     return redirect("communityextensionservices:ces-dashboard")
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def members(request):
@@ -112,7 +112,7 @@ def members(request):
     return render(request, "communityextensionservices/members.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def member_create(request):
@@ -132,7 +132,7 @@ def member_create(request):
     return render(request, "communityextensionservices/form.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def member_edit(request, pk):
@@ -153,7 +153,7 @@ def member_edit(request, pk):
     return render(request, "communityextensionservices/form.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def member_delete(request, pk):
@@ -173,7 +173,7 @@ def member_delete(request, pk):
     return render(request, "communityextensionservices/confirm_delete.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def dues(request):
@@ -189,7 +189,7 @@ def dues(request):
     return render(request, "communityextensionservices/dues.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def dues_create(request):
@@ -209,7 +209,7 @@ def dues_create(request):
     return render(request, "communityextensionservices/form.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activities(request):
@@ -229,7 +229,7 @@ def activities(request):
     return render(request, "communityextensionservices/activities.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activity_create(request):
@@ -249,7 +249,7 @@ def activity_create(request):
     return render(request, "communityextensionservices/form.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activity_edit(request, pk):
@@ -270,7 +270,7 @@ def activity_edit(request, pk):
     return render(request, "communityextensionservices/form.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activity_delete(request, pk):
@@ -290,7 +290,7 @@ def activity_delete(request, pk):
     return render(request, "communityextensionservices/confirm_delete.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def documents(request):
@@ -303,7 +303,7 @@ def documents(request):
     return render(request, "communityextensionservices/documents.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def document_create(request):
@@ -325,7 +325,7 @@ def document_create(request):
     return render(request, "communityextensionservices/form.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def analytics(request):
@@ -338,7 +338,7 @@ def analytics(request):
     return render(request, "communityextensionservices/analytics.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def reports(request):
@@ -351,7 +351,7 @@ def reports(request):
     return render(request, "communityextensionservices/reports.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_lab(request):
@@ -364,7 +364,7 @@ def ml_lab(request):
     return render(request, "communityextensionservices/ml_lab.html", context)
 
 
-@login_required(login_url="/communityextensionservices/login")
+@login_required(login_url="/communitymembership/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def settings(request):

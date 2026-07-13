@@ -7,6 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from core.models import SystemMembership
 from .models import Scholarship, StudentProfile
 from .ml_recommendation import build_overall_prediction_summary, predict_retention
 
@@ -124,3 +125,68 @@ class StudentProfileMlReadinessTests(TestCase):
 
         self.assertIn(prediction['label'], ['Retain', 'At-Risk', 'Failed'])
         self.assertGreaterEqual(prediction['confidence'], 0)
+
+
+class IntakeRetentionPreviewTests(TestCase):
+    def test_preview_endpoint_returns_live_retention_prediction(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="adminpreview", password="secret123")
+        SystemMembership.objects.create(
+            user=user,
+            system_name="scholarshipmanagement",
+            system_role="admin",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("scholarshipmanagement:intake_retention_preview"),
+            {
+                "username": "preview-student",
+                "email": "preview@example.com",
+                "password": "secret12345",
+                "full_name": "Preview Student",
+                "contact_number": "+639171234567",
+                "address": "Test Address",
+                "school_university": "KNS",
+                "course_strand": "BSIT",
+                "province": "Zambales",
+                "gpa": "3.10",
+                "annual_family_income": "120000",
+                "failed_subjects": "2",
+                "units_enrolled": "21",
+                "attendance_rate": "77.5",
+                "socioeconomic_status": "low",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertIn(payload["prediction"]["label"], ["Retain", "At-Risk", "Failed"])
+        self.assertGreaterEqual(payload["prediction"]["confidence"], 0)
+
+    def test_preview_endpoint_does_not_error_for_incomplete_input(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="adminpreview2", password="secret123")
+        SystemMembership.objects.create(
+            user=user,
+            system_name="scholarshipmanagement",
+            system_role="admin",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("scholarshipmanagement:intake_retention_preview"),
+            {
+                "gpa": "3.10",
+                "failed_subjects": "",
+                "units_enrolled": "21",
+                "attendance_rate": "77.5",
+                "socioeconomic_status": "low",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertFalse(payload["ok"])
+        self.assertIn("failed_subjects", payload["errors"])

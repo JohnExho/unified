@@ -10,6 +10,7 @@ from django.db import transaction
 from django.db.models import Q, Count, Avg
 from django.views.decorators.http import require_POST, require_http_methods
 from django.core.paginator import Paginator
+from types import SimpleNamespace
 
 from core.models import Logs, SystemMembership, Systems, Address
 from core.utils import get_client_ip, get_user_agent, decrypt, encrypt
@@ -57,6 +58,17 @@ def _is_admin_mfa_verified(request):
 def _is_staff_or_above(request):
     user_role = _get_user_role(request)
     return request.user.is_superuser or user_role in ('admin', 'superadmin', 'staff', 'reviewer')
+
+
+def _build_retention_preview(form_data):
+    profile = SimpleNamespace(
+        gpa=form_data.get('gpa') or 0.0,
+        failed_subjects=form_data.get('failed_subjects') or 0,
+        units_enrolled=form_data.get('units_enrolled') or 0,
+        attendance_rate=form_data.get('attendance_rate') or 0.0,
+        socioeconomic_status=form_data.get('socioeconomic_status') or '',
+    )
+    return predict_retention(profile, scholarship_type='merit_based')
 
 
 # =====================================================================
@@ -899,6 +911,35 @@ def student_intake_recommendations(request):
         'selected_profile': selected_profile,
         'selected_records': selected_records,
     })
+
+
+@login_required
+@require_system_access
+@require_system_role(['admin', 'superadmin'])
+@require_http_methods(['POST'])
+def intake_retention_preview(request):
+    form = StudentIntakeForm(request.POST)
+
+    preview_fields = [
+        'gpa',
+        'failed_subjects',
+        'units_enrolled',
+        'attendance_rate',
+        'socioeconomic_status',
+    ]
+    form.full_clean()
+
+    field_errors = {
+        name: form.errors.get(name, [])
+        for name in preview_fields
+        if form.errors.get(name)
+    }
+
+    if field_errors:
+        return JsonResponse({'ok': False, 'errors': field_errors})
+
+    prediction = _build_retention_preview(form.cleaned_data)
+    return JsonResponse({'ok': True, 'prediction': prediction})
 
 
 @login_required

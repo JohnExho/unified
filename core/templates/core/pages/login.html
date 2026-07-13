@@ -94,7 +94,7 @@
         </div>
         {% if system_name %}
           <div class="signup-link">
-            Don't have an account? <a href="{% url 'core:core_register' system_name=system_name %}">Register here</a>
+            Don't have an account? <a href="{% url 'core:core_register' system_name=public_system_name|default:system_name %}">Register here</a>
           </div>
         {% endif %}
       </div>

@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
+from django.urls import reverse
 from django.test import TestCase
 
 from communityextensionservices.models import Member
@@ -149,3 +150,14 @@ class MemberContributionLedgerTests(TestCase):
         self.assertEqual(member.total_contributions, Decimal("125.00"))
         self.assertEqual(member.current_balance, Decimal("125.00"))
         self.assertEqual(member.last_payment_date, date(2026, 7, 1))
+
+
+class PublicLoginRedirectTests(TestCase):
+    def test_dashboard_redirects_to_public_informationsystem_login(self):
+        response = self.client.get(reverse("informationmanagement:information-dashboard"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.headers["Location"],
+            "/informationsystem/login?next=/informationsystem/dashboard/",
+        )

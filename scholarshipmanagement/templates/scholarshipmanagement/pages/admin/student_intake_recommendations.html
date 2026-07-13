@@ -12,6 +12,13 @@
 .muted { color: #64748b; font-size: 0.85rem; }
 .badge-compact { font-size: 0.74rem; padding: 3px 8px; border-radius: 999px; background: #eef2ff; color: #3730a3; }
 .section-stack { display: grid; gap: 18px; }
+.prediction-preview { padding: 16px 18px; border: 1px solid #dbe4ff; border-radius: 16px; background: #f8faff; display: grid; gap: 8px; margin-top: 16px; }
+.prediction-preview.is-retain { border-color: #bbf7d0; background: #f0fdf4; }
+.prediction-preview.is-at-risk { border-color: #fde68a; background: #fffbeb; }
+.prediction-preview.is-failed { border-color: #fecaca; background: #fef2f2; }
+.prediction-label { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
+.prediction-meta { display: flex; gap: 14px; flex-wrap: wrap; color: #475569; font-size: 0.92rem; }
+.prediction-hint { color: #64748b; font-size: 0.9rem; }
 </style>
 {% endblock %}
 {% block content %}
@@ -124,6 +131,15 @@
         <div class="form-actions" style="margin-top: 14px;">
           <button type="submit" class="btn btn-primary">Create Student</button>
         </div>
+
+        <div id="retention-preview" class="prediction-preview" aria-live="polite">
+          <div class="prediction-label">Enter the grade details to preview retention status.</div>
+          <div class="prediction-meta">
+            <span>Prediction: <strong id="retention-preview-label">—</strong></span>
+            <span>Confidence: <strong id="retention-preview-confidence">—</strong></span>
+          </div>
+          <p id="retention-preview-hint" class="prediction-hint">This preview updates automatically from GPA, failed subjects, units enrolled, attendance rate, and socioeconomic status.</p>
+        </div>
       </form>
     </section>
 
@@ -187,4 +203,75 @@
     </section>
   </div>
 </main>
+{% block extra_scripts %}
+<script>
+const intakeForm = document.querySelector('form.card-form input[name="action"][value="create_student"]')?.closest('form');
+const previewBox = document.getElementById('retention-preview');
+const previewLabel = document.getElementById('retention-preview-label');
+const previewConfidence = document.getElementById('retention-preview-confidence');
+const previewHint = document.getElementById('retention-preview-hint');
+const previewUrl = "{% url 'scholarshipmanagement:intake_retention_preview' %}";
+const previewFields = ['gpa', 'failed_subjects', 'units_enrolled', 'attendance_rate', 'socioeconomic_status'];
+let previewTimer;
+
+function setPreviewState(label, confidence, hint) {
+  previewLabel.textContent = label || '—';
+  previewConfidence.textContent = confidence ? `${confidence}%` : '—';
+  previewHint.textContent = hint;
+  previewBox.classList.remove('is-retain', 'is-at-risk', 'is-failed');
+  if (label === 'Retain') previewBox.classList.add('is-retain');
+  if (label === 'At-Risk') previewBox.classList.add('is-at-risk');
+  if (label === 'Failed') previewBox.classList.add('is-failed');
+}
+
+async function updateRetentionPreview() {
+  if (!intakeForm) {
+    return;
+  }
+
+  const formData = new FormData(intakeForm);
+  const hasAllValues = previewFields.every((fieldName) => String(formData.get(fieldName) || '').trim() !== '');
+  if (!hasAllValues) {
+    setPreviewState('—', '', 'This preview updates automatically from GPA, failed subjects, units enrolled, attendance rate, and socioeconomic status.');
+    return;
+  }
+
+  try {
+    const response = await fetch(previewUrl, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+      },
+      body: formData,
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) {
+      setPreviewState('—', '', 'Enter valid GPA, failed subjects, units enrolled, attendance rate, and socioeconomic status to preview retention status.');
+      return;
+    }
+
+    setPreviewState(
+      payload.prediction.label,
+      payload.prediction.confidence,
+      'Live retention preview based on the current intake values.'
+    );
+  } catch (error) {
+    setPreviewState('—', '', 'Preview is temporarily unavailable.');
+  }
+}
+
+previewFields.forEach((fieldName) => {
+  intakeForm?.querySelector(`[name="${fieldName}"]`)?.addEventListener('input', () => {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(updateRetentionPreview, 180);
+  });
+  intakeForm?.querySelector(`[name="${fieldName}"]`)?.addEventListener('change', () => {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(updateRetentionPreview, 180);
+  });
+});
+
+updateRetentionPreview();
+</script>
+{% endblock %}
 {% endblock %}

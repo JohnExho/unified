@@ -83,7 +83,7 @@ def _sector_coverage(projects):
     return coverage
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def dashboard(request):
@@ -157,7 +157,7 @@ def dashboard(request):
     return render(request, "informationmanagement/dashboard.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 @require_POST
@@ -199,7 +199,7 @@ def train_naive_bayes_model(request):
     return redirect("informationmanagement:information-dashboard")
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def projects(request):
@@ -214,7 +214,7 @@ def projects(request):
     return render(request, "informationmanagement/projects.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def beneficiaries(request):
@@ -229,7 +229,7 @@ def beneficiaries(request):
     return render(request, "informationmanagement/beneficiaries.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def partners(request):
@@ -250,7 +250,7 @@ def partners(request):
     return render(request, "informationmanagement/partners.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activities(request):
@@ -265,7 +265,7 @@ def activities(request):
     return render(request, "informationmanagement/activities.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def analytics(request):
@@ -317,7 +317,7 @@ def analytics(request):
     return render(request, "informationmanagement/analytics.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def reports(request):
@@ -332,7 +332,7 @@ def reports(request):
     return render(request, "informationmanagement/reports.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_lab(request):
@@ -348,7 +348,7 @@ def ml_lab(request):
     return render(request, "informationmanagement/ml_lab.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def project_create(request):
@@ -368,7 +368,7 @@ def project_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def project_edit(request, pk):
@@ -389,7 +389,7 @@ def project_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def project_delete(request, pk):
@@ -409,7 +409,7 @@ def project_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def beneficiary_create(request):
@@ -429,7 +429,7 @@ def beneficiary_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def beneficiary_edit(request, pk):
@@ -450,7 +450,7 @@ def beneficiary_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def beneficiary_delete(request, pk):
@@ -470,7 +470,7 @@ def beneficiary_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def partner_create(request):
@@ -490,7 +490,7 @@ def partner_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def partner_edit(request, pk):
@@ -511,7 +511,7 @@ def partner_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def partner_delete(request, pk):
@@ -531,7 +531,7 @@ def partner_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activity_create(request):
@@ -551,7 +551,7 @@ def activity_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activity_edit(request, pk):
@@ -572,7 +572,7 @@ def activity_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def activity_delete(request, pk):
@@ -592,7 +592,7 @@ def activity_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def report_create(request):
@@ -612,7 +612,7 @@ def report_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def report_edit(request, pk):
@@ -633,7 +633,7 @@ def report_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def report_delete(request, pk):
@@ -653,7 +653,7 @@ def report_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def report_template_create(request):
@@ -673,7 +673,7 @@ def report_template_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_model_create(request):
@@ -693,7 +693,7 @@ def ml_model_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_model_edit(request, pk):
@@ -714,7 +714,7 @@ def ml_model_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_model_delete(request, pk):
@@ -734,7 +734,7 @@ def ml_model_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_pipeline_create(request):
@@ -754,7 +754,7 @@ def ml_pipeline_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_pipeline_edit(request, pk):
@@ -775,7 +775,7 @@ def ml_pipeline_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_pipeline_delete(request, pk):
@@ -795,7 +795,7 @@ def ml_pipeline_delete(request, pk):
     return render(request, "informationmanagement/confirm_delete.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_experiment_create(request):
@@ -815,7 +815,7 @@ def ml_experiment_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_experiment_edit(request, pk):
@@ -836,7 +836,7 @@ def ml_experiment_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def ml_experiment_delete(request, pk):
@@ -861,7 +861,7 @@ def ml_experiment_delete(request, pk):
 # ============================================================================
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def contribution_funds_list(request):
@@ -878,7 +878,7 @@ def contribution_funds_list(request):
     return render(request, "informationmanagement/contribution_funds_list.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def contribution_fund_create(request):
@@ -914,7 +914,7 @@ def contribution_fund_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def contribution_fund_detail(request, pk):
@@ -936,7 +936,7 @@ def contribution_fund_detail(request, pk):
     return render(request, "informationmanagement/contribution_fund_detail.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def fund_allocation_create(request):
@@ -961,7 +961,7 @@ def fund_allocation_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def fund_expense_create(request):
@@ -991,7 +991,7 @@ def fund_expense_create(request):
 # ============================================================================
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def financial_dashboard(request):
@@ -1012,7 +1012,7 @@ def financial_dashboard(request):
     return render(request, "informationmanagement/financial_dashboard.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def financial_summary_report(request):
@@ -1034,7 +1034,7 @@ def financial_summary_report(request):
     return render(request, "informationmanagement/financial_summary.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def fund_utilization_report(request):
@@ -1053,7 +1053,7 @@ def fund_utilization_report(request):
     return render(request, "informationmanagement/fund_utilization_report.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def monthly_contribution_report(request):
@@ -1077,7 +1077,7 @@ def monthly_contribution_report(request):
     return render(request, "informationmanagement/monthly_report.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def annual_financial_report(request):
@@ -1099,7 +1099,7 @@ def annual_financial_report(request):
     return render(request, "informationmanagement/annual_report.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def export_financial_report(request, report_type):
@@ -1136,7 +1136,7 @@ def export_financial_report(request, report_type):
 # ============================================================================
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def member_contributions_list(request):
@@ -1167,7 +1167,7 @@ def member_contributions_list(request):
     return render(request, "informationmanagement/member_contributions_list.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def member_contribution_detail(request, pk):
@@ -1191,7 +1191,7 @@ def member_contribution_detail(request, pk):
     return render(request, "informationmanagement/member_contribution_detail.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def member_contribution_create(request):
@@ -1223,7 +1223,7 @@ def member_contribution_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def member_contribution_entry_create(request, pk):
@@ -1248,7 +1248,7 @@ def member_contribution_entry_create(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def member_contribution_edit(request, pk):
@@ -1273,7 +1273,7 @@ def member_contribution_edit(request, pk):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def export_member_statement(request, pk):
@@ -1297,7 +1297,7 @@ def export_member_statement(request, pk):
     return redirect("informationmanagement:member-contribution-detail", pk=pk)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def master_data_departments_list(request):
@@ -1314,7 +1314,7 @@ def master_data_departments_list(request):
     return render(request, "informationmanagement/master_data_departments_list.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def master_data_department_create(request):
@@ -1337,7 +1337,7 @@ def master_data_department_create(request):
     return render(request, "informationmanagement/form.html", context)
 
 
-@login_required(login_url="/informationmanagement/login")
+@login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["admin", "superadmin"])
 def master_data_department_edit(request, pk):

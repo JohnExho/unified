@@ -71,5 +71,6 @@ urlpatterns = [
     path('settings/', views.settings, name='sm_settings'),
 
     # API
+    path('api/intake/retention-preview/', views.intake_retention_preview, name='intake_retention_preview'),
     path('api/scholarships/<uuid:scholarship_id>/stats/', views.api_scholarship_stats, name='api_scholarship_stats'),
 ]

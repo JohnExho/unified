@@ -56,3 +56,49 @@ class UrlPrefixTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'href="/communitymembership/dashboard/"')
         self.assertContains(response, 'href="/informationsystem/dashboard/"')
+
+    def test_login_pages_use_public_register_urls(self):
+        community_response = self.client.get("/communitymembership/login/")
+        information_response = self.client.get("/informationsystem/login/")
+
+        self.assertEqual(community_response.status_code, 200)
+        self.assertEqual(information_response.status_code, 200)
+        self.assertContains(
+            community_response, 'href="/communitymembership/register/"'
+        )
+        self.assertContains(
+            information_response, 'href="/informationsystem/register/"'
+        )
+
+    def test_public_register_url_creates_canonical_membership_and_redirects(self):
+        Systems.objects.get_or_create(
+            name="informationmanagement",
+            defaults={
+                "description": "Information Management",
+                "terms_of_service": "Information terms.",
+            },
+        )
+
+        response = self.client.post(
+            "/informationsystem/register/",
+            {
+                "username": "info-user",
+                "password": "secret12345",
+                "confirm_password": "secret12345",
+                "first_name": "Info",
+                "last_name": "User",
+                "email": "info@example.com",
+                "terms_accepted": "true",
+            },
+        )
+
+        self.assertRedirects(response, "/informationsystem/login/")
+        self.assertTrue(
+            get_user_model().objects.filter(username="info-user").exists()
+        )
+        self.assertTrue(
+            get_user_model()
+            .objects.get(username="info-user")
+            .systemmembership_set.filter(system_name="informationmanagement")
+            .exists()
+        )
