@@ -53,34 +53,6 @@
 						</div>
 					</div>
 
-					<!-- ── Schedule ──────────────────────────────────────────── -->
-					<div class="req-section">
-						<div class="req-section-head">
-							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-							Schedule
-						</div>
-						<div class="req-section-body">
-							<div class="req-grid-4">
-								<div class="req-field">
-									<label>Date Borrowed</label>
-									<input type="date" id="dateBorrowed">
-								</div>
-								<div class="req-field">
-								<label>Date Returned</label>
-								<input type="date" id="dateReturned">
-							</div>
-							<div class="req-field">
-								<label>Time Borrowed</label>
-								<input type="time" id="timeBorrowed">
-								</div>
-								<div class="req-field">
-									<label>Time Returned</label>
-									<input type="time" id="timeReturned">
-								</div>
-							</div>
-						</div>
-					</div>
-
 					<!-- ── Purpose / Notes ───────────────────────────────────── -->
 					<div class="req-section">
 						<div class="req-section-body">
@@ -95,7 +67,7 @@
 					<div class="req-section">
 						<div class="req-section-head">
 							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-							Item / Equipment Borrowed
+							Items Requested
 						</div>
 						<div class="req-section-body">
 							<div class="items-grid-header">
@@ -222,10 +194,6 @@ function submitAddRequisitionForm(event) {
 	const borrowerAddress = document.getElementById('borrowerAddress').value.trim();
 	const borrowerContact = document.getElementById('borrowerContact').value.trim();
 	const borrowerPosition = document.getElementById('borrowerPosition').value.trim();
-	const dateBorrowed = document.getElementById('dateBorrowed').value;
-	const dateReturned = document.getElementById('dateReturned').value;
-	const timeBorrowed = document.getElementById('timeBorrowed').value;
-	const timeReturned = document.getElementById('timeReturned').value;
 	const eventName = document.getElementById('eventName').value.trim();
 	const purpose = document.getElementById('requisitionPurpose').value.trim();
 
@@ -263,10 +231,6 @@ function submitAddRequisitionForm(event) {
 	formData.append('borrower_contact_no', borrowerContact);
 	formData.append('borrower_position', borrowerPosition);
 	formData.append('event_name', eventName);
-	formData.append('date_borrowed', dateBorrowed);
-	formData.append('date_returned', dateReturned);
-	formData.append('time_borrowed', timeBorrowed);
-	formData.append('time_returned', timeReturned);
 	formData.append('items', JSON.stringify(items));
 	formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
 	

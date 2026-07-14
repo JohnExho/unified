@@ -22,9 +22,13 @@ MODEL_DIR = Path(__file__).resolve().parent / "ml_models"
 
 def predict_retention(profile, scholarship_type='general'):
     """Classify a student into Retain / At-Risk / Failed using thesis-aligned inputs for renewal classification."""
+    gpa = float(getattr(profile, 'gpa', 0) or 0.0)
+    if gpa <= 2.75:
+        return {'label': 'At-Risk', 'confidence': 100.0}
+
     features = np.array([
         [
-            float(profile.gpa or 0.0),
+            gpa,
             float(getattr(profile, 'failed_subjects', 0) or 0),
             float(getattr(profile, 'units_enrolled', 0) or 0),
             float(getattr(profile, 'attendance_rate', 0) or 0),

@@ -40,3 +40,5 @@ class InventoryAccessRestrictionTests(TestCase):
         self.assertNotIn('id="dateReturned" required', html)
         self.assertNotIn('id="timeBorrowed" required', html)
         self.assertNotIn('id="timeReturned" required', html)
+        self.assertNotIn('Date Borrowed', html)
+        self.assertNotIn('Date Returned', html)

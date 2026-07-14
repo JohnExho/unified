@@ -126,6 +126,26 @@ class StudentProfileMlReadinessTests(TestCase):
         self.assertIn(prediction['label'], ['Retain', 'At-Risk', 'Failed'])
         self.assertGreaterEqual(prediction['confidence'], 0)
 
+    def test_predict_retention_marks_gpa_275_as_at_risk(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="mluser5", password="secret123")
+        profile = StudentProfile.objects.create(
+            user=user,
+            full_name="Jane Doe",
+            course_strand="BSIT",
+            gpa=2.75,
+            annual_family_income=Decimal("150000"),
+            province="Cebu",
+            failed_subjects=0,
+            units_enrolled=24,
+            attendance_rate=95.0,
+            socioeconomic_status='low',
+        )
+
+        prediction = predict_retention(profile, scholarship_type='merit_based')
+
+        self.assertEqual(prediction['label'], 'At-Risk')
+
 
 class IntakeRetentionPreviewTests(TestCase):
     def test_preview_endpoint_returns_live_retention_prediction(self):
