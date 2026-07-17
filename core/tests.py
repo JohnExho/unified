@@ -30,6 +30,12 @@ class RegisterTermsModalTests(TestCase):
         html = response.content.decode()
         self.assertIn("core/js/register.js", html)
 
+    def test_information_system_register_page_uses_register_stylesheet(self):
+        response = self.client.get("/informationsystem/register/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "informationmanagement/css/pages/register.css")
+
 
 class UrlPrefixTests(TestCase):
     def test_new_system_prefixes_resolve_to_the_correct_views(self):

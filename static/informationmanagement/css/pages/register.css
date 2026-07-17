@@ -1,0 +1,337 @@
+/* Information Management Register Page */
+
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --bg-gradient-start: #0f172a;
+  --bg-gradient-end: #1e293b;
+  --card-bg: rgba(255, 255, 255, 0.08);
+  --border-color: rgba(255, 255, 255, 0.15);
+  --text-light: #f8fafc;
+  --text-muted: #cbd5e1;
+  --error: #ef4444;
+  --radius: 18px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+  min-height: 100vh;
+  color: var(--text-light);
+}
+
+.container {
+  width: 100%;
+  padding: 2rem;
+}
+
+.login-page.register-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.login-layout.register-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  max-width: 1000px;
+  margin: auto;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.logo-section {
+  background: linear-gradient(160deg, rgba(37, 99, 235, 0.8), rgba(30, 64, 175, 0.9));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo img {
+  width: 120px;
+  height: auto;
+}
+
+.logo-text {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+.form-section {
+  padding: 3rem;
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.form-section h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-light);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.input-wrapper label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.input-wrapper input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+.password-match-indicator {
+  min-height: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.password-match-indicator.match {
+  color: #22c55e;
+}
+
+.password-match-indicator.no-match {
+  color: #f87171;
+}
+
+.terms-link-wrapper {
+  margin-top: 0.2rem;
+  text-align: center;
+}
+
+.view-terms-link {
+  color: #bfdbfe;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.view-terms-link:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+button[type="submit"] {
+  width: 100%;
+  padding: 0.9rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin-top: 0.4rem;
+}
+
+button[type="submit"]:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+}
+
+button[type="submit"]:disabled {
+  background: #64748b;
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+.login-link {
+  margin-top: 1.2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.login-link a {
+  color: #bfdbfe;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.login-link a:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+}
+
+.modal.active,
+.modal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content,
+.auth-modal-content {
+  background: rgba(15, 23, 42, 0.95);
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  width: min(92%, 860px);
+  max-width: 860px;
+  max-height: 85vh;
+  overflow: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.modal-header,
+.auth-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(160deg, rgba(37, 99, 235, 0.8), rgba(30, 64, 175, 0.9));
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2,
+.auth-modal-header h2 {
+  font-size: 1.15rem;
+  color: white;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+.modal-body,
+.auth-modal-body {
+  padding: 1.2rem 1.25rem;
+  color: var(--text-light);
+}
+
+.modal-footer,
+.auth-modal-footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border-color);
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.checkbox-wrapper,
+.auth-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.9rem;
+  color: var(--text-muted);
+}
+
+.checkbox-wrapper input,
+.auth-checkbox-wrapper input {
+  width: 1rem;
+  height: 1rem;
+}
+
+.terms-text {
+  line-height: 1.75;
+}
+
+.terms-text h3,
+.terms-text h4 {
+  margin: 0.75rem 0 0.35rem;
+}
+
+.terms-text p,
+.terms-text ul {
+  margin-bottom: 0.75rem;
+}
+
+.terms-text ul {
+  padding-left: 1.25rem;
+}
+
+.btn-accept,
+.auth-btn-accept {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-accept:hover:not(:disabled),
+.auth-btn-accept:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn-accept:disabled,
+.auth-btn-accept:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .login-layout.register-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .logo-section {
+    padding: 2rem;
+  }
+
+  .form-section {
+    padding: 2rem;
+  }
+}

@@ -16,7 +16,7 @@
 {% elif system_name == 'communityextensionservices' or system_name == 'communitymembership' or system_name == 'ces' %}
 <link rel="stylesheet" type="text/css" href="{% static 'communityextensionservices/css/pages/login.css' %}" />
 {% elif system_name == 'informationsystem' or system_name == 'informationmanagement' %}
-<link rel="stylesheet" type="text/css" href="{% static 'informationmanagement/css/pages/login.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'informationmanagement/css/pages/register.css' %}" />
 {% elif system_name == 'scholarshipmanagement' %}
 <link rel="stylesheet" type="text/css" href="{% static 'scholarshipmanagement/css/pages/login.css' %}" />
 {% else %}
@@ -196,6 +196,8 @@
 {% include 'performanceevaluation/modals/terms_modal.html' %}
 {% elif system_name == 'librarymanagement' %}
 {% include 'librarymanagement/modals/terms_modal.html' %}
+{% elif system_name == 'informationsystem' or system_name == 'informationmanagement' %}
+{% include 'core/modals/terms_modal.html' %}
 {% else %}
 {% include 'core/modals/terms_modal.html' %}
 {% endif %}
