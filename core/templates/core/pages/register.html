@@ -12,11 +12,15 @@
 {% elif system_name == 'performanceevaluation' %}
 <link rel="stylesheet" type="text/css" href="{% static 'performanceevaluation/css/pages/register.css' %}" />
 {% elif system_name == 'librarymanagement' %}
-<link rel="stylesheet" type="text/css" href="{% static 'core/css/library_register_styles.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'librarymanagement/css/pages/login.css' %}" />
+{% elif system_name == 'communityextensionservices' or system_name == 'communitymembership' or system_name == 'ces' %}
+<link rel="stylesheet" type="text/css" href="{% static 'communityextensionservices/css/pages/login.css' %}" />
+{% elif system_name == 'informationsystem' or system_name == 'informationmanagement' %}
+<link rel="stylesheet" type="text/css" href="{% static 'informationmanagement/css/pages/login.css' %}" />
 {% elif system_name == 'scholarshipmanagement' %}
 <link rel="stylesheet" type="text/css" href="{% static 'scholarshipmanagement/css/pages/login.css' %}" />
 {% else %}
-<link rel="stylesheet" type="text/css" href="{% static 'core/css/default_register_styles.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'projectmanagement/css/pages/register.css' %}" />
 {% endif %}
 
 {% if system_name == 'scholarshipmanagement' %}
@@ -31,9 +35,9 @@
 {% endif %}
 
 <script src="{% static 'core/js/register.js' %}" defer></script>
-<div class="container">
+<div class="container login-page register-page">
 
-  <div class="register-layout">
+  <div class="login-layout register-layout">
     <!-- Logo Section -->
     <div class="logo-section">
       <div class="logo">
@@ -195,5 +199,6 @@
 {% else %}
 {% include 'core/modals/terms_modal.html' %}
 {% endif %}
+<!-- Terms modal is included globally in base.html to ensure fixed positioning works correctly -->
 
 {% endblock %}

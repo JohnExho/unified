@@ -5,6 +5,9 @@ function openTermsModal() {
   const modal = document.getElementById('termsModal');
   if (modal) {
     modal.classList.add('active');
+    modal.style.display = 'flex';
+    modal.style.visibility = 'visible';
+    modal.style.opacity = '1';
     document.body.style.overflow = 'hidden';
   }
 }
@@ -16,7 +19,10 @@ function closeTermsModal() {
   
   if (modal) {
     modal.classList.remove('active');
-    document.body.style.overflow = 'auto';
+    modal.style.display = 'none';
+    modal.style.visibility = 'hidden';
+    modal.style.opacity = '0';
+    document.body.style.overflow = '';
     
     // Reset checkbox when closing
     if (agreeCheckbox) {

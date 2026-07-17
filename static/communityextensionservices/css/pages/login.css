@@ -49,6 +49,13 @@
   padding: 2rem;
 }
 
+.login-page.register-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
 .login-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -59,6 +66,18 @@
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+  min-height: 620px;
+}
+
+.register-layout .form-section {
+  padding: 2.7rem 3rem;
+  gap: 0.25rem;
+}
+
+.register-layout form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 
 /* =========================================
@@ -101,14 +120,23 @@
    ========================================= */
 
 .form-section {
-  padding: 3rem;
+  padding: 3rem 3.2rem;
   background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .form-section h1 {
   font-size: 1.9rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 0.4rem;
   font-weight: 600;
+}
+
+.form-subtitle {
+  margin-bottom: 1.5rem;
+  color: var(--muted);
+  font-size: 0.95rem;
 }
 
 /* =========================================
@@ -116,7 +144,7 @@
    ========================================= */
 
 .input-wrapper {
-  margin-bottom: 1.8rem;
+  margin-bottom: 0.35rem;
   position: relative;
 }
 
@@ -176,11 +204,154 @@ button[type="submit"] {
   font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  margin-top: 0.45rem;
 }
 
 button[type="submit"]:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(53, 208, 186, 0.3);
+}
+
+#termsModal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(7, 10, 16, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+#termsModal.active {
+  display: flex !important;
+}
+
+#termsModal .modal-content,
+.modal-content.auth-modal-content {
+  width: min(100%, 860px);
+  max-width: 860px;
+  max-height: 85vh;
+  overflow: auto;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#termsModal .modal-header,
+#termsModal .modal-body,
+#termsModal .modal-footer {
+  box-sizing: border-box;
+}
+
+#termsModal .modal-body {
+  padding: 1.2rem 1.4rem;
+}
+
+#termsModal .modal-footer {
+  padding: 1rem 1.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+#termsModal .terms-text {
+  line-height: 1.75;
+}
+
+#termsModal .terms-text h3,
+#termsModal .terms-text h4 {
+  margin: 0.75rem 0 0.35rem;
+}
+
+#termsModal .terms-text p,
+#termsModal .terms-text ul {
+  margin-bottom: 0.75rem;
+}
+
+#termsModal .terms-text ul {
+  padding-left: 1.25rem;
+}
+
+.auth-modal-header {
+  background: linear-gradient(145deg, var(--surface-2), var(--card));
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  padding: 1.2rem 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.auth-modal-header h2 {
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+.close-btn {
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: var(--accent);
+}
+
+.auth-modal-body {
+  color: var(--text);
+  padding: 1.2rem 1.4rem;
+}
+
+.auth-modal-body .terms-text {
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.auth-modal-footer {
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  padding: 1rem 1.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.auth-checkbox-wrapper {
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.auth-btn-accept {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.8rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-btn-accept:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.auth-btn-accept:disabled {
+  opacity: 0.6;
 }
 
 /* =========================================
@@ -198,7 +369,7 @@ button[type="submit"]:hover {
    ========================================= */
 
 .signup-link {
-  margin-top: 2rem;
+  margin-top: 0.9rem;
   text-align: center;
   font-size: 0.85rem;
   color: var(--muted);

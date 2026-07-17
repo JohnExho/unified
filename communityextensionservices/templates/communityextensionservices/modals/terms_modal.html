@@ -1,4 +1,4 @@
-<!-- Terms and Conditions Modal -->
+<!-- Terms and Conditions Modal - Community Extension Services -->
 <div id="termsModal" class="modal" style="display:none;">
   <div class="modal-content auth-modal-content">
     <div class="modal-header auth-modal-header">
@@ -6,15 +6,23 @@
       <button class="close-btn" onclick="closeTermsModal()" type="button">&times;</button>
     </div>
     <div class="modal-body auth-modal-body">
-      <!-- Terms of Service -->
       {% if system_info.terms_of_service %}
         <div class="terms-text">
           {{ system_info.terms_of_service|linebreaks }}
         </div>
       {% else %}
         <div class="terms-text">
-          <p>No Terms and Conditions available for {{ system_info.display_name }} at this time.</p>
-          <p>Please contact the system administrator for more information.</p>
+          <h3>Community Extension Services - Terms and Conditions</h3>
+          <h4>1. Acceptance of Terms</h4>
+          <p>By using the Community Extension Services portal, you agree to comply with the applicable policies and community service guidelines.</p>
+          <h4>2. Account Responsibility</h4>
+          <p>You are responsible for maintaining the confidentiality of your account and for all actions taken under it.</p>
+          <h4>3. Community Service Activities</h4>
+          <p>All service and participation records entered into the system must be accurate and authorized by the appropriate office.</p>
+          <h4>4. Privacy and Data Use</h4>
+          <p>Data submitted through the system may be used for reporting, monitoring, and service evaluation purposes.</p>
+          <h4>5. Changes to Terms</h4>
+          <p>These terms may be updated periodically. Continued use of the platform indicates acceptance of the latest version.</p>
         </div>
       {% endif %}
     </div>

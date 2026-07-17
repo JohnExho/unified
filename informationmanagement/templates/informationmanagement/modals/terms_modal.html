@@ -1,0 +1,46 @@
+<!-- Terms and Conditions Modal - Information Management -->
+<div id="termsModal" class="modal" style="display:none;">
+  <div class="modal-content auth-modal-content">
+    <div class="modal-header auth-modal-header">
+      <h2>Terms and Conditions - {{ system_info.description }}</h2>
+      <button class="close-btn" onclick="closeTermsModal()" type="button">&times;</button>
+    </div>
+    <div class="modal-body auth-modal-body">
+      {% if system_info.terms_of_service %}
+        <div class="terms-text">
+          {{ system_info.terms_of_service|linebreaks }}
+        </div>
+      {% else %}
+        <div class="terms-text">
+          <h3>Information Management System - Terms and Conditions</h3>
+          <h4>1. Acceptance of Terms</h4>
+          <p>By accessing and using the Information Management System, you agree to comply with these terms and applicable policies.</p>
+
+          <h4>2. Account Responsibility</h4>
+          <p>You are responsible for maintaining the confidentiality of your account credentials and for all activities performed under your account.</p>
+
+          <h4>3. Appropriate Use</h4>
+          <p>You will use the system only for authorized administrative, reporting, or information-sharing purposes and will not misuse or disclose confidential data.</p>
+
+          <h4>4. Data Privacy</h4>
+          <p>Information stored in the system may be confidential. You agree to protect that information and use it only as permitted by your role and applicable law.</p>
+
+          <h4>5. System Availability</h4>
+          <p>The system may be unavailable from time to time due to maintenance or technical issues. We will make reasonable efforts to restore access promptly.</p>
+
+          <h4>6. Changes to Terms</h4>
+          <p>These terms may be updated periodically. Continued use of the system constitutes your acceptance of any changes.</p>
+        </div>
+      {% endif %}
+    </div>
+    <div class="modal-footer auth-modal-footer">
+      <div class="checkbox-wrapper auth-checkbox-wrapper">
+        <input type="checkbox" id="agreeCheckbox" onchange="toggleAcceptButton()">
+        <label for="agreeCheckbox">I have read and agree to the Terms and Conditions</label>
+      </div>
+      <div class="modal-buttons auth-modal-buttons">
+        <button type="button" class="btn-accept auth-btn-accept" id="acceptBtn" disabled onclick="acceptTerms()">Accept & Continue</button>
+      </div>
+    </div>
+  </div>
+</div>

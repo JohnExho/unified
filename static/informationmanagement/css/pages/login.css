@@ -46,6 +46,13 @@ body {
   padding: 2rem;
 }
 
+.login-page.register-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
 .login-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -106,7 +113,13 @@ body {
 
 .form-section h1 {
   font-size: 2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0.35rem;
+}
+
+.form-subtitle {
+  margin-bottom: 1.4rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
 }
 
 /* Input Fields */
@@ -170,12 +183,107 @@ button[type="submit"] {
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.25s ease;
+  margin-top: 0.2rem;
 }
 
 button[type="submit"]:hover {
   background: var(--primary-hover);
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+}
+
+#termsModal .modal-content,
+.auth-modal-content {
+  background: var(--card-bg);
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  width: min(100%, 860px);
+  max-width: 860px;
+  max-height: 85vh;
+  overflow: auto;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#termsModal .modal-header,
+#termsModal .modal-body,
+#termsModal .modal-footer {
+  box-sizing: border-box;
+}
+
+#termsModal .modal-body {
+  padding: 1.2rem 1.4rem;
+}
+
+#termsModal .modal-footer {
+  padding: 1rem 1.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+#termsModal .terms-text {
+  line-height: 1.75;
+}
+
+#termsModal .terms-text h3,
+#termsModal .terms-text h4 {
+  margin: 0.75rem 0 0.35rem;
+}
+
+#termsModal .terms-text p,
+#termsModal .terms-text ul {
+  margin-bottom: 0.75rem;
+}
+
+#termsModal .terms-text ul {
+  padding-left: 1.25rem;
+}
+
+.auth-modal-header {
+  background: linear-gradient(160deg, rgba(37, 99, 235, 0.8), rgba(30, 64, 175, 0.9));
+  border-bottom: 1px solid var(--border-color);
+}
+
+.auth-modal-header h2 {
+  color: var(--text-light);
+  font-size: 1.2rem;
+}
+
+.close-btn {
+  color: var(--text-light);
+  background: transparent;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+.auth-modal-body {
+  color: var(--text-light);
+}
+
+.auth-modal-footer {
+  background: rgba(15, 23, 42, 0.6);
+  border-top: 1px solid var(--border-color);
+}
+
+.auth-checkbox-wrapper {
+  color: var(--text-muted);
+}
+
+.auth-btn-accept {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 12px;
+}
+
+.auth-btn-accept:hover:not(:disabled) {
+  background: var(--primary-hover);
 }
 
 /* Errors */

@@ -1,11 +1,11 @@
 <!-- Terms and Conditions Modal - Library Management -->
-<div id="termsModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
+<div id="termsModal" class="modal" style="display:none;">
+  <div class="modal-content auth-modal-content">
+    <div class="modal-header auth-modal-header">
       <h2>Terms and Conditions - {{ system_info.description }}</h2>
-      <button class="close-btn" onclick="closeTermsModal()">&times;</button>
+      <button class="close-btn" onclick="closeTermsModal()" type="button">&times;</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body auth-modal-body">
       <!-- Terms of Service -->
       {% if system_info.terms_of_service %}
         <div class="terms-text">
@@ -76,13 +76,13 @@
         </div>
       {% endif %}
     </div>
-    <div class="modal-footer">
-      <div class="checkbox-wrapper">
+    <div class="modal-footer auth-modal-footer">
+      <div class="checkbox-wrapper auth-checkbox-wrapper">
         <input type="checkbox" id="agreeCheckbox" onchange="toggleAcceptButton()">
         <label for="agreeCheckbox">I have read and agree to the Terms and Conditions</label>
       </div>
-      <div class="modal-buttons">
-        <button type="button" class="btn-accept" id="acceptBtn" disabled onclick="acceptTerms()">Accept & Continue</button>
+      <div class="modal-buttons auth-modal-buttons">
+        <button type="button" class="btn-accept auth-btn-accept" id="acceptBtn" disabled onclick="acceptTerms()">Accept & Continue</button>
       </div>
     </div>
   </div>
