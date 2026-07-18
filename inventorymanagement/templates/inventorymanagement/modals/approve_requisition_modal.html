@@ -12,7 +12,7 @@
 		<form id="approveRequisitionForm" method="post">
 			{% csrf_token %}
 			<div class="modal-body">
-				<p>Approve this requisition? It can be issued once approved.</p>
+				<p>Approve this requisition? Approval will also issue the items and deduct them from inventory.</p>
 			</div>
 			<div class="form-actions">
 				<button type="button" class="btn btn-secondary" onclick="closeModal('approveRequisitionModal')">Cancel</button>

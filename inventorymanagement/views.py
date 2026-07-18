@@ -6,7 +6,8 @@ from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Q, Count, Avg, F, ExpressionWrapper, DurationField
+from django.db import transaction
+from django.db.models import Q, Count, Avg, F, ExpressionWrapper, DurationField, Sum
 from .models import InventoryCategory, InventoryItem, InventoryTransaction, Asset, AssetCategory, AssetAssignment, AssetMaintenance, Requisition, RequisitionItem, MLInsight
 from core.models import Address, Logs, SystemMembership
 from django.contrib.auth import get_user_model
@@ -40,6 +41,56 @@ def _handle_non_admin_access(request):
     return redirect('inventorymanagement:requisitions')
 
 
+def _issue_requisition_inventory(requisition, performed_by):
+    requisition_items = list(requisition.items.select_related('inventory_item'))
+    if not requisition_items:
+        raise ValueError('This requisition has no items to issue.')
+
+    inventory_by_id = {}
+    insufficient_items = []
+
+    for req_item in requisition_items:
+        quantity_to_issue = req_item.quantity_requested - req_item.quantity_issued
+        if quantity_to_issue <= 0:
+            continue
+
+        inventory_item = InventoryItem.objects.select_for_update().get(id=req_item.inventory_item_id)
+        inventory_by_id[req_item.inventory_item_id] = inventory_item
+
+        if inventory_item.quantity < quantity_to_issue:
+            insufficient_items.append(
+                f"{inventory_item.name} (requested {quantity_to_issue}, available {inventory_item.quantity})"
+            )
+
+    if insufficient_items:
+        raise ValueError('Insufficient stock for: ' + ', '.join(insufficient_items))
+
+    issued_any = False
+
+    for req_item in requisition_items:
+        quantity_to_issue = req_item.quantity_requested - req_item.quantity_issued
+        if quantity_to_issue <= 0:
+            continue
+
+        inventory_item = inventory_by_id[req_item.inventory_item_id]
+        inventory_item.quantity -= quantity_to_issue
+        inventory_item.save()
+
+        req_item.quantity_issued = req_item.quantity_requested
+        req_item.save(update_fields=['quantity_issued'])
+
+        InventoryTransaction.objects.create(
+            item=inventory_item,
+            transaction_type='ISSUE',
+            quantity=-quantity_to_issue,
+            performed_by=performed_by,
+            remarks=f"Issued from requisition {requisition.id}"
+        )
+        issued_any = True
+
+    return issued_any
+
+
 @login_required
 @require_system_access
 def dashboard(request):
@@ -61,17 +112,21 @@ def dashboard(request):
     
     # Get today's transactions
     today = timezone.now().date()
-    issued_today = InventoryTransaction.objects.filter(
+    issued_today_quantity = InventoryTransaction.objects.filter(
         created_at__date=today,
         transaction_type='ISSUE'
-    ).count()
-    returned_today = InventoryTransaction.objects.filter(
+    ).aggregate(total_quantity=Sum('quantity'))['total_quantity']
+    returned_today_quantity = InventoryTransaction.objects.filter(
         created_at__date=today,
         transaction_type='RETURN'
-    ).count()
+    ).aggregate(total_quantity=Sum('quantity'))['total_quantity']
+    asset_issued_today = AssetAssignment.objects.filter(assigned_at__date=today).count()
+    asset_returned_today = AssetAssignment.objects.filter(returned_at__date=today).count()
+
+    issued_today = abs(issued_today_quantity or 0) + asset_issued_today
+    returned_today = (returned_today_quantity or 0) + asset_returned_today
     
     # Get inventory by category for bar chart
-    from django.db.models import Sum
     category_data = InventoryItem.objects.values('category__name').annotate(
         total_quantity=Sum('quantity')
     ).order_by('-total_quantity')[:5]
@@ -339,7 +394,7 @@ def requisitions(request):
             pass
 
     pending_count = Requisition.objects.filter(status='PENDING').count()
-    approved_count = Requisition.objects.filter(status='APPROVED').count()
+    approved_count = Requisition.objects.filter(approved_by__isnull=False).count()
     rejected_count = Requisition.objects.filter(status='REJECTED').count()
 
     requisitions_list = list(requisitions_queryset)
@@ -1995,27 +2050,39 @@ def delete_requisition(request, requisition_id):
 def approve_requisition(request, requisition_id):
     """Approve a requisition (admin only)"""
     requisition = get_object_or_404(Requisition, id=requisition_id)
+
+    if requisition.status != 'PENDING':
+        messages.error(request, 'Only pending requisitions can be approved.')
+        return redirect('inventorymanagement:requisitions')
     
     if request.method == 'POST':
-        requisition.status = 'APPROVED'
-        requisition.approved_by = request.user
-        requisition.approved_at = timezone.now()
-        requisition.save()
-        
-        # Log the action
-        Logs.objects.create(
-            user=request.user,
-            system_name='inventorymanagement',
-            action='UPDATE',
-            target_model='Requisition',
-            target_id=str(requisition.id),
-            description=f"Approved requisition {requisition.id}",
-            hidden_description=f"Admin '{request.user.username}' approved requisition {requisition.id}",
-            ip_address=get_client_ip(request),
-            user_agent=get_user_agent(request),
-        )
-        
-        messages.success(request, 'Requisition approved successfully')
+        try:
+            with transaction.atomic():
+                _issue_requisition_inventory(requisition, request.user)
+
+                requisition.status = 'ISSUED'
+                requisition.approved_by = request.user
+                requisition.approved_at = timezone.now()
+                requisition.save(update_fields=['status', 'approved_by', 'approved_at'])
+
+                Logs.objects.create(
+                    user=request.user,
+                    system_name='inventorymanagement',
+                    action='UPDATE',
+                    target_model='Requisition',
+                    target_id=str(requisition.id),
+                    description=f"Approved and issued requisition {requisition.id}",
+                    hidden_description=f"Admin '{request.user.username}' approved and issued requisition {requisition.id}",
+                    ip_address=get_client_ip(request),
+                    user_agent=get_user_agent(request),
+                )
+
+            messages.success(request, 'Requisition approved and issued successfully.')
+        except ValueError as exc:
+            messages.error(request, str(exc))
+        except Exception as exc:
+            messages.error(request, f'Error approving requisition: {exc}')
+
         return redirect('inventorymanagement:requisitions')
     
     return redirect('inventorymanagement:requisitions')
@@ -2067,49 +2134,28 @@ def issue_requisition(request, requisition_id):
     
     if request.method == 'POST':
         try:
-            items = requisition.items.all()
-            
-            for req_item in items:
-                quantity_to_issue = req_item.quantity_requested - req_item.quantity_issued
-                
-                # Check if sufficient stock
-                if req_item.inventory_item.quantity < quantity_to_issue:
-                    messages.error(request, f"Insufficient stock for {req_item.inventory_item.name}")
-                    return redirect('inventorymanagement:requisitions')
-                
-                # Deduct from inventory and create transaction
-                req_item.inventory_item.quantity -= quantity_to_issue
-                req_item.inventory_item.save()
-                
-                req_item.quantity_issued = req_item.quantity_requested
-                req_item.save()
-                
-                # Create transaction record
-                InventoryTransaction.objects.create(
-                    item=req_item.inventory_item,
-                    transaction_type='ISSUE',
-                    quantity=-quantity_to_issue,
-                    performed_by=request.user,
-                    remarks=f"Issued from requisition {requisition.id}"
+            with transaction.atomic():
+                _issue_requisition_inventory(requisition, request.user)
+
+                requisition.status = 'ISSUED'
+                requisition.save(update_fields=['status'])
+
+                Logs.objects.create(
+                    user=request.user,
+                    system_name='inventorymanagement',
+                    action='UPDATE',
+                    target_model='Requisition',
+                    target_id=str(requisition.id),
+                    description=f"Issued items from requisition {requisition.id}",
+                    hidden_description=f"Admin '{request.user.username}' issued items from requisition {requisition.id}",
+                    ip_address=get_client_ip(request),
+                    user_agent=get_user_agent(request),
                 )
             
-            requisition.status = 'ISSUED'
-            requisition.save()
-            
-            # Log the action
-            Logs.objects.create(
-                user=request.user,
-                system_name='inventorymanagement',
-                action='UPDATE',
-                target_model='Requisition',
-                target_id=str(requisition.id),
-                description=f"Issued items from requisition {requisition.id}",
-                hidden_description=f"Admin '{request.user.username}' issued items from requisition {requisition.id}",
-                ip_address=get_client_ip(request),
-                user_agent=get_user_agent(request),
-            )
-            
             messages.success(request, 'Items issued successfully')
+            return redirect('inventorymanagement:requisitions')
+        except ValueError as e:
+            messages.error(request, str(e))
             return redirect('inventorymanagement:requisitions')
         except Exception as e:
             import traceback
@@ -2729,12 +2775,12 @@ def ml_lab(request):
 
     # Asset utilization
     total_assets = Asset.objects.count()
-    assigned_assets = Asset.objects.filter(status='assigned').count()
+    assigned_assets = Asset.objects.filter(status='ASSIGNED').count()
     utilization_rate = round((assigned_assets / total_assets) * 100) if total_assets else 0
 
     # Requisition approval rate
     total_reqs = Requisition.objects.count()
-    approved_reqs = Requisition.objects.filter(status='approved').count()
+    approved_reqs = Requisition.objects.filter(approved_by__isnull=False).count()
     approval_rate = round((approved_reqs / total_reqs) * 100) if total_reqs else 0
 
     # Build a complete 60-day daily transaction series (0-filled for missing dates)
