@@ -62,7 +62,7 @@ def authors_publishers_management(request):
 
 
 @login_required(login_url="/librarymanagement/login")
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def dashboard(request):
     """Library dashboard"""
 
@@ -308,7 +308,7 @@ def recommendations_dashboard(request):
 
 
 @login_required(login_url="/librarymanagement/login")
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def trending_books(request):
     """Trending / popular books"""
     # Get period type from query params, default to weekly

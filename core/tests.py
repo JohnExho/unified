@@ -76,6 +76,32 @@ class UrlPrefixTests(TestCase):
             information_response, 'href="/informationsystem/register/"'
         )
 
+    def test_inventory_login_and_register_use_thesis_aligned_label(self):
+        login_response = self.client.get("/inventorymanagement/login/")
+        register_response = self.client.get("/inventorymanagement/register/")
+
+        self.assertEqual(login_response.status_code, 200)
+        self.assertEqual(register_response.status_code, 200)
+        self.assertContains(
+            login_response,
+            "Manage inventory records, stock levels, and asset movement."
+        )
+        self.assertContains(
+            register_response,
+            "Community Extension and Institutional Linkages",
+        )
+        self.assertContains(register_response, "Register - Inventory Management")
+
+    def test_information_login_and_register_use_information_label(self):
+        login_response = self.client.get("/informationsystem/login/")
+        register_response = self.client.get("/informationsystem/register/")
+
+        self.assertEqual(login_response.status_code, 200)
+        self.assertEqual(register_response.status_code, 200)
+        self.assertContains(login_response, "Institutional information, records, and reports")
+        self.assertContains(register_response, "Institutional information, records, and reports")
+        self.assertContains(register_response, "Register - Information Management")
+
     def test_public_register_url_creates_canonical_membership_and_redirects(self):
         Systems.objects.get_or_create(
             name="informationmanagement",

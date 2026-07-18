@@ -1,7 +1,15 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Register - {{ system_name|title }}{% endblock %}
+{% block title %}
+  {% if system_name == 'inventorymanagement' %}
+    Register - Inventory Management
+  {% elif system_name == 'informationmanagement' or system_name == 'informationsystem' or system_name == 'ims' %}
+    Register - Information Management
+  {% else %}
+    Register - {{ system_name|title }}
+  {% endif %}
+{% endblock %}
 
 {% block content %}
 <!-- Dynamic CSS Loading -->
@@ -44,10 +52,14 @@
         <img src="{% static 'core/images/kolehiyo_logo.png' %}" alt="Kolehiyo ng Subic logo" />
       </div>
       <div class="logo-text">
-        {% if system_name == 'scholarshipmanagement' %}Scholarship Management{% else %}{{ system_info.description }}{% endif %}
+        {% if system_name == 'scholarshipmanagement' %}Scholarship Management{% elif system_name == 'inventorymanagement' %}Inventory Management{% elif system_name == 'informationmanagement' or system_name == 'informationsystem' or system_name == 'ims' %}Information Management{% else %}{{ system_info.description }}{% endif %}
       </div>
       {% if system_name == 'scholarshipmanagement' %}
       <div class="logo-tagline">Gated scholarship application platform</div>
+      {% elif system_name == 'inventorymanagement' %}
+      <div class="logo-tagline">Manage inventory records, stock levels, and asset movement.</div>
+      {% elif system_name == 'informationmanagement' or system_name == 'informationsystem' or system_name == 'ims' %}
+      <div class="logo-tagline">Institutional information, records, and reports</div>
       {% endif %}
     </div>
 

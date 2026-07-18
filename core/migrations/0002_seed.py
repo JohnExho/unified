@@ -13,9 +13,9 @@ def seed_systems_and_memberships(apps, schema_editor):
         ('core', 'Core System', 'Core system for user management and authentication.'),
         ('projectmanagement', 'Project Management', 'Manage projects, tasks, and team collaboration.'),
         ('librarymanagement', 'Library Management', 'Manage library resources, books, and borrowing.'),
-        ('inventorymanagement', 'Inventory Management', 'Track and manage inventory items and stock.'),
+        ('inventorymanagement', 'Inventory Management', 'Manage inventory records, stock levels, and asset movement.'),
         ('communityextensionservices', 'Community Extension Services', 'Faculty Contribution Module.'),
-        ('informationmanagement', 'Information Management', 'Manage inventory records, stock levels, and asset movement.'),
+        ('informationmanagement', 'Information Management', 'Manage institutional information, records, and reports.'),
         ('performanceevaluation', 'Performance Evaluation', 'Evaluate and track employee performance.'),
         ('scholarshipmanagement', 'Scholarship Management', 'Manage and administer scholarship programs and applications.'),
     ]

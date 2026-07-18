@@ -44,6 +44,12 @@
         {% if system_name == 'scholarshipmanagement' %}
           <div class="logo-text">Scholarship Management</div>
           <div class="logo-tagline">Gated scholarship application platform</div>
+        {% elif system_name == 'inventorymanagement' %}
+          <div class="logo-text">Inventory Management</div>
+          <div class="logo-tagline">Manage inventory records, stock levels, and asset movement.</div>
+        {% elif system_name == 'informationmanagement' or system_name == 'informationsystem' or system_name == 'ims' %}
+          <div class="logo-text">Information Management</div>
+          <div class="logo-tagline">Institutional information, records, and reports</div>
         {% elif system_info %}
           <div class="logo-text">{{ system_info.display_name }}</div>
         {% elif system_name %}

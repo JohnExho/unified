@@ -36,6 +36,22 @@ def get_public_system_url(system_name):
     return PUBLIC_SYSTEM_URLS.get(system_name, system_name)
 
 
+def get_system_display_config(system_name):
+    if system_name == "inventorymanagement":
+        return {
+            "description": "Manage inventory records, stock levels, and asset movement.",
+            "display_name": "Inventory Management",
+        }
+
+    if system_name in {"informationmanagement", "informationsystem", "ims"}:
+        return {
+            "description": "Manage institutional information, records, and reports.",
+            "display_name": "Information Management",
+        }
+
+    return {}
+
+
 def core_register(request, system_name):
     User = get_user_model()
     canonical_system_name = get_canonical_system_name(system_name)
@@ -45,14 +61,16 @@ def core_register(request, system_name):
     # Note: 'name' is the field in Systems table, not 'system_name'
     try:
         system = Systems.objects.get(name=canonical_system_name)
+        overrides = get_system_display_config(canonical_system_name)
         system_info = {
             "name": system.name,
-            "description": system.description,
+            "description": overrides.get("description", system.description),
             "terms_of_service": system.terms_of_service,
-            "display_name": (
+            "display_name": overrides.get(
+                "display_name",
                 system.display_name
                 if hasattr(system, "display_name")
-                else system.name.title()
+                else system.name.title(),
             ),
         }
     except Systems.DoesNotExist:
@@ -213,10 +231,12 @@ def core_login(request, system_name=None):
     if canonical_system_name:
         try:
             system = Systems.objects.get(name=canonical_system_name)
+            overrides = get_system_display_config(canonical_system_name)
             system_info = {
                 "name": system.name,
-                "description": system.description,
-                "display_name": (
+                "description": overrides.get("description", system.description),
+                "display_name": overrides.get(
+                    "display_name",
                     system.display_name
                     if hasattr(system, "display_name")
                     else system.description or system.name.title()
