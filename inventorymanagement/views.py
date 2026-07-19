@@ -8,7 +8,22 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q, Count, Avg, F, ExpressionWrapper, DurationField, Sum
-from .models import InventoryCategory, InventoryItem, InventoryTransaction, Asset, AssetCategory, AssetAssignment, AssetMaintenance, Requisition, RequisitionItem, MLInsight
+from .models import (
+    InventoryCategory,
+    InventoryItem,
+    InventoryTransaction,
+    Asset,
+    AssetCategory,
+    AssetAssignment,
+    AssetMaintenance,
+    Requisition,
+    RequisitionItem,
+    AssetLoanRequest,
+    AssetLoanRequestItem,
+    ConferenceRoom,
+    ConferenceRoomReservation,
+    MLInsight,
+)
 from core.models import Address, Logs, SystemMembership
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
@@ -91,6 +106,69 @@ def _issue_requisition_inventory(requisition, performed_by):
     return issued_any
 
 
+def _process_requisition_approval(requisition, performed_by):
+    requisition_items = list(requisition.items.select_related('inventory_item').select_for_update())
+    if not requisition_items:
+        raise ValueError('This requisition has no items to process.')
+
+    issued_items = []
+    unavailable_items = []
+    partially_fulfilled_items = []
+
+    inventory_cache = {}
+
+    for req_item in requisition_items:
+        outstanding = req_item.quantity_requested - req_item.quantity_issued
+        if outstanding <= 0:
+            continue
+
+        if req_item.inventory_item_id in inventory_cache:
+            inventory_item = inventory_cache[req_item.inventory_item_id]
+        else:
+            inventory_item = InventoryItem.objects.select_for_update().get(id=req_item.inventory_item_id)
+            inventory_cache[req_item.inventory_item_id] = inventory_item
+
+        if inventory_item.quantity <= 0:
+            unavailable_items.append(req_item)
+            continue
+
+        quantity_to_issue = min(outstanding, inventory_item.quantity)
+        inventory_item.quantity -= quantity_to_issue
+        inventory_item.save(update_fields=['quantity'])
+
+        req_item.quantity_issued += quantity_to_issue
+        req_item.save(update_fields=['quantity_issued'])
+
+        InventoryTransaction.objects.create(
+            item=inventory_item,
+            transaction_type='ISSUE',
+            quantity=-quantity_to_issue,
+            performed_by=performed_by,
+            remarks=f"Issued from requisition {requisition.id}"
+        )
+
+        issued_items.append(req_item)
+        if quantity_to_issue < outstanding:
+            partially_fulfilled_items.append(req_item)
+
+    if not issued_items:
+        raise ValueError('No available items to issue; request remains pending.')
+
+    requisition.approved_by = performed_by
+    requisition.approved_at = timezone.now()
+    if unavailable_items or partially_fulfilled_items:
+        requisition.status = 'APPROVED'
+    else:
+        requisition.status = 'ISSUED'
+    requisition.save(update_fields=['status', 'approved_by', 'approved_at'])
+
+    return {
+        'issued_items': issued_items,
+        'unavailable_items': unavailable_items,
+        'partially_fulfilled_items': partially_fulfilled_items,
+    }
+
+
 @login_required
 @require_system_access
 def dashboard(request):
@@ -105,11 +183,11 @@ def dashboard(request):
     # Get basic statistics
     total_items = InventoryItem.objects.count()
     active_items = InventoryItem.objects.filter(quantity__gt=F('low_stock_threshold')).count()
-    out_of_stock = InventoryItem.objects.filter(quantity=0).count()
-    low_stock = InventoryItem.objects.filter(quantity__gt=0, quantity__lte=F('low_stock_threshold')).count()
-    # Show both low stock and out of stock items in the table (items needing attention)
-    low_stock_items = InventoryItem.objects.filter(quantity__lte=F('low_stock_threshold')).order_by('quantity')
-    
+    low_stock_items = InventoryItem.objects.filter(quantity__gt=0, quantity__lte=F('low_stock_threshold')).order_by('quantity')
+    out_of_stock_items = InventoryItem.objects.filter(quantity=0).order_by('name')
+    low_stock = low_stock_items.count()
+    out_of_stock = out_of_stock_items.count()
+
     # Get today's transactions
     today = timezone.now().date()
     issued_today_quantity = InventoryTransaction.objects.filter(
@@ -174,6 +252,7 @@ def dashboard(request):
         'low_stock_count': low_stock,
         'out_of_stock': out_of_stock,
         'low_stock_items': low_stock_items,
+        'out_of_stock_items': out_of_stock_items,
         'issued_today': issued_today,
         'returned_today': returned_today,
         'category_labels': json.dumps(category_labels),
@@ -2058,12 +2137,7 @@ def approve_requisition(request, requisition_id):
     if request.method == 'POST':
         try:
             with transaction.atomic():
-                _issue_requisition_inventory(requisition, request.user)
-
-                requisition.status = 'ISSUED'
-                requisition.approved_by = request.user
-                requisition.approved_at = timezone.now()
-                requisition.save(update_fields=['status', 'approved_by', 'approved_at'])
+                result = _process_requisition_approval(requisition, request.user)
 
                 Logs.objects.create(
                     user=request.user,
@@ -2071,13 +2145,20 @@ def approve_requisition(request, requisition_id):
                     action='UPDATE',
                     target_model='Requisition',
                     target_id=str(requisition.id),
-                    description=f"Approved and issued requisition {requisition.id}",
-                    hidden_description=f"Admin '{request.user.username}' approved and issued requisition {requisition.id}",
+                    description=f"Approved requisition {requisition.id}",
+                    hidden_description=f"Admin '{request.user.username}' approved requisition {requisition.id}",
                     ip_address=get_client_ip(request),
                     user_agent=get_user_agent(request),
                 )
 
-            messages.success(request, 'Requisition approved and issued successfully.')
+            if result['unavailable_items']:
+                unavailable_list = ', '.join([
+                    f"{item.inventory_item.name} (requested {item.quantity_requested - item.quantity_issued})"
+                    for item in result['unavailable_items']
+                ])
+                messages.warning(request, f"Partial approval applied. Some items were unavailable: {unavailable_list}")
+            else:
+                messages.success(request, 'Requisition approved and issued successfully.')
         except ValueError as exc:
             messages.error(request, str(exc))
         except Exception as exc:
@@ -2583,6 +2664,466 @@ def get_asset_categories(request):
     """Get all asset categories as JSON"""
     categories = AssetCategory.objects.all().values('id', 'name')
     return JsonResponse({'categories': list(categories)})
+
+
+def _parse_datetime_local(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        try:
+            return datetime.strptime(value, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            return None
+
+
+def _has_overlapping_reservations(room, start_datetime, end_datetime, exclude_id=None):
+    qs = ConferenceRoomReservation.objects.filter(
+        room=room,
+        status__in=['PENDING', 'APPROVED']
+    )
+    if exclude_id:
+        qs = qs.exclude(id=exclude_id)
+    return qs.filter(
+        start_datetime__lt=end_datetime,
+        end_datetime__gt=start_datetime
+    ).exists()
+
+
+@login_required
+@require_system_access
+def asset_loan_requests(request):
+    current_system = request.current_system
+    systems = request.session.get('accessible_systems', [])
+    status_filter = request.GET.get('status', '').strip().upper()
+    search_query = request.GET.get('search', '').strip()
+
+    loan_requests = AssetLoanRequest.objects.select_related('requested_by', 'approved_by').prefetch_related('items__asset')
+    if status_filter:
+        loan_requests = loan_requests.filter(status=status_filter)
+
+    if search_query:
+        loan_requests = loan_requests.filter(
+            Q(event_name__icontains=search_query) |
+            Q(purpose__icontains=search_query) |
+            Q(requested_by__username__icontains=search_query)
+        )
+
+    if not _is_inventory_admin(request):
+        loan_requests = loan_requests.filter(requested_by=request.user)
+
+    loan_requests = loan_requests.order_by('-created_at')
+    pending_count = AssetLoanRequest.objects.filter(status='PENDING').count()
+    approved_count = AssetLoanRequest.objects.filter(status='APPROVED').count()
+    rejected_count = AssetLoanRequest.objects.filter(status='REJECTED').count()
+    returned_count = AssetLoanRequest.objects.filter(status='RETURNED').count()
+
+    return render(request, 'inventorymanagement/pages/asset_loan_requests.html', {
+        'systems': systems,
+        'current_system': current_system,
+        'loan_requests': loan_requests,
+        'status_filter': status_filter,
+        'search_query': search_query,
+        'pending_count': pending_count,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+        'returned_count': returned_count,
+        'is_admin': _is_inventory_admin(request),
+    })
+
+
+@login_required
+@require_system_access
+def create_asset_loan_request(request):
+    if request.method == 'POST':
+        event_name = request.POST.get('event_name', '').strip()
+        purpose = request.POST.get('purpose', '').strip()
+        expected_return_date = request.POST.get('expected_return_date', '').strip() or None
+        asset_ids = request.POST.getlist('assets')
+
+        if not event_name:
+            messages.error(request, 'Event name is required.')
+            return redirect('inventorymanagement:create_asset_loan_request')
+
+        if not asset_ids:
+            messages.error(request, 'Please select at least one asset.')
+            return redirect('inventorymanagement:create_asset_loan_request')
+
+        assets = Asset.objects.filter(id__in=asset_ids, status='AVAILABLE')
+        if assets.count() != len(asset_ids):
+            messages.error(request, 'One or more selected assets are not available.')
+            return redirect('inventorymanagement:create_asset_loan_request')
+
+        loan_request = AssetLoanRequest.objects.create(
+            requested_by=request.user,
+            event_name=event_name,
+            purpose=purpose,
+            expected_return_date=expected_return_date,
+            status='PENDING'
+        )
+
+        for asset in assets:
+            AssetLoanRequestItem.objects.create(
+                request=loan_request,
+                asset=asset
+            )
+
+        Logs.objects.create(
+            user=request.user,
+            system_name='inventorymanagement',
+            action='CREATE',
+            target_model='AssetLoanRequest',
+            target_id=str(loan_request.id),
+            description=f"Created asset loan request {loan_request.id}",
+            hidden_description=f"User '{request.user.username}' created asset loan request {loan_request.id}",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+
+        messages.success(request, 'Asset requisition request created successfully.')
+        return redirect('inventorymanagement:asset_loan_requests')
+
+    available_assets = Asset.objects.filter(status='AVAILABLE').select_related('category')
+    return render(request, 'inventorymanagement/pages/create_asset_loan_request.html', {
+        'available_assets': available_assets,
+    })
+
+
+@login_required
+@require_system_access
+@require_system_role(['admin', 'superadmin'])
+def approve_asset_loan_request(request, request_id):
+    loan_request = get_object_or_404(AssetLoanRequest, id=request_id)
+
+    if loan_request.status != 'PENDING':
+        messages.error(request, 'Only pending asset loan requests can be approved.')
+        return redirect('inventorymanagement:asset_loan_requests')
+
+    if request.method == 'POST':
+        unavailable = []
+        for item in loan_request.items.select_related('asset'):
+            if item.asset.status != 'AVAILABLE':
+                unavailable.append(item.asset.name)
+
+        if unavailable:
+            messages.error(request, f"Cannot approve request because these assets are unavailable: {', '.join(unavailable)}")
+            return redirect('inventorymanagement:asset_loan_requests')
+
+        for item in loan_request.items.select_related('asset'):
+            asset = item.asset
+            borrower = loan_request.requested_by
+            assignment = AssetAssignment.objects.create(
+                asset=asset,
+                assigned_to=borrower,
+                assigned_to_name=borrower.get_full_name() or borrower.username,
+                remarks=f"Approved from asset loan request {loan_request.id}"
+            )
+            asset.status = 'ASSIGNED'
+            asset.save()
+
+        loan_request.status = 'APPROVED'
+        loan_request.approved_by = request.user
+        loan_request.approved_at = timezone.now()
+        loan_request.save(update_fields=['status', 'approved_by', 'approved_at'])
+
+        Logs.objects.create(
+            user=request.user,
+            system_name='inventorymanagement',
+            action='UPDATE',
+            target_model='AssetLoanRequest',
+            target_id=str(loan_request.id),
+            description=f"Approved asset loan request {loan_request.id}",
+            hidden_description=f"Admin '{request.user.username}' approved asset loan request {loan_request.id}",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+
+        messages.success(request, 'Asset requisition approved successfully.')
+        return redirect('inventorymanagement:asset_loan_requests')
+
+    return redirect('inventorymanagement:asset_loan_requests')
+
+
+@login_required
+@require_system_access
+@require_system_role(['admin', 'superadmin'])
+def reject_asset_loan_request(request, request_id):
+    loan_request = get_object_or_404(AssetLoanRequest, id=request_id)
+    if request.method == 'POST':
+        reason = request.POST.get('reason', '').strip()
+        loan_request.status = 'REJECTED'
+        loan_request.rejection_reason = reason
+        loan_request.save(update_fields=['status', 'rejection_reason'])
+
+        Logs.objects.create(
+            user=request.user,
+            system_name='inventorymanagement',
+            action='UPDATE',
+            target_model='AssetLoanRequest',
+            target_id=str(loan_request.id),
+            description=f"Rejected asset loan request {loan_request.id}",
+            hidden_description=f"Admin '{request.user.username}' rejected asset loan request {loan_request.id}: {reason}",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+
+        messages.success(request, 'Asset requisition rejected successfully.')
+        return redirect('inventorymanagement:asset_loan_requests')
+    return redirect('inventorymanagement:asset_loan_requests')
+
+
+@login_required
+@require_system_access
+@require_system_role(['admin', 'superadmin'])
+def return_asset_loan_request(request, request_id):
+    loan_request = get_object_or_404(AssetLoanRequest, id=request_id)
+    if request.method == 'POST':
+        for item in loan_request.items.select_related('asset'):
+            asset = item.asset
+            assignment = asset.assignments.filter(returned_at__isnull=True).first()
+            if assignment:
+                assignment.returned_at = timezone.now()
+                assignment.save()
+            asset.status = 'AVAILABLE'
+            asset.save()
+
+        loan_request.status = 'RETURNED'
+        loan_request.save(update_fields=['status'])
+
+        Logs.objects.create(
+            user=request.user,
+            system_name='inventorymanagement',
+            action='UPDATE',
+            target_model='AssetLoanRequest',
+            target_id=str(loan_request.id),
+            description=f"Returned assets for loan request {loan_request.id}",
+            hidden_description=f"Admin '{request.user.username}' returned assets for loan request {loan_request.id}",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+
+        messages.success(request, 'Asset requisition marked as returned.')
+        return redirect('inventorymanagement:asset_loan_requests')
+    return redirect('inventorymanagement:asset_loan_requests')
+
+
+@login_required
+@require_system_access
+def view_asset_loan_request(request, request_id):
+    loan_request = get_object_or_404(AssetLoanRequest, id=request_id)
+    items = loan_request.items.select_related('asset')
+
+    current_system = request.current_system
+    systems = request.session.get('accessible_systems', [])
+
+    return render(request, 'inventorymanagement/pages/view_asset_loan_request.html', {
+        'systems': systems,
+        'current_system': current_system,
+        'loan_request': loan_request,
+        'items': items,
+        'is_admin': _is_inventory_admin(request),
+    })
+
+
+@login_required
+@require_system_access
+def conference_reservations(request):
+    current_system = request.current_system
+    systems = request.session.get('accessible_systems', [])
+    status_filter = request.GET.get('status', '').strip().upper()
+    search_query = request.GET.get('search', '').strip()
+
+    reservations = ConferenceRoomReservation.objects.select_related('room', 'requested_by', 'approved_by')
+    if status_filter:
+        reservations = reservations.filter(status=status_filter)
+
+    if search_query:
+        reservations = reservations.filter(
+            Q(event_name__icontains=search_query) |
+            Q(purpose__icontains=search_query) |
+            Q(requested_by__username__icontains=search_query) |
+            Q(room__name__icontains=search_query)
+        )
+
+    if not _is_inventory_admin(request):
+        reservations = reservations.filter(requested_by=request.user)
+
+    reservations = reservations.order_by('-created_at')
+    pending_count = ConferenceRoomReservation.objects.filter(status='PENDING').count()
+    approved_count = ConferenceRoomReservation.objects.filter(status='APPROVED').count()
+    rejected_count = ConferenceRoomReservation.objects.filter(status='REJECTED').count()
+    cancelled_count = ConferenceRoomReservation.objects.filter(status='CANCELLED').count()
+
+    return render(request, 'inventorymanagement/pages/conference_reservations.html', {
+        'systems': systems,
+        'current_system': current_system,
+        'reservations': reservations,
+        'status_filter': status_filter,
+        'search_query': search_query,
+        'pending_count': pending_count,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+        'cancelled_count': cancelled_count,
+        'is_admin': _is_inventory_admin(request),
+    })
+
+
+@login_required
+@require_system_access
+def create_conference_reservation(request):
+    if request.method == 'POST':
+        room_id = request.POST.get('room', '').strip()
+        event_name = request.POST.get('event_name', '').strip()
+        purpose = request.POST.get('purpose', '').strip()
+        start_dt = _parse_datetime_local(request.POST.get('start_datetime', '').strip())
+        end_dt = _parse_datetime_local(request.POST.get('end_datetime', '').strip())
+
+        if not room_id or not event_name or not start_dt or not end_dt:
+            messages.error(request, 'Please complete all required reservation fields.')
+            return redirect('inventorymanagement:create_conference_reservation')
+
+        if start_dt >= end_dt:
+            messages.error(request, 'Start time must be before end time.')
+            return redirect('inventorymanagement:create_conference_reservation')
+
+        room = get_object_or_404(ConferenceRoom, id=room_id)
+        if _has_overlapping_reservations(room, start_dt, end_dt):
+            messages.error(request, 'This room is already reserved for the selected time range.')
+            return redirect('inventorymanagement:create_conference_reservation')
+
+        reservation = ConferenceRoomReservation.objects.create(
+            room=room,
+            requested_by=request.user,
+            event_name=event_name,
+            purpose=purpose,
+            start_datetime=start_dt,
+            end_datetime=end_dt,
+            status='PENDING'
+        )
+
+        Logs.objects.create(
+            user=request.user,
+            system_name='inventorymanagement',
+            action='CREATE',
+            target_model='ConferenceRoomReservation',
+            target_id=str(reservation.id),
+            description=f"Created conference room reservation {reservation.id}",
+            hidden_description=f"User '{request.user.username}' created conference room reservation {reservation.id}",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+
+        messages.success(request, 'Conference room reservation submitted successfully.')
+        return redirect('inventorymanagement:conference_reservations')
+
+    rooms = ConferenceRoom.objects.filter(is_active=True)
+    return render(request, 'inventorymanagement/pages/create_conference_reservation.html', {
+        'rooms': rooms,
+    })
+
+
+@login_required
+@require_system_access
+@require_system_role(['admin', 'superadmin'])
+def approve_conference_reservation(request, reservation_id):
+    reservation = get_object_or_404(ConferenceRoomReservation, id=reservation_id)
+    if reservation.status != 'PENDING':
+        messages.error(request, 'Only pending reservations can be approved.')
+        return redirect('inventorymanagement:conference_reservations')
+
+    if _has_overlapping_reservations(reservation.room, reservation.start_datetime, reservation.end_datetime, exclude_id=reservation.id):
+        messages.error(request, 'Cannot approve this reservation because it overlaps with an existing booking.')
+        return redirect('inventorymanagement:conference_reservations')
+
+    reservation.status = 'APPROVED'
+    reservation.approved_by = request.user
+    reservation.approved_at = timezone.now()
+    reservation.save(update_fields=['status', 'approved_by', 'approved_at'])
+
+    Logs.objects.create(
+        user=request.user,
+        system_name='inventorymanagement',
+        action='UPDATE',
+        target_model='ConferenceRoomReservation',
+        target_id=str(reservation.id),
+        description=f"Approved conference room reservation {reservation.id}",
+        hidden_description=f"Admin '{request.user.username}' approved conference room reservation {reservation.id}",
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+
+    messages.success(request, 'Conference room reservation approved.')
+    return redirect('inventorymanagement:conference_reservations')
+
+
+@login_required
+@require_system_access
+@require_system_role(['admin', 'superadmin'])
+def reject_conference_reservation(request, reservation_id):
+    reservation = get_object_or_404(ConferenceRoomReservation, id=reservation_id)
+    if request.method == 'POST':
+        reason = request.POST.get('reason', '').strip()
+        reservation.status = 'REJECTED'
+        reservation.rejection_reason = reason
+        reservation.save(update_fields=['status', 'rejection_reason'])
+
+        Logs.objects.create(
+            user=request.user,
+            system_name='inventorymanagement',
+            action='UPDATE',
+            target_model='ConferenceRoomReservation',
+            target_id=str(reservation.id),
+            description=f"Rejected conference room reservation {reservation.id}",
+            hidden_description=f"Admin '{request.user.username}' rejected conference room reservation {reservation.id}: {reason}",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+
+        messages.success(request, 'Conference room reservation rejected.')
+        return redirect('inventorymanagement:conference_reservations')
+    return redirect('inventorymanagement:conference_reservations')
+
+
+@login_required
+@require_system_access
+@require_system_role(['admin', 'superadmin'])
+def cancel_conference_reservation(request, reservation_id):
+    reservation = get_object_or_404(ConferenceRoomReservation, id=reservation_id)
+    if request.method == 'POST':
+        reservation.status = 'CANCELLED'
+        reservation.save(update_fields=['status'])
+
+        Logs.objects.create(
+            user=request.user,
+            system_name='inventorymanagement',
+            action='UPDATE',
+            target_model='ConferenceRoomReservation',
+            target_id=str(reservation.id),
+            description=f"Cancelled conference room reservation {reservation.id}",
+            hidden_description=f"Admin '{request.user.username}' cancelled conference room reservation {reservation.id}",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
+
+        messages.success(request, 'Conference room reservation cancelled.')
+        return redirect('inventorymanagement:conference_reservations')
+    return redirect('inventorymanagement:conference_reservations')
+
+
+@login_required
+@require_system_access
+def view_conference_reservation(request, reservation_id):
+    reservation = get_object_or_404(ConferenceRoomReservation, id=reservation_id)
+    current_system = request.current_system
+    systems = request.session.get('accessible_systems', [])
+
+    return render(request, 'inventorymanagement/pages/view_conference_reservation.html', {
+        'systems': systems,
+        'current_system': current_system,
+        'reservation': reservation,
+        'is_admin': _is_inventory_admin(request),
+    })
 
 
 @login_required

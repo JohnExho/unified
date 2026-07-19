@@ -117,6 +117,41 @@ class InventoryRequisitionFlowTests(TestCase):
         self.assertEqual(self.item.quantity, 5)
         self.assertFalse(InventoryTransaction.objects.filter(item=self.item, transaction_type='ISSUE').exists())
 
+    def test_partial_approval_issues_available_items(self):
+        second_item = InventoryItem.objects.create(
+            name='Battery Pack',
+            category=self.category,
+            unit='pcs',
+            quantity=2,
+            low_stock_threshold=1,
+        )
+
+        requisition = Requisition.objects.create(requested_by=self.requester, status='PENDING')
+        RequisitionItem.objects.create(requisition=requisition, inventory_item=self.item, quantity_requested=4)
+        RequisitionItem.objects.create(requisition=requisition, inventory_item=second_item, quantity_requested=3)
+
+        self.client.force_login(self.admin)
+        self._set_inventory_session()
+
+        response = self.client.post(reverse('inventorymanagement:approve_requisition', args=[requisition.id]))
+
+        self.assertEqual(response.status_code, 302)
+
+        requisition.refresh_from_db()
+        self.item.refresh_from_db()
+        second_item.refresh_from_db()
+
+        first_req_item = requisition.items.get(inventory_item=self.item)
+        second_req_item = requisition.items.get(inventory_item=second_item)
+
+        self.assertEqual(requisition.status, 'APPROVED')
+        self.assertEqual(first_req_item.quantity_issued, 4)
+        self.assertEqual(second_req_item.quantity_issued, 2)
+        self.assertEqual(self.item.quantity, 1)
+        self.assertEqual(second_item.quantity, 0)
+        self.assertTrue(InventoryTransaction.objects.filter(item=self.item, transaction_type='ISSUE').exists())
+        self.assertTrue(InventoryTransaction.objects.filter(item=second_item, transaction_type='ISSUE').exists())
+
     def test_dashboard_and_ml_lab_use_live_statuses_and_quantities(self):
         InventoryTransaction.objects.create(
             item=self.item,

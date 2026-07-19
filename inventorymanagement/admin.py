@@ -9,6 +9,10 @@ from .models import (
     AssetMaintenance,
     Requisition,
     RequisitionItem,
+    AssetLoanRequest,
+    AssetLoanRequestItem,
+    ConferenceRoom,
+    ConferenceRoomReservation,
 )
 
 @admin.register(InventoryCategory)
@@ -127,3 +131,54 @@ class RequisitionItemAdmin(admin.ModelAdmin):
         "quantity_issued",
     )
     search_fields = ("inventory_item__name",)
+
+
+@admin.register(AssetLoanRequest)
+class AssetLoanRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "requested_by",
+        "status",
+        "approved_by",
+        "expected_return_date",
+        "created_at",
+    )
+    search_fields = (
+        "requested_by__username",
+        "approved_by__username",
+        "event_name",
+    )
+    list_filter = ("status", "created_at")
+    readonly_fields = ("created_at",)
+
+
+class AssetLoanRequestItemInline(admin.TabularInline):
+    model = AssetLoanRequestItem
+    extra = 0
+
+
+@admin.register(ConferenceRoom)
+class ConferenceRoomAdmin(admin.ModelAdmin):
+    list_display = ("name", "location", "capacity", "is_active", "created_at")
+    search_fields = ("name", "location",)
+    list_filter = ("is_active",)
+    readonly_fields = ("created_at",)
+
+
+@admin.register(ConferenceRoomReservation)
+class ConferenceRoomReservationAdmin(admin.ModelAdmin):
+    list_display = (
+        "room",
+        "requested_by",
+        "event_name",
+        "start_datetime",
+        "end_datetime",
+        "status",
+    )
+    search_fields = (
+        "room__name",
+        "requested_by__username",
+        "event_name",
+    )
+    list_filter = ("status", "start_datetime")
+    readonly_fields = ("created_at",)

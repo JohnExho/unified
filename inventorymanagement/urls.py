@@ -62,6 +62,22 @@ urlpatterns = [
     path('requisition/<uuid:requisition_id>/issue/', views.issue_requisition, name='issue_requisition'),
     path('requisition/<uuid:requisition_id>/items/', views.get_requisition_items, name='get_requisition_items'),
     path('requisitions/export/', views.export_requisitions, name='export_requisitions'),
+
+    # Asset Loan Request URLs
+    path('asset-loans/', views.asset_loan_requests, name='asset_loan_requests'),
+    path('asset-loan/create/', views.create_asset_loan_request, name='create_asset_loan_request'),
+    path('asset-loan/<uuid:request_id>/approve/', views.approve_asset_loan_request, name='approve_asset_loan_request'),
+    path('asset-loan/<uuid:request_id>/reject/', views.reject_asset_loan_request, name='reject_asset_loan_request'),
+    path('asset-loan/<uuid:request_id>/return/', views.return_asset_loan_request, name='return_asset_loan_request'),
+    path('asset-loan/<uuid:request_id>/', views.view_asset_loan_request, name='view_asset_loan_request'),
+
+    # Conference Room Reservation URLs
+    path('conference-reservations/', views.conference_reservations, name='conference_reservations'),
+    path('conference-reservations/create/', views.create_conference_reservation, name='create_conference_reservation'),
+    path('conference-reservations/<uuid:reservation_id>/approve/', views.approve_conference_reservation, name='approve_conference_reservation'),
+    path('conference-reservations/<uuid:reservation_id>/reject/', views.reject_conference_reservation, name='reject_conference_reservation'),
+    path('conference-reservations/<uuid:reservation_id>/cancel/', views.cancel_conference_reservation, name='cancel_conference_reservation'),
+    path('conference-reservations/<uuid:reservation_id>/', views.view_conference_reservation, name='view_conference_reservation'),
     
     # Admin routes
     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
