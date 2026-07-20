@@ -48,6 +48,31 @@ class InventoryAccessRestrictionTests(TestCase):
         self.assertNotIn('Date Returned', html)
 
 
+class InventoryAssetLoanRequestViewTests(TestCase):
+    def setUp(self):
+        self.User = get_user_model()
+        self.requester = self.User.objects.create_user(username='assetrequester', password='testpass123')
+        self.admin = self.User.objects.create_user(username='assetadmin', password='testpass123')
+
+        SystemMembership.objects.create(user=self.requester, system_name='inventorymanagement', system_role='user')
+        SystemMembership.objects.create(user=self.admin, system_name='inventorymanagement', system_role='admin')
+
+    def _set_inventory_session(self):
+        session = self.client.session
+        session['current_system'] = 'inventorymanagement'
+        session['accessible_systems'] = ['inventorymanagement']
+        session.save()
+
+    def test_asset_loan_requests_page_renders(self):
+        self.client.force_login(self.requester)
+        self._set_inventory_session()
+
+        response = self.client.get(reverse('inventorymanagement:asset_loan_requests'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Asset Loan Requests')
+
+
 class InventoryRequisitionFlowTests(TestCase):
     def setUp(self):
         self.User = get_user_model()

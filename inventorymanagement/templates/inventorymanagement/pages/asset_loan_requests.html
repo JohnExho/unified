@@ -1,0 +1,94 @@
+{% extends 'inventorymanagement/base.html' %}
+{% load static %}
+
+{% block title %}Asset Loan Requests - Inventory Management{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/assets.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+  <div class="top-bar">
+    <div class="page-header">
+      <div class="breadcrumb">Dashboard <span class="breadcrumb-sep">›</span> Asset Loan Requests</div>
+      <h1>Asset Loan Requests</h1>
+    </div>
+    <div class="top-actions">
+      <a class="btn btn-primary" href="{% url 'inventorymanagement:create_asset_loan_request' %}">New Request</a>
+    </div>
+  </div>
+
+  <div class="content-wrap">
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-label">Pending</div>
+        <div class="summary-value">{{ pending_count|default:0 }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Approved</div>
+        <div class="summary-value">{{ approved_count|default:0 }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Rejected</div>
+        <div class="summary-value">{{ rejected_count|default:0 }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Returned</div>
+        <div class="summary-value">{{ returned_count|default:0 }}</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-search">
+        <form class="search-box" method="get" action="{{ request.path }}">
+          <input type="text" name="search" placeholder="Search requests..." value="{{ search_query|default:'' }}" />
+        </form>
+      </div>
+      <div class="toolbar-actions">
+        <form method="get" action="{{ request.path }}" class="filter-inline">
+          <select name="status" class="filter-select">
+            <option value="" {% if not status_filter %}selected{% endif %}>All Statuses</option>
+            <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+            <option value="APPROVED" {% if status_filter == 'APPROVED' %}selected{% endif %}>Approved</option>
+            <option value="REJECTED" {% if status_filter == 'REJECTED' %}selected{% endif %}>Rejected</option>
+            <option value="RETURNED" {% if status_filter == 'RETURNED' %}selected{% endif %}>Returned</option>
+          </select>
+          <button class="btn btn-secondary" type="submit">Apply</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="table-card">
+      {% if loan_requests %}
+      <table>
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Requested By</th>
+            <th>Status</th>
+            <th>Expected Return</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for request_item in loan_requests %}
+          <tr>
+            <td>{{ request_item.event_name|default:'Untitled Event' }}</td>
+            <td>{{ request_item.requested_by.get_full_name|default:request_item.requested_by.username }}</td>
+            <td>{{ request_item.get_status_display }}</td>
+            <td>{{ request_item.expected_return_date|default:'—' }}</td>
+            <td>
+              <a class="btn btn-secondary" href="{% url 'inventorymanagement:view_asset_loan_request' request_item.id %}">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p>No asset loan requests found.</p>
+      {% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}

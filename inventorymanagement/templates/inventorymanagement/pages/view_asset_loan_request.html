@@ -1,0 +1,45 @@
+{% extends 'inventorymanagement/base.html' %}
+{% load static %}
+
+{% block title %}Asset Loan Request Details - Inventory Management{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/assets.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+  <div class="top-bar">
+    <div class="page-header">
+      <div class="breadcrumb">Dashboard <span class="breadcrumb-sep">›</span> Asset Loan Requests</div>
+      <h1>Asset Loan Request Details</h1>
+    </div>
+  </div>
+
+  <div class="content-wrap">
+    <div class="table-card">
+      <p><strong>Event:</strong> {{ loan_request.event_name|default:'Untitled Event' }}</p>
+      <p><strong>Requested By:</strong> {{ loan_request.requested_by.get_full_name|default:loan_request.requested_by.username }}</p>
+      <p><strong>Status:</strong> {{ loan_request.get_status_display }}</p>
+      <p><strong>Purpose:</strong> {{ loan_request.purpose|default:'—' }}</p>
+      <p><strong>Expected Return Date:</strong> {{ loan_request.expected_return_date|default:'—' }}</p>
+      <p><strong>Created:</strong> {{ loan_request.created_at }}</p>
+
+      <h3>Requested Assets</h3>
+      {% if items %}
+      <ul>
+        {% for item in items %}
+        <li>{{ item.asset.name }} ({{ item.asset.asset_code }})</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>No assets were attached to this request.</p>
+      {% endif %}
+
+      <div class="top-actions">
+        <a class="btn btn-secondary" href="{% url 'inventorymanagement:asset_loan_requests' %}">Back to Requests</a>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}
