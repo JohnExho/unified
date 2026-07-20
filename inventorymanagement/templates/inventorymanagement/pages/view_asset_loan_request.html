@@ -4,7 +4,7 @@
 {% block title %}Asset Loan Request Details - Inventory Management{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/assets.css' %}">
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/requisitions.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -17,26 +17,45 @@
   </div>
 
   <div class="content-wrap">
-    <div class="table-card">
-      <p><strong>Event:</strong> {{ loan_request.event_name|default:'Untitled Event' }}</p>
-      <p><strong>Requested By:</strong> {{ loan_request.requested_by.get_full_name|default:loan_request.requested_by.username }}</p>
-      <p><strong>Status:</strong> {{ loan_request.get_status_display }}</p>
-      <p><strong>Purpose:</strong> {{ loan_request.purpose|default:'—' }}</p>
-      <p><strong>Expected Return Date:</strong> {{ loan_request.expected_return_date|default:'—' }}</p>
-      <p><strong>Created:</strong> {{ loan_request.created_at }}</p>
+    <div class="table-card detail-card">
+      <div class="detail-section">
+        <div class="detail-row"><span class="detail-label">Event</span><span class="detail-value">{{ loan_request.event_name|default:'Untitled Event' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Requested By</span><span class="detail-value">{{ loan_request.requested_by.get_full_name|default:loan_request.requested_by.username }}</span></div>
+        <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="status-pill {% if loan_request.status == 'PENDING' %}status-pending{% elif loan_request.status == 'APPROVED' %}status-approved{% elif loan_request.status == 'REJECTED' %}status-rejected{% else %}status-returned{% endif %}">{{ loan_request.get_status_display }}</span></span></div>
+        <div class="detail-row"><span class="detail-label">Purpose</span><span class="detail-value">{{ loan_request.purpose|default:'—' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Expected Return Date</span><span class="detail-value">{{ loan_request.expected_return_date|default:'—' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Created</span><span class="detail-value">{{ loan_request.created_at }}</span></div>
+      </div>
 
-      <h3>Requested Assets</h3>
-      {% if items %}
-      <ul>
-        {% for item in items %}
-        <li>{{ item.asset.name }} ({{ item.asset.asset_code }})</li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      <p>No assets were attached to this request.</p>
+      <div class="detail-section">
+        <h3>Requested Assets</h3>
+        {% if items %}
+        <ul class="detail-list">
+          {% for item in items %}
+          <li>{{ item.asset.name }} ({{ item.asset.asset_code }})</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p>No assets were attached to this request.</p>
+        {% endif %}
+      </div>
+
+      {% if is_admin %}
+      <div class="detail-actions">
+        {% if loan_request.status == 'PENDING' %}
+        <form method="post" action="{% url 'inventorymanagement:approve_asset_loan_request' loan_request.id %}">
+          {% csrf_token %}
+          <button class="btn btn-primary" type="submit">Approve</button>
+        </form>
+        <form method="post" action="{% url 'inventorymanagement:reject_asset_loan_request' loan_request.id %}">
+          {% csrf_token %}
+          <button class="btn btn-secondary" type="submit">Reject</button>
+        </form>
+        {% endif %}
+      </div>
       {% endif %}
 
-      <div class="top-actions">
+      <div class="detail-actions">
         <a class="btn btn-secondary" href="{% url 'inventorymanagement:asset_loan_requests' %}">Back to Requests</a>
       </div>
     </div>

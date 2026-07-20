@@ -4,7 +4,7 @@
 {% block title %}Create Asset Loan Request - Inventory Management{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/assets.css' %}">
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/requisitions.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -18,36 +18,38 @@
 
   <div class="content-wrap">
     <div class="table-card">
-      <form method="post" action="{% url 'inventorymanagement:create_asset_loan_request' %}">
+      <form method="post" action="{% url 'inventorymanagement:create_asset_loan_request' %}" class="request-form">
         {% csrf_token %}
-        <div class="form-group">
-          <label for="event_name">Event Name</label>
-          <input id="event_name" name="event_name" type="text" required>
-        </div>
-        <div class="form-group">
-          <label for="purpose">Purpose</label>
-          <textarea id="purpose" name="purpose"></textarea>
-        </div>
-        <div class="form-group">
-          <label for="expected_return_date">Expected Return Date</label>
-          <input id="expected_return_date" name="expected_return_date" type="date">
-        </div>
-        <div class="form-group">
-          <label>Select Assets</label>
-          {% if available_assets %}
-            {% for asset in available_assets %}
-            <div>
-              <label>
-                <input type="checkbox" name="assets" value="{{ asset.id }}">
-                {{ asset.name }} ({{ asset.asset_code }})
-              </label>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="event_name">Event Name</label>
+            <input id="event_name" name="event_name" type="text" required>
+          </div>
+          <div class="form-group">
+            <label for="purpose">Purpose</label>
+            <textarea id="purpose" name="purpose" rows="4"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="expected_return_date">Expected Return Date</label>
+            <input id="expected_return_date" name="expected_return_date" type="date">
+          </div>
+          <div class="form-group form-group-full">
+            <label>Select Assets</label>
+            <div class="asset-option-list">
+              {% if available_assets %}
+                {% for asset in available_assets %}
+                <label class="asset-option">
+                  <input type="checkbox" name="assets" value="{{ asset.id }}">
+                  <span>{{ asset.name }} ({{ asset.asset_code }})</span>
+                </label>
+                {% endfor %}
+              {% else %}
+                <p>No available assets are currently available.</p>
+              {% endif %}
             </div>
-            {% endfor %}
-          {% else %}
-            <p>No available assets are currently available.</p>
-          {% endif %}
+          </div>
         </div>
-        <div class="top-actions">
+        <div class="form-actions">
           <button class="btn btn-primary" type="submit">Submit Request</button>
           <a class="btn btn-secondary" href="{% url 'inventorymanagement:asset_loan_requests' %}">Cancel</a>
         </div>

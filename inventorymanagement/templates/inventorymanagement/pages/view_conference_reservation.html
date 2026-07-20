@@ -1,0 +1,52 @@
+{% extends 'inventorymanagement/base.html' %}
+{% load static %}
+
+{% block title %}Conference Reservation Details - Inventory Management{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'inventorymanagement/css/pages/requisitions.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="main-content">
+  <div class="top-bar">
+    <div class="page-header">
+      <div class="breadcrumb">Dashboard <span class="breadcrumb-sep">›</span> Conference Reservations</div>
+      <h1>Conference Reservation Details</h1>
+    </div>
+  </div>
+
+  <div class="content-wrap">
+    <div class="table-card detail-card">
+      <div class="detail-section">
+        <div class="detail-row"><span class="detail-label">Event</span><span class="detail-value">{{ reservation.event_name|default:'Untitled Event' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Room</span><span class="detail-value">{{ reservation.room.name|default:'—' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Requested By</span><span class="detail-value">{{ reservation.requested_by.get_full_name|default:reservation.requested_by.username }}</span></div>
+        <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="status-pill {% if reservation.status == 'PENDING' %}status-pending{% elif reservation.status == 'APPROVED' %}status-approved{% elif reservation.status == 'REJECTED' %}status-rejected{% else %}status-cancelled{% endif %}">{{ reservation.get_status_display }}</span></span></div>
+        <div class="detail-row"><span class="detail-label">Purpose</span><span class="detail-value">{{ reservation.purpose|default:'—' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Schedule</span><span class="detail-value">{{ reservation.start_datetime }} → {{ reservation.end_datetime }}</span></div>
+        <div class="detail-row"><span class="detail-label">Created</span><span class="detail-value">{{ reservation.created_at }}</span></div>
+      </div>
+
+      {% if is_admin %}
+      <div class="detail-actions">
+        {% if reservation.status == 'PENDING' %}
+        <form method="post" action="{% url 'inventorymanagement:approve_conference_reservation' reservation.id %}">
+          {% csrf_token %}
+          <button class="btn btn-primary" type="submit">Approve</button>
+        </form>
+        <form method="post" action="{% url 'inventorymanagement:reject_conference_reservation' reservation.id %}">
+          {% csrf_token %}
+          <button class="btn btn-secondary" type="submit">Reject</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <div class="detail-actions">
+        <a class="btn btn-secondary" href="{% url 'inventorymanagement:conference_reservations' %}">Back to Reservations</a>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

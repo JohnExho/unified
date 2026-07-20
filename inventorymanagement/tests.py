@@ -5,7 +5,18 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 from core.models import SystemMembership
-from .models import Asset, AssetAssignment, AssetCategory, InventoryCategory, InventoryItem, InventoryTransaction, Requisition, RequisitionItem
+from .models import (
+    Asset,
+    AssetAssignment,
+    AssetCategory,
+    InventoryCategory,
+    InventoryItem,
+    InventoryTransaction,
+    Requisition,
+    RequisitionItem,
+    ConferenceRoom,
+    ConferenceRoomReservation,
+)
 
 
 class InventoryAccessRestrictionTests(TestCase):
@@ -71,6 +82,37 @@ class InventoryAssetLoanRequestViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Asset Loan Requests')
+
+
+class InventoryConferenceReservationFlowTests(TestCase):
+    def setUp(self):
+        self.User = get_user_model()
+        self.user = self.User.objects.create_user(username='roomuser', password='testpass123')
+        SystemMembership.objects.create(user=self.user, system_name='inventorymanagement', system_role='user')
+
+    def _set_inventory_session(self):
+        session = self.client.session
+        session['current_system'] = 'inventorymanagement'
+        session['accessible_systems'] = ['inventorymanagement']
+        session.save()
+
+    def test_create_conference_reservation_accepts_text_room_name(self):
+        self.client.force_login(self.user)
+        self._set_inventory_session()
+
+        response = self.client.post(reverse('inventorymanagement:create_conference_reservation'), {
+            'room': 'Boardroom',
+            'event_name': 'Planning Session',
+            'purpose': 'Team planning',
+            'start_datetime': '2026-07-20T10:00',
+            'end_datetime': '2026-07-20T11:00',
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(ConferenceRoom.objects.filter(name='Boardroom').exists())
+        reservation = ConferenceRoomReservation.objects.get(event_name='Planning Session')
+        self.assertEqual(reservation.room.name, 'Boardroom')
+        self.assertEqual(reservation.status, 'PENDING')
 
 
 class InventoryRequisitionFlowTests(TestCase):

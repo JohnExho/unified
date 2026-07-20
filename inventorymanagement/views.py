@@ -3018,13 +3018,13 @@ def conference_reservations(request):
 @require_system_access
 def create_conference_reservation(request):
     if request.method == 'POST':
-        room_id = request.POST.get('room', '').strip()
+        room_name = request.POST.get('room', '').strip()
         event_name = request.POST.get('event_name', '').strip()
         purpose = request.POST.get('purpose', '').strip()
         start_dt = _parse_datetime_local(request.POST.get('start_datetime', '').strip())
         end_dt = _parse_datetime_local(request.POST.get('end_datetime', '').strip())
 
-        if not room_id or not event_name or not start_dt or not end_dt:
+        if not room_name or not event_name or not start_dt or not end_dt:
             messages.error(request, 'Please complete all required reservation fields.')
             return redirect('inventorymanagement:create_conference_reservation')
 
@@ -3032,7 +3032,14 @@ def create_conference_reservation(request):
             messages.error(request, 'Start time must be before end time.')
             return redirect('inventorymanagement:create_conference_reservation')
 
-        room = get_object_or_404(ConferenceRoom, id=room_id)
+        room, created = ConferenceRoom.objects.get_or_create(
+            name__iexact=room_name,
+            defaults={'name': room_name, 'is_active': True}
+        )
+        if created:
+            room.name = room_name
+            room.save(update_fields=['name', 'is_active'])
+
         if _has_overlapping_reservations(room, start_dt, end_dt):
             messages.error(request, 'This room is already reserved for the selected time range.')
             return redirect('inventorymanagement:create_conference_reservation')
