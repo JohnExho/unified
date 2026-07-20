@@ -85,7 +85,7 @@ def _sector_coverage(projects):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def dashboard(request):
     if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
@@ -201,7 +201,7 @@ def train_naive_bayes_model(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def projects(request):
     if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
@@ -216,7 +216,7 @@ def projects(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def beneficiaries(request):
     if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
@@ -231,7 +231,7 @@ def beneficiaries(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def partners(request):
     if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
@@ -252,7 +252,7 @@ def partners(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def activities(request):
     if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
@@ -267,7 +267,7 @@ def activities(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def analytics(request):
     if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
@@ -319,7 +319,7 @@ def analytics(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def reports(request):
     if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
@@ -334,7 +334,7 @@ def reports(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def ml_lab(request):
     if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
@@ -863,10 +863,10 @@ def ml_experiment_delete(request, pk):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def contribution_funds_list(request):
     """List all contribution funds"""
-    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
     
     funds = ContributionFund.objects.all()
@@ -916,10 +916,10 @@ def contribution_fund_create(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def contribution_fund_detail(request, pk):
     """View fund details with allocations and expenses"""
-    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
     
     fund = get_object_or_404(ContributionFund, pk=pk)
@@ -993,10 +993,10 @@ def fund_expense_create(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def financial_dashboard(request):
     """Financial dashboard with key metrics"""
-    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
     
     from .services import FinancialReportingService
@@ -1014,10 +1014,10 @@ def financial_dashboard(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def financial_summary_report(request):
     """Association financial summary report"""
-    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
     
     from .services import FinancialReportingService
@@ -1036,10 +1036,10 @@ def financial_summary_report(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def fund_utilization_report(request):
     """Fund utilization report"""
-    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
     
     from .services import FinancialReportingService
@@ -1055,10 +1055,10 @@ def fund_utilization_report(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def monthly_contribution_report(request):
     """Monthly contribution report"""
-    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
     
     from .services import FinancialReportingService
@@ -1079,10 +1079,10 @@ def monthly_contribution_report(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def annual_financial_report(request):
     """Annual financial report"""
-    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
     
     from .services import FinancialReportingService
@@ -1138,10 +1138,10 @@ def export_financial_report(request, report_type):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def member_contributions_list(request):
     """List member contribution records"""
-    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
     
     from .services import MemberContributionService
@@ -1169,10 +1169,10 @@ def member_contributions_list(request):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def member_contribution_detail(request, pk):
     """View member contribution detail and statement"""
-    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
     
     from .services import MemberContributionService
@@ -1299,10 +1299,10 @@ def export_member_statement(request, pk):
 
 @login_required(login_url="/informationsystem/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
+@require_system_role(["user", "admin", "superadmin"])
 def master_data_departments_list(request):
     """List master data departments"""
-    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+    if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
     
     departments = MasterDataDepartment.objects.all()
