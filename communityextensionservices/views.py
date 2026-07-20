@@ -36,11 +36,18 @@ def _has_ces_admin_access(user):
     )
 
 
+def _can_access_ces(request_user):
+    return Services.has_access(request_user, "communityextensionservices") or Services.has_access(
+        request_user,
+        "communityextensionservices",
+        role="user",
+    )
+
+
 @login_required(login_url="/communitymembership/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
 def dashboard(request):
-    if not Services.has_access(request.user, "communityextensionservices"):
+    if not _can_access_ces(request.user):
         return render(request, "404.html", status=404)
 
     cluster_snapshot = CESClusteringService.get_dashboard_snapshot(limit=6)
@@ -101,9 +108,8 @@ def train_member_kmeans(request):
 
 @login_required(login_url="/communitymembership/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
 def members(request):
-    if not Services.has_access(request.user, "communityextensionservices"):
+    if not _can_access_ces(request.user):
         return render(request, "404.html", status=404)
     context = {
         **_base_context(request),
@@ -114,9 +120,8 @@ def members(request):
 
 @login_required(login_url="/communitymembership/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
 def member_create(request):
-    if not Services.has_access(request.user, "communityextensionservices"):
+    if not _can_access_ces(request.user):
         return render(request, "404.html", status=404)
     form = MemberForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -134,9 +139,8 @@ def member_create(request):
 
 @login_required(login_url="/communitymembership/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
 def member_edit(request, pk):
-    if not Services.has_access(request.user, "communityextensionservices"):
+    if not _can_access_ces(request.user):
         return render(request, "404.html", status=404)
     member = get_object_or_404(Member, pk=pk)
     form = MemberForm(request.POST or None, instance=member)
@@ -155,9 +159,8 @@ def member_edit(request, pk):
 
 @login_required(login_url="/communitymembership/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
 def member_delete(request, pk):
-    if not Services.has_access(request.user, "communityextensionservices"):
+    if not _can_access_ces(request.user):
         return render(request, "404.html", status=404)
     member = get_object_or_404(Member, pk=pk)
     if request.method == "POST":
@@ -175,9 +178,8 @@ def member_delete(request, pk):
 
 @login_required(login_url="/communitymembership/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
 def dues(request):
-    if not Services.has_access(request.user, "communityextensionservices"):
+    if not _can_access_ces(request.user):
         return render(request, "404.html", status=404)
     context = {
         **_base_context(request),
@@ -191,9 +193,8 @@ def dues(request):
 
 @login_required(login_url="/communitymembership/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
 def dues_create(request):
-    if not Services.has_access(request.user, "communityextensionservices"):
+    if not _can_access_ces(request.user):
         return render(request, "404.html", status=404)
     form = DuesPaymentForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -211,9 +212,8 @@ def dues_create(request):
 
 @login_required(login_url="/communitymembership/login")
 @require_system_access
-@require_system_role(["admin", "superadmin"])
 def activities(request):
-    if not Services.has_access(request.user, "communityextensionservices"):
+    if not _can_access_ces(request.user):
         return render(request, "404.html", status=404)
     activities_qs = Activity.objects.annotate(
         attendees=Count("attendance", distinct=True),

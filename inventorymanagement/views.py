@@ -114,8 +114,41 @@ def _process_requisition_approval(requisition, performed_by):
     issued_items = []
     unavailable_items = []
     partially_fulfilled_items = []
+    fully_issued_items = []
 
     inventory_cache = {}
+    potential_full_fulfillment = False
+
+    for req_item in requisition_items:
+        outstanding = req_item.quantity_requested - req_item.quantity_issued
+        if outstanding <= 0:
+            continue
+
+        if req_item.inventory_item_id in inventory_cache:
+            inventory_item = inventory_cache[req_item.inventory_item_id]
+        else:
+            inventory_item = InventoryItem.objects.select_for_update().get(id=req_item.inventory_item_id)
+            inventory_cache[req_item.inventory_item_id] = inventory_item
+
+        if inventory_item.quantity <= 0:
+            unavailable_items.append(req_item)
+            continue
+
+        if inventory_item.quantity >= outstanding:
+            potential_full_fulfillment = True
+
+    if not potential_full_fulfillment:
+        requisition.status = 'PENDING'
+        requisition.approved_by = None
+        requisition.approved_at = None
+        requisition.save(update_fields=['status', 'approved_by', 'approved_at'])
+        return {
+            'issued_items': [],
+            'unavailable_items': unavailable_items,
+            'partially_fulfilled_items': [],
+            'fully_issued_items': [],
+            'approval_status': requisition.status,
+        }
 
     for req_item in requisition_items:
         outstanding = req_item.quantity_requested - req_item.quantity_issued
@@ -148,24 +181,34 @@ def _process_requisition_approval(requisition, performed_by):
         )
 
         issued_items.append(req_item)
-        if quantity_to_issue < outstanding:
+        if quantity_to_issue == outstanding:
+            fully_issued_items.append(req_item)
+        else:
             partially_fulfilled_items.append(req_item)
 
     if not issued_items:
         raise ValueError('No available items to issue; request remains pending.')
 
-    requisition.approved_by = performed_by
-    requisition.approved_at = timezone.now()
-    if unavailable_items or partially_fulfilled_items:
-        requisition.status = 'APPROVED'
+    if fully_issued_items:
+        requisition.approved_by = performed_by
+        requisition.approved_at = timezone.now()
+        if unavailable_items or partially_fulfilled_items:
+            requisition.status = 'APPROVED'
+        else:
+            requisition.status = 'ISSUED'
     else:
-        requisition.status = 'ISSUED'
+        requisition.status = 'PENDING'
+        requisition.approved_by = None
+        requisition.approved_at = None
+
     requisition.save(update_fields=['status', 'approved_by', 'approved_at'])
 
     return {
         'issued_items': issued_items,
         'unavailable_items': unavailable_items,
         'partially_fulfilled_items': partially_fulfilled_items,
+        'fully_issued_items': fully_issued_items,
+        'approval_status': requisition.status,
     }
 
 
@@ -2151,7 +2194,9 @@ def approve_requisition(request, requisition_id):
                     user_agent=get_user_agent(request),
                 )
 
-            if result['unavailable_items']:
+            if result['approval_status'] == 'PENDING':
+                messages.warning(request, 'Requisition remains pending because the requested quantities could not be fully fulfilled.')
+            elif result['unavailable_items']:
                 unavailable_list = ', '.join([
                     f"{item.inventory_item.name} (requested {item.quantity_requested - item.quantity_issued})"
                     for item in result['unavailable_items']

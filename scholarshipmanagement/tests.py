@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 from core.models import SystemMembership
 from .models import Scholarship, StudentProfile
@@ -20,6 +21,46 @@ class ScholarshipSeederTests(TestCase):
         call_command("seed_scholarshipmanagement")
 
         self.assertEqual(1, User.objects.filter(username="Scholar").count())
+
+
+class ScholarshipTypeAndGwaTests(TestCase):
+    def test_scholarship_type_choices_include_lgu_and_provincial(self):
+        self.assertIn(("lgu", "LGU Scholarship"), Scholarship._meta.get_field("scholarship_type").choices)
+        self.assertIn(("provincial", "Provincial Scholarship"), Scholarship._meta.get_field("scholarship_type").choices)
+
+    def test_student_profile_accepts_gpa_values_between_1_and_5(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="gpauser", password="secret123")
+        profile = StudentProfile(user=user, gpa=5.0)
+
+        profile.full_clean()
+
+    def test_predict_retention_uses_new_gwa_ranges(self):
+        User = get_user_model()
+        at_risk_user = User.objects.create_user(username="gparange-at-risk", password="secret123")
+        risk_user = User.objects.create_user(username="gparange-risk", password="secret123")
+        at_risk_profile = StudentProfile.objects.create(
+            user=at_risk_user,
+            gpa=2.6,
+            failed_subjects=0,
+            units_enrolled=24,
+            attendance_rate=95.0,
+            socioeconomic_status='low',
+        )
+        risk_profile = StudentProfile.objects.create(
+            user=risk_user,
+            gpa=3.1,
+            failed_subjects=0,
+            units_enrolled=24,
+            attendance_rate=95.0,
+            socioeconomic_status='low',
+        )
+
+        at_risk_prediction = predict_retention(at_risk_profile, scholarship_type='merit_based')
+        risk_prediction = predict_retention(risk_profile, scholarship_type='merit_based')
+
+        self.assertEqual(at_risk_prediction['label'], 'At Risk')
+        self.assertEqual(risk_prediction['label'], 'Risk')
 
 
 class ScholarshipMlModelPageTests(TestCase):
@@ -123,7 +164,7 @@ class StudentProfileMlReadinessTests(TestCase):
 
         prediction = predict_retention(profile, scholarship_type='merit_based')
 
-        self.assertIn(prediction['label'], ['Retain', 'At-Risk', 'Failed'])
+        self.assertIn(prediction['label'], ['Retained', 'At Risk', 'Risk'])
         self.assertGreaterEqual(prediction['confidence'], 0)
 
     def test_predict_retention_marks_gpa_275_as_at_risk(self):
@@ -144,7 +185,7 @@ class StudentProfileMlReadinessTests(TestCase):
 
         prediction = predict_retention(profile, scholarship_type='merit_based')
 
-        self.assertEqual(prediction['label'], 'At-Risk')
+        self.assertEqual(prediction['label'], 'At Risk')
 
 
 class IntakeRetentionPreviewTests(TestCase):
@@ -182,7 +223,7 @@ class IntakeRetentionPreviewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertTrue(payload["ok"])
-        self.assertIn(payload["prediction"]["label"], ["Retain", "At-Risk", "Failed"])
+        self.assertIn(payload["prediction"]["label"], ["Retained", "At Risk", "Risk"])
         self.assertGreaterEqual(payload["prediction"]["confidence"], 0)
 
     def test_preview_endpoint_does_not_error_for_incomplete_input(self):

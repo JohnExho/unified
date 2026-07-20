@@ -1,6 +1,9 @@
 from django.core.management import call_command
 from django.test import TestCase
+from django.contrib.auth import get_user_model
+from django.urls import reverse
 
+from core.models import SystemMembership
 from .models import Contribution, Member, Service
 
 
@@ -30,3 +33,19 @@ class PublicLoginRedirectTests(TestCase):
             response.headers["Location"],
             "/communitymembership/login?next=/communitymembership/dashboard/",
         )
+
+
+class CESAccessTests(TestCase):
+    def test_regular_user_with_membership_can_access_dashboard(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="cesuser", password="secret123")
+        SystemMembership.objects.create(user=user, system_name="communityextensionservices", system_role="user")
+
+        self.client.force_login(user)
+        session = self.client.session
+        session["current_system"] = "communityextensionservices"
+        session.save()
+
+        response = self.client.get(reverse("communityextensionservices:ces-dashboard"))
+
+        self.assertEqual(response.status_code, 200)

@@ -29,7 +29,7 @@ class StudentProfileForm(forms.ModelForm):
             'family_background': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3}),
             'school_university': forms.TextInput(attrs={'class': 'form-input'}),
             'course_strand': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'e.g. BSCS, BSIT, ABM'}),
-            'gpa': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '0', 'max': '4.0', 'placeholder': '0.00 - 4.00'}),
+            'gpa': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01', 'min': '1.0', 'max': '5.0', 'placeholder': '1.00 - 5.00'}),
             'academic_awards': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 2}),
             'annual_family_income': forms.NumberInput(attrs={'class': 'form-input', 'step': '1000', 'placeholder': 'Annual family income in PHP'}),
             'province': forms.TextInput(attrs={'class': 'form-input'}),
@@ -146,7 +146,7 @@ class StudentIntakeForm(forms.Form):
     course_strand = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'form-input'}))
     province = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-input'}))
 
-    gpa = forms.FloatField(min_value=0.0, max_value=4.0, widget=forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}))
+    gpa = forms.FloatField(min_value=1.0, max_value=5.0, widget=forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}))
     annual_family_income = forms.DecimalField(min_value=0, max_digits=12, decimal_places=2, widget=forms.NumberInput(attrs={'class': 'form-input', 'step': '1000'}))
 
     failed_subjects = forms.IntegerField(min_value=0, initial=0, widget=forms.NumberInput(attrs={'class': 'form-input'}))

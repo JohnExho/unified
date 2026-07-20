@@ -218,10 +218,10 @@ function setPreviewState(label, confidence, hint) {
   previewLabel.textContent = label || '—';
   previewConfidence.textContent = confidence ? `${confidence}%` : '—';
   previewHint.textContent = hint;
-  previewBox.classList.remove('is-retain', 'is-at-risk', 'is-failed');
-  if (label === 'Retain') previewBox.classList.add('is-retain');
-  if (label === 'At-Risk') previewBox.classList.add('is-at-risk');
-  if (label === 'Failed') previewBox.classList.add('is-failed');
+  previewBox.classList.remove('is-retained', 'is-at-risk', 'is-risk');
+  if (label === 'Retained') previewBox.classList.add('is-retained');
+  if (label === 'At Risk') previewBox.classList.add('is-at-risk');
+  if (label === 'Risk') previewBox.classList.add('is-risk');
 }
 
 async function updateRetentionPreview() {

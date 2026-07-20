@@ -21,10 +21,15 @@ MODEL_DIR = Path(__file__).resolve().parent / "ml_models"
 
 
 def predict_retention(profile, scholarship_type='general'):
-    """Classify a student into Retain / At-Risk / Failed using thesis-aligned inputs for renewal classification."""
+    """Classify a student into Retained / At Risk / Risk using the updated GWA scale."""
     gpa = float(getattr(profile, 'gpa', 0) or 0.0)
-    if gpa <= 2.75:
-        return {'label': 'At-Risk', 'confidence': 100.0}
+    if 1.0 <= gpa <= 2.5:
+        return {'label': 'Retained', 'confidence': 100.0}
+    if 2.6 <= gpa <= 3.0:
+        return {'label': 'At Risk', 'confidence': 100.0}
+    if 3.1 <= gpa <= 5.0:
+        return {'label': 'Risk', 'confidence': 100.0}
+    return {'label': 'Risk', 'confidence': 100.0}
 
     features = np.array([
         [
@@ -38,14 +43,14 @@ def predict_retention(profile, scholarship_type='general'):
     ])
 
     X_train = np.array([
-        [3.8, 0, 24, 92, 1, 0],
-        [3.5, 1, 21, 86, 1, 0],
+        [1.6, 0, 24, 92, 1, 0],
+        [2.1, 1, 21, 86, 1, 0],
         [2.8, 2, 18, 74, 1, 1],
-        [2.3, 3, 16, 63, 0, 1],
-        [1.8, 4, 12, 48, 0, 1],
-        [1.4, 5, 9, 35, 0, 1],
+        [3.4, 3, 16, 63, 0, 1],
+        [4.2, 4, 12, 48, 0, 1],
+        [5.0, 5, 9, 35, 0, 1],
     ])
-    y_train = np.array(['Retain', 'Retain', 'At-Risk', 'At-Risk', 'Failed', 'Failed'])
+    y_train = np.array(['Retained', 'Retained', 'At Risk', 'Risk', 'Risk', 'Risk'])
 
     tree_model = DecisionTreeClassifier(max_depth=3, random_state=7)
     tree_model.fit(X_train, y_train)

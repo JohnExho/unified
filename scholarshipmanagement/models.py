@@ -45,7 +45,7 @@ class StudentProfile(models.Model):
     course_strand = models.CharField(max_length=255, blank=True)
     gpa = models.FloatField(
         null=True, blank=True,
-        validators=[MinValueValidator(0.0), MaxValueValidator(4.0)]
+        validators=[MinValueValidator(1.0), MaxValueValidator(5.0)]
     )
     academic_awards = models.TextField(blank=True)
 
@@ -202,6 +202,8 @@ class Scholarship(models.Model):
         ('private', 'Private'),
         ('corporate', 'Corporate'),
         ('organization', 'Organization'),
+        ('lgu', 'LGU Scholarship'),
+        ('provincial', 'Provincial Scholarship'),
     ]
     STATUS_CHOICES = [
         ('draft', 'Draft'),
