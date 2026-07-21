@@ -171,9 +171,17 @@ class Report(models.Model):
     period = models.CharField(max_length=120)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     owner = models.CharField(max_length=120)
+    template = models.ForeignKey(
+        "ReportTemplate",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reports",
+    )
 
     def __str__(self):
-        return f"{self.title} ({self.period})"
+        template_part = f" [{self.template.name}]" if self.template else ""
+        return f"{self.title} ({self.period}){template_part}"
 
 
 class ReportTemplate(models.Model):
@@ -181,6 +189,20 @@ class ReportTemplate(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class DecisionSupportSummary(models.Model):
+    title = models.CharField(max_length=200, default="Decision Support Summary")
+    content = models.TextField(blank=True)
+    generated_at = models.DateTimeField(auto_now_add=True)
+    generated_by = models.CharField(max_length=120, blank=True)
+    report_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["-generated_at"]
+
+    def __str__(self):
+        return f"{self.title} ({self.generated_at:%Y-%m-%d %H:%M})"
 
 
 class MLModel(models.Model):

@@ -11,8 +11,14 @@
     <div class="action-group">
       <a class="button secondary"
          href="{% url 'informationmanagement:information-report-template-create' %}">New Template</a>
-      <a class="button"
+      <a class="button secondary"
          href="{% url 'informationmanagement:information-report-create' %}">Generate Report</a>
+      {% if can_generate_summary %}
+        <form class="inline-form" method="post" action="{% url 'informationmanagement:information-report-generate-summary' %}">
+          {% csrf_token %}
+          <button class="button" type="submit">Generate Decision Summary</button>
+        </form>
+      {% endif %}
     </div>
   </div>
   <div class="grid cols-2">
@@ -62,8 +68,13 @@
         <div class="list">
           {% for template in templates %}
             <div class="list-item">
-              <div class="text-strong">{{ template.name }}</div>
-              <span class="pill">Template</span>
+              <div>
+                <div class="text-strong">{{ template.name }}</div>
+                <div class="muted text-small">Click to use this template when creating a report.</div>
+              </div>
+              <div class="inline-actions">
+                <a class="link-btn" href="{% url 'informationmanagement:information-report-create' %}?template={{ template.id }}">Use</a>
+              </div>
             </div>
           {% endfor %}
         </div>
@@ -80,20 +91,22 @@
       </div>
       <span class="tag">Auto-generated</span>
     </div>
-    {% if reports %}
+    {% if summaries %}
       <div class="list">
-        {% for report in reports|slice:":3" %}
+        {% for summary in summaries %}
           <div class="list-item">
             <div>
-              <div class="text-strong">{{ report.title }}</div>
-              <div class="muted text-small">{{ report.period }} · {{ report.status }}</div>
+              <div class="text-strong">{{ summary.title }}</div>
+              <div class="muted text-small">{{ summary.generated_at|date:"M d, Y H:i" }} · {{ summary.report_count }} reports</div>
             </div>
-            <span class="badge {% if report.status == 'Generated' %}success{% else %}warning{% endif %}">{{ report.status }}</span>
+            <span class="badge success">Ready</span>
           </div>
         {% endfor %}
       </div>
-    {% else %}
+    {% elif reports %}
       <div class="empty-state">Decision support summaries will appear after reports are generated.</div>
+    {% else %}
+      <div class="empty-state">No reports are available yet to generate a summary.</div>
     {% endif %}
   </div>
 {% endblock content %}

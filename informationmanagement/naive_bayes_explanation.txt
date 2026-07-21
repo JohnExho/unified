@@ -1,0 +1,35 @@
+Naive Bayes Classifier Explanation
+
+Purpose:
+The Naive Bayes model predicts the most likely class for new input records based on historical data. It uses Bayes' Theorem and assumes each feature contributes independently to the prediction.
+
+How it Works:
+1. Historical records are used as training data with labeled outcomes.
+2. The model calculates the probability of each class given the feature values.
+3. It evaluates the probability of the input belonging to each possible class.
+4. The class with the highest probability is selected as the prediction.
+
+Inputs:
+- Historical dataset containing examples and labels.
+- Selected predictor variables or features used for classification.
+
+Output:
+- Predicted class label.
+- Probability or confidence score for the predicted class when available.
+
+Advantages:
+- Fast prediction and low computational cost.
+- Works well with categorical data.
+- Efficient when dataset size is small.
+- Simple and interpretable results.
+
+Limitations:
+- Assumes feature independence, which is not always true in real data.
+- Performance depends on the quality and representativeness of the training data.
+- May be less accurate when features are highly correlated.
+
+Interpreting a Bayes Table:
+- Prior probabilities represent how likely each class is before seeing the features.
+- Likelihood values describe how likely each feature value is for each class.
+- Posterior probabilities combine priors and likelihoods to estimate the probability of each class given the observed features.
+- The model selects the class with the highest posterior probability as the prediction.

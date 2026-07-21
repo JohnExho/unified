@@ -83,6 +83,11 @@ urlpatterns = [
         views.report_template_create,
         name="information-report-template-create",
     ),
+    path(
+        "reports/generate-summary/",
+        views.generate_decision_support_summary,
+        name="information-report-generate-summary",
+    ),
     path("ml-lab/", views.ml_lab, name="information-ml-lab"),
     path(
         "ml-lab/models/new/", views.ml_model_create, name="information-ml-model-create"

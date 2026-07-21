@@ -633,6 +633,17 @@
         {% endblock content %}
       </main>
     </div>
+    <script>
+      window.DJANGO_MESSAGES = [
+      {% for message in messages %}
+        {
+          level: "{{ message.tags }}",
+          text: "{{ message|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+      ];
+    </script>
+    <script src="{% static 'core/js/global-toast.js' %}" defer></script>
     {% block extra_scripts %}
     {% endblock extra_scripts %}
   </body>

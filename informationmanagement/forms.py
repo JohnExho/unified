@@ -99,7 +99,10 @@ class ActivityForm(forms.ModelForm):
 class ReportForm(forms.ModelForm):
     class Meta:
         model = Report
-        fields = ["title", "period", "status", "owner"]
+        fields = ["title", "period", "status", "owner", "template"]
+        widgets = {
+            "template": forms.Select(attrs={"class": "form-select"}),
+        }
 
 
 class ReportTemplateForm(forms.ModelForm):

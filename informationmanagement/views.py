@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum
@@ -14,6 +16,7 @@ from .models import (
     Activity,
     Report,
     ReportTemplate,
+    DecisionSupportSummary,
     MLModel,
     MLPipeline,
     MLExperiment,
@@ -23,6 +26,8 @@ from .models import (
     MemberContributionRecord,
     MasterDataDepartment,
 )
+
+logger = logging.getLogger(__name__)
 from .forms import (
     ProjectForm,
     BeneficiaryGroupForm,
@@ -320,16 +325,151 @@ def analytics(request):
 @login_required(login_url="/informationsystem/login")
 @require_system_access
 @require_system_role(["user", "admin", "superadmin"])
+def _build_decision_support_summary():
+    reports = Report.objects.order_by("-id")
+    total_reports = reports.count()
+    generated_count = reports.filter(status="Generated").count()
+    in_review_count = reports.filter(status="In Review").count()
+    draft_count = reports.filter(status="Draft").count()
+    template_counts = (
+        Report.objects.values("template__name")
+        .annotate(count=Count("id"))
+        .order_by("-count")
+    )
+    most_used_template = None
+    if template_counts:
+        most_used_template = template_counts[0]["template__name"] or "Standard"
+
+    summary_lines = [
+        f"Generated on {timezone.now():%B %d, %Y at %H:%M}",
+        f"Total reports: {total_reports}.",
+        f"Generated: {generated_count}, In Review: {in_review_count}, Draft: {draft_count}.",
+    ]
+    if most_used_template:
+        summary_lines.append(f"Most used template: {most_used_template}.")
+    summary_lines.append(
+        "Decision support highlights focus on template adoption, report completion, and recommendation readiness."
+    )
+    if total_reports == 0:
+        summary_lines = ["No report records available to generate decision support summary."]
+
+    return "\n".join(summary_lines), total_reports
+
+
+@login_required(login_url="/informationsystem/login")
+@require_system_access
+@require_system_role(["user", "admin", "superadmin"])
 def reports(request):
     if not Services.has_access(request.user, "informationmanagement"):
         return render(request, "404.html", status=404)
 
+    summaries = DecisionSupportSummary.objects.all()[:3]
     context = {
         **_base_context(request),
         "reports": Report.objects.order_by("-id"),
         "templates": ReportTemplate.objects.order_by("name"),
+        "summaries": summaries,
+        "can_generate_summary": Services.has_access(
+            request.user,
+            "informationmanagement",
+            role="admin",
+        ),
     }
     return render(request, "informationmanagement/reports.html", context)
+
+
+@login_required(login_url="/informationsystem/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+@require_POST
+def generate_decision_support_summary(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+
+    try:
+        content, report_count = _build_decision_support_summary()
+        if report_count == 0:
+            messages.error(request, "Cannot generate decision support summary: no reports available.")
+            return redirect("informationmanagement:information-reports")
+
+        latest_summary = DecisionSupportSummary.objects.first()
+        if latest_summary and latest_summary.content == content:
+            messages.info(request, "A current decision support summary already exists.")
+            return redirect("informationmanagement:information-reports")
+
+        DecisionSupportSummary.objects.create(
+            title="Decision Support Summary",
+            content=content,
+            generated_by=request.user.get_username(),
+            report_count=report_count,
+        )
+        messages.success(request, "Decision support summary generated successfully.")
+    except Exception as exc:
+        logger.exception("Failed to generate decision support summary")
+        messages.error(
+            request,
+            "Unable to create decision support summary at this time. Please check the logs and try again.",
+        )
+
+    return redirect("informationmanagement:information-reports")
+
+
+@login_required(login_url="/informationsystem/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def report_create(request):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+
+    template = None
+    template_id = request.GET.get("template")
+    if template_id:
+        template = ReportTemplate.objects.filter(pk=template_id).first()
+
+    initial = {}
+    if template:
+        initial = {
+            "template": template,
+            "title": template.name,
+        }
+
+    form = ReportForm(request.POST or None, initial=initial)
+    if request.method == "POST" and form.is_valid():
+        report = form.save()
+        if report.status == "Generated" and not report.template:
+            report.template = template
+            report.save(update_fields=["template"])
+        messages.success(request, "Report created successfully.")
+        return redirect("informationmanagement:information-reports")
+
+    context = {
+        **_base_context(request),
+        "form": form,
+        "title": "New Report",
+        "cancel_url": "informationmanagement:information-reports",
+    }
+    return render(request, "informationmanagement/form.html", context)
+
+
+@login_required(login_url="/informationsystem/login")
+@require_system_access
+@require_system_role(["admin", "superadmin"])
+def report_edit(request, pk):
+    if not Services.has_access(request.user, "informationmanagement", role="admin"):
+        return render(request, "404.html", status=404)
+    report = get_object_or_404(Report, pk=pk)
+    form = ReportForm(request.POST or None, instance=report)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Report updated successfully.")
+        return redirect("informationmanagement:information-reports")
+    context = {
+        **_base_context(request),
+        "form": form,
+        "title": "Edit Report",
+        "cancel_url": "informationmanagement:information-reports",
+    }
+    return render(request, "informationmanagement/form.html", context)
 
 
 @login_required(login_url="/informationsystem/login")
