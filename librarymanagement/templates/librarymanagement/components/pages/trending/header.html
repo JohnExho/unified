@@ -17,24 +17,24 @@
 </div>
 <!-- Period Selector -->
 <div class="period-tabs">
-  <button class="period-tab {% if period_type == 'daily' or not period_type %}active{% endif %}"
-          onclick="filterByPeriod('daily')">
+  <a class="period-tab {% if period_type == 'daily' or not period_type %}active{% endif %}"
+     href="{% url 'librarymanagement:trending_books' %}?period=daily">
     {% include "librarymanagement/components/icons/calendar.svg" %}
     Daily
-  </button>
-  <button class="period-tab {% if period_type == 'weekly' %}active{% endif %}"
-          onclick="filterByPeriod('weekly')">
+  </a>
+  <a class="period-tab {% if period_type == 'weekly' %}active{% endif %}"
+     href="{% url 'librarymanagement:trending_books' %}?period=weekly">
     {% include "librarymanagement/components/icons/calendar.svg" %}
     Weekly
-  </button>
-  <button class="period-tab {% if period_type == 'monthly' %}active{% endif %}"
-          onclick="filterByPeriod('monthly')">
+  </a>
+  <a class="period-tab {% if period_type == 'monthly' %}active{% endif %}"
+     href="{% url 'librarymanagement:trending_books' %}?period=monthly">
     {% include "librarymanagement/components/icons/calendar.svg" %}
     Monthly
-  </button>
-  <button class="period-tab {% if period_type == 'yearly' %}active{% endif %}"
-          onclick="filterByPeriod('yearly')">
+  </a>
+  <a class="period-tab {% if period_type == 'yearly' %}active{% endif %}"
+     href="{% url 'librarymanagement:trending_books' %}?period=yearly">
     {% include "librarymanagement/components/icons/chart-bar.svg" %}
     Yearly
-  </button>
+  </a>
 </div>
