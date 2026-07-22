@@ -1775,10 +1775,13 @@ class RecommendationServices:
         recommendations = []
         for book in recommended_books:
             score = min(100.0, book.category_match_count * 25.0)
-            recommendation, created = BookRecommendation.objects.get_or_create(
+            recommendation, created = BookRecommendation.objects.update_or_create(
                 user=user,
                 book=book,
-                defaults={"score": score, "reason": "Based on your reading history"},
+                defaults={
+                    "score": score,
+                    "reason": "Based on your reading history",
+                },
             )
             recommendations.append(recommendation)
 
@@ -1797,7 +1800,7 @@ class RecommendationServices:
 
         recommendations = []
         for trend in trending:
-            recommendation, created = BookRecommendation.objects.get_or_create(
+            recommendation, created = BookRecommendation.objects.update_or_create(
                 user=user,
                 book=trend.book,
                 defaults={

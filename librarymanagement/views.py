@@ -15,6 +15,7 @@ from librarymanagement.services import (
     NotificationServices,
     DashboardServices,
     ReportServices,
+    RecommendationServices,
     DataMiningServices,
 )
 from .models import (
@@ -283,16 +284,29 @@ def user_activities(request):
 
 
 @login_required(login_url="/librarymanagement/login")
+@require_system_role(["user", "admin", "superadmin"])
 def recommendations_dashboard(request):
     """Book recommendations"""
     recommendations = (
-        BookRecommendation.objects.all()
+        BookRecommendation.objects.filter(user=request.user)
         .select_related("user", "book")
         .prefetch_related("book__authors")
         .order_by("-score", "-created_at")[:50]
     )
-    actioned_count = BookRecommendation.objects.filter(actioned=True).count()
-    total_count = BookRecommendation.objects.count()
+
+    if not recommendations.exists():
+        RecommendationServices.refresh_recommendations(request.user)
+        recommendations = (
+            BookRecommendation.objects.filter(user=request.user)
+            .select_related("user", "book")
+            .prefetch_related("book__authors")
+            .order_by("-score", "-created_at")[:50]
+        )
+
+    actioned_count = (
+        BookRecommendation.objects.filter(user=request.user, actioned=True).count()
+    )
+    total_count = BookRecommendation.objects.filter(user=request.user).count()
     success_rate = int((actioned_count / total_count) * 100) if total_count > 0 else 0
 
     return render(
@@ -309,6 +323,15 @@ def recommendations_dashboard(request):
 
 @login_required(login_url="/librarymanagement/login")
 @require_system_role(["user", "admin", "superadmin"])
+def refresh_recommendations(request):
+    """Regenerate personalized recommendations for the current user"""
+    RecommendationServices.refresh_recommendations(request.user)
+    messages.success(request, "Personalized recommendations have been refreshed.")
+    return redirect("librarymanagement:recommendations_dashboard")
+
+
+@login_required(login_url="/librarymanagement/login")
+@require_system_role(["user", "admin", "superadmin"])
 def trending_books(request):
     """Trending / popular books"""
     # Get period type from query params, default to weekly
@@ -320,6 +343,16 @@ def trending_books(request):
         .prefetch_related("book__authors")
         .order_by("-popularity_score", "-period_start")[:20]
     )
+
+    if not trending.exists():
+        # Generate trending records if the analytics have not been run yet.
+        DataMiningServices.analyze_trending_books(period_type=period_type)
+        trending = (
+            TrendingBook.objects.filter(period_type=period_type)
+            .select_related("book")
+            .prefetch_related("book__authors")
+            .order_by("-popularity_score", "-period_start")[:20]
+        )
 
     return render(
         request,

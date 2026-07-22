@@ -114,6 +114,11 @@
   color: var(--muted-foreground);
 }
 
+.highlight-text {
+  font-weight: var(--font-semibold);
+  color: var(--primary);
+}
+
 .settings-item-control {
   flex-shrink: 0;
   margin-left: var(--spacing-lg);

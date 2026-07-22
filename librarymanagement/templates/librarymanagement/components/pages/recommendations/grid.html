@@ -41,7 +41,8 @@
         <div class="empty-state-icon">{% include "librarymanagement/components/icons/robot-face.svg" %}</div>
         <h3>No Recommendations Yet</h3>
         <p>Book recommendations will be generated based on user behavior and preferences.</p>
-        <button class="button button-default button-md mt-lg">Generate Recommendations</button>
+        <a href="{% url 'librarymanagement:refresh_recommendations' %}"
+           class="button button-default button-md mt-lg">Generate Recommendations</a>
       </div>
     </div>
   {% endif %}

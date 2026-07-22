@@ -85,6 +85,11 @@ urlpatterns = [
         views.recommendations_dashboard,
         name="recommendations_dashboard",
     ),
+    path(
+        "recommendations/refresh/",
+        views.refresh_recommendations,
+        name="refresh_recommendations",
+    ),
     path("trending/", views.trending_books, name="trending_books"),
     path("reports/", views.reports_dashboard, name="reports_dashboard"),
     path(
