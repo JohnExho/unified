@@ -1,5 +1,15 @@
 <div class="recommendations-grid">
-  {% if recommendations %}
+  {% if not recommendations_enabled %}
+    <div class="card empty-state-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">{% include "librarymanagement/components/icons/robot-face.svg" %}</div>
+        <h3>Recommendations Disabled</h3>
+        <p>{{ disabled_message|default:"Book recommendation functionality is currently disabled." }}</p>
+        <a href="{% url 'librarymanagement:library_settings' %}"
+           class="button button-default button-md mt-lg">Update Library Settings</a>
+      </div>
+    </div>
+  {% elif recommendations %}
     {% for recommendation in recommendations %}
       <div class="recommendation-card">
         <div class="recommendation-cover">

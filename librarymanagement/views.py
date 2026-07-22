@@ -16,6 +16,7 @@ from librarymanagement.services import (
     DashboardServices,
     ReportServices,
     RecommendationServices,
+    LibrarySettingsServices,
     DataMiningServices,
 )
 from .models import (
@@ -82,7 +83,29 @@ def dashboard(request):
     stats = DashboardServices.get_overview_stats()
     recent_transactions = DashboardServices.get_recent_transactions(limit=4)
     popular_books = DashboardServices.get_popular_books(limit=4)
-    activity_summary = DashboardServices.get_activity_summary(days=activity_days)
+
+    library = Library.objects.first()
+    settings = (
+        LibrarySettingsServices.get_or_create_settings(library) if library else None
+    )
+    if settings and not settings.enable_user_analytics:
+        activity_summary = {
+            "borrowed_count": 0,
+            "borrowed_percentage": 0,
+            "returned_count": 0,
+            "returned_percentage": 0,
+            "reservations_count": 0,
+            "reservations_percentage": 0,
+            "days": activity_days,
+        }
+        activity_disabled_message = (
+            "User activity tracking is disabled in Library Settings. "
+            "Enable it to see analytics and usage panels."
+        )
+    else:
+        activity_summary = DashboardServices.get_activity_summary(days=activity_days)
+        activity_disabled_message = None
+
     demand_forecast_snapshot = DataMiningServices.get_demand_forecast_snapshot(limit=5)
     can_train_forecast_model = (
         request.user.is_superuser
@@ -116,6 +139,8 @@ def dashboard(request):
             "popular_books": popular_books,
             # Activity summary
             "activity_summary": activity_summary,
+            "activity_tracking_enabled": not settings or settings.enable_user_analytics,
+            "activity_disabled_message": activity_disabled_message,
             # Random Forest demand forecasting
             "demand_forecasts": demand_forecast_snapshot["forecasts"],
             "rf_model_ready": demand_forecast_snapshot["model_ready"],
@@ -287,21 +312,34 @@ def user_activities(request):
 @require_system_role(["user", "admin", "superadmin"])
 def recommendations_dashboard(request):
     """Book recommendations"""
-    recommendations = (
-        BookRecommendation.objects.filter(user=request.user)
-        .select_related("user", "book")
-        .prefetch_related("book__authors")
-        .order_by("-score", "-created_at")[:50]
+    library = Library.objects.first()
+    settings = (
+        LibrarySettingsServices.get_or_create_settings(library) if library else None
     )
+    disabled_message = None
 
-    if not recommendations.exists():
-        RecommendationServices.refresh_recommendations(request.user)
+    if settings and not settings.enable_book_recommendations:
+        recommendations = BookRecommendation.objects.none()
+        disabled_message = (
+            "Book recommendation functionality is disabled in Library Settings. "
+            "Enable it to see AI-driven suggestions."
+        )
+    else:
         recommendations = (
             BookRecommendation.objects.filter(user=request.user)
             .select_related("user", "book")
             .prefetch_related("book__authors")
             .order_by("-score", "-created_at")[:50]
         )
+
+        if not recommendations.exists():
+            RecommendationServices.refresh_recommendations(request.user)
+            recommendations = (
+                BookRecommendation.objects.filter(user=request.user)
+                .select_related("user", "book")
+                .prefetch_related("book__authors")
+                .order_by("-score", "-created_at")[:50]
+            )
 
     actioned_count = (
         BookRecommendation.objects.filter(user=request.user, actioned=True).count()
@@ -317,6 +355,9 @@ def recommendations_dashboard(request):
             "actioned_count": actioned_count,
             "success_rate": success_rate,
             "total_count": total_count,
+            "recommendations_enabled": not settings or settings.enable_book_recommendations,
+            "disabled_message": disabled_message,
+            "view_type": "recommendations",
         },
     )
 
@@ -325,6 +366,18 @@ def recommendations_dashboard(request):
 @require_system_role(["user", "admin", "superadmin"])
 def refresh_recommendations(request):
     """Regenerate personalized recommendations for the current user"""
+    library = Library.objects.first()
+    settings = (
+        LibrarySettingsServices.get_or_create_settings(library) if library else None
+    )
+
+    if settings and not settings.enable_book_recommendations:
+        messages.error(
+            request,
+            "Book recommendation feature is disabled in Library Settings. Enable it first.",
+        )
+        return redirect("librarymanagement:recommendations_dashboard")
+
     RecommendationServices.refresh_recommendations(request.user)
     messages.success(request, "Personalized recommendations have been refreshed.")
     return redirect("librarymanagement:recommendations_dashboard")
@@ -334,19 +387,23 @@ def refresh_recommendations(request):
 @require_system_role(["user", "admin", "superadmin"])
 def trending_books(request):
     """Trending / popular books"""
-    # Get period type from query params, default to weekly
+    from librarymanagement.services import LibrarySettingsServices
+
+    library = Library.objects.first()
+    settings = (
+        LibrarySettingsServices.get_or_create_settings(library) if library else None
+    )
+    disabled_message = None
+
     period_type = request.GET.get("period", "weekly")
 
-    trending = (
-        TrendingBook.objects.filter(period_type=period_type)
-        .select_related("book")
-        .prefetch_related("book__authors")
-        .order_by("-popularity_score", "-period_start")[:20]
-    )
-
-    if not trending.exists():
-        # Generate trending records if the analytics have not been run yet.
-        DataMiningServices.analyze_trending_books(period_type=period_type)
+    if settings and not settings.enable_trending_analysis:
+        trending = TrendingBook.objects.none()
+        disabled_message = (
+            "Trending analysis is disabled in Library Settings. "
+            "Enable it to see popular books and trends."
+        )
+    else:
         trending = (
             TrendingBook.objects.filter(period_type=period_type)
             .select_related("book")
@@ -354,12 +411,24 @@ def trending_books(request):
             .order_by("-popularity_score", "-period_start")[:20]
         )
 
+        if not trending.exists():
+            DataMiningServices.analyze_trending_books(period_type=period_type)
+            trending = (
+                TrendingBook.objects.filter(period_type=period_type)
+                .select_related("book")
+                .prefetch_related("book__authors")
+                .order_by("-popularity_score", "-period_start")[:20]
+            )
+
     return render(
         request,
         "librarymanagement/pages/trending_books.html",
         {
             "trending": trending,
             "period_type": period_type,
+            "trending_enabled": not settings or settings.enable_trending_analysis,
+            "disabled_message": disabled_message,
+            "view_type": "trending",
         },
     )
 

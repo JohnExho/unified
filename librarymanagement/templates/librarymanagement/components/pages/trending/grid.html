@@ -1,6 +1,16 @@
 {% load static %}
 <div class="trending-grid">
-  {% if trending %}
+  {% if not trending_enabled %}
+    <div class="card empty-state-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">{% include "librarymanagement/components/icons/chart-bar.svg" %}</div>
+        <h3>Trending Analysis Disabled</h3>
+        <p>{{ disabled_message|default:"Trending analytics are currently disabled." }}</p>
+        <a href="{% url 'librarymanagement:library_settings' %}"
+           class="button button-default button-md mt-lg">Update Library Settings</a>
+      </div>
+    </div>
+  {% elif trending %}
     {% for item in trending %}
       <div class="trending-card">
         {% if item.popularity_score > 80 %}
