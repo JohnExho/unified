@@ -160,6 +160,9 @@ SESSION_COOKIE_AGE = 86400  # 24 hours
 CSRF_COOKIE_SECURE = not DEBUG  # HTTPS only in production
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = [
+    "https://unified-1.onrender.com",
+]
 
 # Security Headers
 if not DEBUG:
