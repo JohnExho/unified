@@ -5,6 +5,10 @@
       <p class="page-subtitle">Manage your library's book collection</p>
     </div>
     <div class="button-group">
+      <a href="{% url 'librarymanagement:bulk_import_books' %}" class="button button-outline">
+        {% include "librarymanagement/components/icons/download.svg" %}
+        Import
+      </a>
       <button class="button button-outline" onclick="openDialog('exportBooksDialog')">
         {% include "librarymanagement/components/icons/book-upload.svg" %}
         Export
