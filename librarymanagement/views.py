@@ -4,6 +4,7 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from core.decorators import require_system_role
 
@@ -199,7 +200,30 @@ def books_list(request):
     publishers = Publisher.objects.all()
     libraries = Library.objects.all()
 
-    # Calculate statistics
+    # Apply search and filter parameters
+    search_query = request.GET.get("search", "").strip()
+    category_filter = request.GET.get("category", "").strip()
+    status_filter = request.GET.get("status", "").strip()
+    resource_type = request.GET.get("type", "").strip()
+
+    if search_query:
+        books = books.filter(
+            Q(title__icontains=search_query)
+            | Q(isbn__icontains=search_query)
+            | Q(authors__full_name__icontains=search_query)
+            | Q(publisher__name__icontains=search_query)
+        ).distinct()
+
+    if category_filter:
+        books = books.filter(categories__id=category_filter)
+
+    if status_filter:
+        books = books.filter(status=status_filter)
+
+    if resource_type:
+        books = books.filter(resource_type=resource_type)
+
+    # Calculate statistics for the current result set
     total_books = books.count()
     available_books = books.filter(status="available").count()
     borrowed_books = books.filter(status="borrowed").count()
@@ -215,6 +239,10 @@ def books_list(request):
         "available_books": available_books,
         "borrowed_books": borrowed_books,
         "reserved_books": reserved_books,
+        "search_query": search_query,
+        "category_filter": category_filter,
+        "status_filter": status_filter,
+        "resource_type": resource_type,
     }
     return render(request, "librarymanagement/pages/books_list.html", context)
 

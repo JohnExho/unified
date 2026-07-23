@@ -1,42 +1,48 @@
-<div class="filter-bar">
+<form method="get" action="{% url 'librarymanagement:books_list' %}" class="filter-bar">
   <div class="filter-group">
     <div class="filter-item search-box">
       <label class="label">Search Books</label>
-      <input type="text"
-             class="input input-sm"
-             placeholder="Search by title, author, ISBN...">
+      <input
+        type="text"
+        name="search"
+        value="{{ search_query|default:'' }}"
+        class="input input-sm"
+        placeholder="Search by title, author, ISBN..."
+      >
     </div>
     <div class="filter-item">
       <label>Category</label>
-      <select class="select">
-        <option value="">All Categories</option>
+      <select name="category" class="select">
+        <option value="" {% if not category_filter %}selected{% endif %}>All Categories</option>
         {% for category in categories %}
-          <option value="{{ category.id }}">{{ category.name }}</option>
+          <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
+            {{ category.name }}
+          </option>
         {% endfor %}
       </select>
     </div>
     <div class="filter-item">
       <label>Status</label>
-      <select class="select">
-        <option value="">All Status</option>
-        <option value="available">Available</option>
-        <option value="borrowed">Borrowed</option>
-        <option value="reserved">Reserved</option>
-        <option value="maintenance">Maintenance</option>
+      <select name="status" class="select">
+        <option value="" {% if not status_filter %}selected{% endif %}>All Status</option>
+        <option value="available" {% if status_filter == 'available' %}selected{% endif %}>Available</option>
+        <option value="borrowed" {% if status_filter == 'borrowed' %}selected{% endif %}>Borrowed</option>
+        <option value="reserved" {% if status_filter == 'reserved' %}selected{% endif %}>Reserved</option>
+        <option value="maintenance" {% if status_filter == 'maintenance' %}selected{% endif %}>Maintenance</option>
       </select>
     </div>
     <div class="filter-item">
       <label>Type</label>
-      <select class="select">
-        <option value="">All Types</option>
-        <option value="physical">Physical</option>
-        <option value="digital">Digital</option>
-        <option value="audio">Audio</option>
+      <select name="type" class="select">
+        <option value="" {% if not resource_type %}selected{% endif %}>All Types</option>
+        <option value="physical" {% if resource_type == 'physical' %}selected{% endif %}>Physical</option>
+        <option value="digital" {% if resource_type == 'digital' %}selected{% endif %}>Digital</option>
+        <option value="audio" {% if resource_type == 'audio' %}selected{% endif %}>Audio</option>
       </select>
     </div>
     <div class="filter-item filter-item-button">
       <label>&nbsp;</label>
-      <button class="button button-default">Apply</button>
+      <button type="submit" class="button button-default">Apply</button>
     </div>
   </div>
-</div>
+</form>
